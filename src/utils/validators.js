@@ -353,9 +353,116 @@ function validateUserUpdate(updateData) {
   };
 }
 
+/**
+ * Validate event creation data
+ */
+function validateEventData(eventData) {
+  const errors = [];
+  
+  try {
+    if (!eventData || typeof eventData !== 'object') {
+      return { isValid: false, errors: ['Event data is required'] };
+    }
+
+    // Sanitize inputs
+    if (eventData.name) eventData.name = validators.sanitizeString(eventData.name);
+    if (eventData.description) eventData.description = validators.sanitizeString(eventData.description);
+
+    // Required fields
+    validators.required(eventData.name, 'Event name');
+    validators.minLength(eventData.name, 1, 'Event name');
+    validators.maxLength(eventData.name, 100, 'Event name');
+
+    validators.required(eventData.date, 'Event date');
+    validators.date(eventData.date, 'Event date');
+
+    // Optional fields with validation
+    if (eventData.description && eventData.description.length > 500) {
+      validators.maxLength(eventData.description, 500, 'Description');
+    }
+
+    // Validate participants if provided
+    if (eventData.participants) {
+      if (!Array.isArray(eventData.participants)) {
+        throw new ValidationError('Participants must be a list');
+      }
+      validators.uuidArray(eventData.participants, 'Participants');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid event data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Validate event update data (all fields optional)
+ */
+function validateEventUpdate(updateData) {
+  const errors = [];
+  
+  try {
+    if (!updateData || typeof updateData !== 'object') {
+      return { isValid: false, errors: ['Update data is required'] };
+    }
+
+    // Sanitize inputs if present
+    if (updateData.name !== undefined) {
+      updateData.name = validators.sanitizeString(updateData.name);
+    }
+    if (updateData.description !== undefined) {
+      updateData.description = validators.sanitizeString(updateData.description);
+    }
+
+    // Validate provided fields
+    if (updateData.name !== undefined) {
+      validators.required(updateData.name, 'Event name');
+      validators.minLength(updateData.name, 1, 'Event name');
+      validators.maxLength(updateData.name, 100, 'Event name');
+    }
+
+    if (updateData.date !== undefined) {
+      validators.date(updateData.date, 'Event date');
+    }
+
+    if (updateData.description !== undefined && updateData.description !== '') {
+      validators.maxLength(updateData.description, 500, 'Description');
+    }
+
+    if (updateData.participants !== undefined) {
+      if (!Array.isArray(updateData.participants)) {
+        throw new ValidationError('Participants must be a list');
+      }
+      validators.uuidArray(updateData.participants, 'Participants');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid update data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
 module.exports = {
   ValidationError,
   validators,
   validateUserData,
   validateUserUpdate,
+  validateEventData,
+  validateEventUpdate,
 };
