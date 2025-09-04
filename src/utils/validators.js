@@ -256,7 +256,106 @@ const validators = {
   }
 };
 
+/**
+ * Validate user creation data
+ */
+function validateUserData(userData) {
+  const errors = [];
+  
+  try {
+    if (!userData || typeof userData !== 'object') {
+      return { isValid: false, errors: ['User data is required'] };
+    }
+
+    // Sanitize inputs
+    if (userData.name) userData.name = validators.sanitizeString(userData.name);
+    if (userData.email) userData.email = validators.sanitizeString(userData.email);
+    if (userData.phone) userData.phone = validators.sanitizeString(userData.phone);
+
+    // Required fields
+    validators.required(userData.name, 'Name');
+    validators.minLength(userData.name, 1, 'Name');
+    validators.maxLength(userData.name, 100, 'Name');
+
+    // Optional fields with validation
+    if (userData.email) {
+      validators.email(userData.email, 'Email');
+      validators.maxLength(userData.email, 255, 'Email');
+    }
+
+    if (userData.phone) {
+      validators.phone(userData.phone, 'Phone');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid user data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Validate user update data (all fields optional)
+ */
+function validateUserUpdate(updateData) {
+  const errors = [];
+  
+  try {
+    if (!updateData || typeof updateData !== 'object') {
+      return { isValid: false, errors: ['Update data is required'] };
+    }
+
+    // Sanitize inputs if present
+    if (updateData.name !== undefined) {
+      updateData.name = validators.sanitizeString(updateData.name);
+    }
+    if (updateData.email !== undefined) {
+      updateData.email = validators.sanitizeString(updateData.email);
+    }
+    if (updateData.phone !== undefined) {
+      updateData.phone = validators.sanitizeString(updateData.phone);
+    }
+
+    // Validate provided fields
+    if (updateData.name !== undefined) {
+      validators.required(updateData.name, 'Name');
+      validators.minLength(updateData.name, 1, 'Name');
+      validators.maxLength(updateData.name, 100, 'Name');
+    }
+
+    if (updateData.email !== undefined && updateData.email !== '') {
+      validators.email(updateData.email, 'Email');
+      validators.maxLength(updateData.email, 255, 'Email');
+    }
+
+    if (updateData.phone !== undefined && updateData.phone !== '') {
+      validators.phone(updateData.phone, 'Phone');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid update data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
 module.exports = {
   ValidationError,
   validators,
+  validateUserData,
+  validateUserUpdate,
 };
