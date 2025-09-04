@@ -138,8 +138,8 @@ class FileManager {
       const stats = await fs.stat(filePath);
       return {
         size: stats.size,
-        modified: stats.mtime,
-        created: stats.birthtime,
+        modified: new Date(stats.mtime),
+        created: new Date(stats.birthtime),
       };
     } catch (error) {
       if (error.code === 'ENOENT') {
