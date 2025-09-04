@@ -458,6 +458,111 @@ function validateEventUpdate(updateData) {
   };
 }
 
+/**
+ * Validate cost item creation data
+ */
+function validateCostItemData(costItemData) {
+  const errors = [];
+  
+  try {
+    if (!costItemData || typeof costItemData !== 'object') {
+      return { isValid: false, errors: ['Cost item data is required'] };
+    }
+
+    // Sanitize inputs
+    if (costItemData.description) costItemData.description = validators.sanitizeString(costItemData.description);
+
+    // Required fields
+    validators.required(costItemData.description, 'Description');
+    validators.minLength(costItemData.description, 1, 'Description');
+    validators.maxLength(costItemData.description, 255, 'Description');
+
+    validators.required(costItemData.amount, 'Amount');
+    validators.positiveNumber(costItemData.amount, 'Amount');
+
+    validators.required(costItemData.paidBy, 'Paid by user');
+    validators.uuid(costItemData.paidBy, 'Paid by user');
+
+    validators.required(costItemData.eventId, 'Event ID');
+    validators.uuid(costItemData.eventId, 'Event ID');
+
+    validators.required(costItemData.date, 'Date');
+    validators.date(costItemData.date, 'Date');
+
+    // Validate split percentages
+    if (costItemData.splitPercentage) {
+      validators.splitPercentages(costItemData.splitPercentage, 'Split percentages');
+    } else {
+      throw new ValidationError('Split percentages are required');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid cost item data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Validate cost item update data (all fields optional)
+ */
+function validateCostItemUpdate(updateData) {
+  const errors = [];
+  
+  try {
+    if (!updateData || typeof updateData !== 'object') {
+      return { isValid: false, errors: ['Update data is required'] };
+    }
+
+    // Sanitize inputs if present
+    if (updateData.description !== undefined) {
+      updateData.description = validators.sanitizeString(updateData.description);
+    }
+
+    // Validate provided fields
+    if (updateData.description !== undefined) {
+      validators.required(updateData.description, 'Description');
+      validators.minLength(updateData.description, 1, 'Description');
+      validators.maxLength(updateData.description, 255, 'Description');
+    }
+
+    if (updateData.amount !== undefined) {
+      validators.positiveNumber(updateData.amount, 'Amount');
+    }
+
+    if (updateData.paidBy !== undefined) {
+      validators.uuid(updateData.paidBy, 'Paid by user');
+    }
+
+    if (updateData.date !== undefined) {
+      validators.date(updateData.date, 'Date');
+    }
+
+    if (updateData.splitPercentage !== undefined) {
+      validators.splitPercentages(updateData.splitPercentage, 'Split percentages');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid update data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
 module.exports = {
   ValidationError,
   validators,
@@ -465,4 +570,6 @@ module.exports = {
   validateUserUpdate,
   validateEventData,
   validateEventUpdate,
+  validateCostItemData,
+  validateCostItemUpdate,
 };
