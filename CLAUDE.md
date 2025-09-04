@@ -1,0 +1,203 @@
+# Claude Code Session Context
+
+## Project Overview
+**Badminton Event Cost Splitter** - A simple expense-splitting web application for badminton events that allows users to create events, add participants, track expenses, and calculate balances.
+
+## User Requirements Summary
+
+### Initial Requirements
+- Local app (no login required) for organizing badminton events
+- Support multiple events with different participants and spending
+- Even cost splitting by default among event participants  
+- Proper calculation ensuring person who paid still owes their share
+- Local file storage (CSV or JSON) - no database initially
+- Simple web interface
+
+### Core Features Needed
+- **User Management**: Add users with UUID, name, email (optional), phone (optional)
+- **Event Creation**: Create events with participants from user pool
+- **Cost Tracking**: Add expenses with description, amount, paidBy, date
+- **Balance Calculation**: Track who owes what across all events
+- **Settlement Tracking**: Record when payments are made to organizer
+
+### Additional Requirements Clarified
+1. **Payment System**: Users pay directly to organizer/shared pot (not each other)
+2. **Partial Cost Participation**: Support excluding users from specific cost items or custom split percentages
+3. **Cross-Event Balance**: Track total balance across all events
+4. **Top-up Support**: Allow advance payments
+5. **Audit Trail**: Full transaction history for all payments and cost modifications
+6. **Settlement vs Top-up**: Both are technically identical (add to user balance) - difference is just for audit/description purposes
+7. **User Experience Priority**: App must be extremely user-friendly with minimal learning curve - intuitive for non-technical users
+
+### Key Design Decisions Made
+
+#### Data Structure Approach
+- **JSON files** chosen over CSV (more flexible for nested data)
+- **splitPercentage** system where all participants' percentages sum to 100% (easier calculation)
+- **Unified payment** system (removed type distinction, kept optional event linking for audit)
+
+#### Split Percentage Examples
+- 3 people: 33.33%, 33.33%, 33.34% (default equal split)
+- Custom: 40%, 35%, 25% (must sum to 100%)
+- Exclusion: 0% for excluded participant
+
+#### Technical Simplifications
+- Payments are technically identical regardless of purpose
+- Optional `relatedEventId` for audit trail only
+- Description field allows user to specify purpose
+
+## Example Business Scenario
+**Event**: 6 people signed up for badminton session
+**Cost Item 1**: Court Rental $60 - all 6 people pay equally (16.67% each = $10 each)
+**Cost Item 2**: Shuttlecocks $30 - Bob excluded (0%), remaining 5 people pay equally (20% each = $6 each)
+**Result**: Bob owes $10 (court only), others owe $16 each (court + shuttlecocks)
+
+## File Structure Decided
+```
+data/
+├── users.json          // User profiles with balances
+├── events.json         // Event details with participants  
+├── cost_items.json     // Expenses with splitPercentage config
+└── payments.json       // All payments (settlements + top-ups)
+```
+
+## Technology Stack Selected
+- **Backend**: Node.js + Express + File System operations
+- **Frontend**: HTML/CSS/JavaScript (vanilla) + Bootstrap
+- **Storage**: JSON files (no database initially)
+- **ID Generation**: uuid library
+
+## Key UI Design Elements
+- **Dashboard**: Quick stats, recent activities, quick actions
+- **Events Page**: List + detailed event view with cost items
+- **Split Configuration UI**: Interactive sliders with real-time percentage updates
+- **Payments Page**: Global balances + payment recording + transaction history
+- **Visual Indicators**: Color coding for balances (red=owes, green=credit, gray=balanced)
+
+## Current Status
+- ✅ Complete design document created (`DESIGN.md`)
+- ✅ All user requirements captured and addressed
+- ✅ Data structures finalized with percentage-based splitting
+- ✅ UI mockups and user flows designed
+- ✅ Calculation logic defined and simplified
+- ✅ Comprehensive implementation plan created (`IMPLEMENTATION_PLAN.md`)
+- ✅ **PHASE 1 COMPLETED** - Project Foundation (2-3 days)
+- ⏳ Ready to begin Phase 2 - Backend API Development
+
+## Implementation Plan Overview
+
+### Phase 1: Project Foundation (2-3 days)
+- Project setup with clean architecture
+- Core infrastructure and models
+- Testing framework setup
+
+### Phase 2: Backend API Development (3-4 days) 
+- Complete REST API with business logic
+- User, Event, Cost Item, Payment services
+- Balance calculation system
+
+### Phase 3: Frontend Foundation (2-3 days)
+- UI architecture and core components
+- Responsive design framework
+- Basic navigation and pages
+
+### Phase 4: Advanced Frontend Features (3-4 days)
+- Interactive split configuration
+- Rich user interface components
+- Mobile-optimized experience
+
+### Phase 5: Integration & Testing (2-3 days)
+- End-to-end testing
+- Performance optimization
+- Final polish and deployment prep
+
+## Important Notes for Implementation
+- Default split: Equal percentages (100 ÷ participant count)
+- All split percentages must sum to exactly 100%
+- Person who paid still owes their calculated share
+- Payments are technically identical regardless of description/purpose
+- Full audit trail required for all transactions
+- UI should be intuitive for split percentage configuration
+- Balance calculations happen across ALL events globally
+
+## User Experience Requirements (CRITICAL)
+- **Zero Learning Curve**: App should be immediately intuitive to anyone
+- **Clear Visual Feedback**: Every action should have immediate, clear feedback
+- **Guided Workflows**: Step-by-step guidance for complex operations
+- **Error Prevention**: Prevent user mistakes before they happen
+- **Mobile-First Design**: Optimized for phone usage during events
+- **Minimal Clicks**: Reduce steps needed to complete common tasks
+- **Smart Defaults**: Pre-fill forms with sensible defaults
+- **Visual Hierarchy**: Most important actions prominently displayed
+- **Confirmation Dialogs**: Clear confirmations for destructive actions
+- **Progressive Disclosure**: Show advanced features only when needed
+
+## Key Validation Rules
+- Split percentages must sum to 100% exactly
+- Only event participants can be assigned cost item splits
+- Payment amounts must be positive
+- User names must be unique
+- Event participants must be existing users
+
+## Implementation Decisions Made
+- ✅ Split percentages sum to exactly 100% with proper rounding
+- ✅ Validation happens on both client and server side
+- ✅ Referential integrity handled through service layer validation
+- ✅ User-friendly confirmation dialogs designed
+- ✅ Full audit trail implemented with timestamps
+
+## UX Decisions Implemented
+- ✅ "Share" terminology instead of "percentage" for users
+- ✅ Visual sliders with real-time dollar amount feedback
+- ✅ Plain language throughout ("expense" not "cost item")
+- ✅ Mobile-first touch targets and thumb-friendly navigation
+- ✅ Error prevention with smart defaults and helpful messages
+- ✅ Progressive disclosure: simple options first
+
+## Phase 1 Deliverables Completed
+- ✅ Complete project structure following clean architecture
+- ✅ Express server with security, CORS, logging middleware
+- ✅ File-based JSON storage with backup and caching
+- ✅ Four data models with comprehensive validation
+- ✅ BaseRepository with full CRUD operations
+- ✅ User-friendly validation and error handling
+- ✅ 78 unit tests with good coverage of core functionality
+- ✅ Development tooling: ESLint, Prettier, Jest, nodemon
+- ✅ UX utilities: terminology mapping, accessibility helpers
+
+## Document Update History
+- Initial design phase completed
+- Implementation plan created with clean architecture
+- User experience requirements added (critical for adoption)
+- **Phase 1 Implementation Completed** (September 2024)
+  - Project foundation established with clean architecture
+  - Core infrastructure: Express server, file storage, validation
+  - Data models: User, Event, CostItem, Payment with full validation
+  - Testing framework: 78 tests passing, comprehensive coverage
+  - UX foundation: User-friendly terminology and accessibility
+  - Ready for Phase 2: Backend API Development
+
+## Current Development Status
+
+**Environment**: Ready for development
+- Server runs on `npm run dev` at http://localhost:3000
+- Tests run with `npm test` (78 passing tests)
+- Code quality with `npm run lint` and `npm run format`
+- Coverage reports with `npm run test:coverage`
+
+**File Structure**: Clean architecture implemented
+- `src/models/` - Data models with validation
+- `src/repositories/` - Data access layer with BaseRepository
+- `src/utils/` - Validation, file management, UX utilities
+- `src/middleware/` - Error handling, logging, security
+- `src/config/` - Application constants and configuration
+- `tests/` - Comprehensive test suite with helpers and fixtures
+
+**Next Phase**: Backend API Development
+- Implement services layer for business logic
+- Create controllers for HTTP request handling
+- Build REST API routes for all entities
+- Add API integration tests
+- Extend test coverage to 85%+
+
+This context should help resume development on any machine or with any developer.

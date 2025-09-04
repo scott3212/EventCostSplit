@@ -1,0 +1,262 @@
+/**
+ * Validation utilities with user-friendly error messages
+ * Follows UX principle of clear, helpful feedback
+ */
+
+class ValidationError extends Error {
+  constructor(message, field = null) {
+    super(message);
+    this.name = 'ValidationError';
+    this.field = field;
+  }
+}
+
+const validators = {
+  /**
+   * Validate required field is present and not empty
+   */
+  required(value, fieldName) {
+    if (value === null || value === undefined || value === '') {
+      throw new ValidationError(
+        `${fieldName} is required`,
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate string meets minimum length
+   */
+  minLength(value, min, fieldName) {
+    if (typeof value !== 'string' || value.length < min) {
+      throw new ValidationError(
+        `${fieldName} must be at least ${min} characters long`,
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate string doesn't exceed maximum length
+   */
+  maxLength(value, max, fieldName) {
+    if (typeof value !== 'string' || value.length > max) {
+      throw new ValidationError(
+        `${fieldName} must be no more than ${max} characters long`,
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate email format (optional field)
+   */
+  email(value, fieldName) {
+    if (!value) return value; // Optional field
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      throw new ValidationError(
+        'Please enter a valid email address',
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate phone number format (optional field)
+   */
+  phone(value, fieldName) {
+    if (!value) return value; // Optional field
+    
+    // Allow various phone formats: +1234567890, (123) 456-7890, 123-456-7890, etc.
+    const phoneRegex = /^[\+]?[\d\s\-\(\)]{10,}$/;
+    if (!phoneRegex.test(value)) {
+      throw new ValidationError(
+        'Please enter a valid phone number',
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate positive number (for amounts)
+   */
+  positiveNumber(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      throw new ValidationError(
+        `${fieldName} must be a positive number`,
+        fieldName.toLowerCase()
+      );
+    }
+    return num;
+  },
+
+  /**
+   * Validate non-negative number
+   */
+  nonNegativeNumber(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0) {
+      throw new ValidationError(
+        `${fieldName} cannot be negative`,
+        fieldName.toLowerCase()
+      );
+    }
+    return num;
+  },
+
+  /**
+   * Validate UUID format
+   */
+  uuid(value, fieldName) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(value)) {
+      throw new ValidationError(
+        `${fieldName} must be a valid ID`,
+        fieldName.toLowerCase()
+      );
+    }
+    return value;
+  },
+
+  /**
+   * Validate date format (ISO string or Date object)
+   */
+  date(value, fieldName) {
+    let date;
+    
+    if (value instanceof Date) {
+      date = value;
+    } else if (typeof value === 'string') {
+      date = new Date(value);
+    } else {
+      throw new ValidationError(
+        `${fieldName} must be a valid date`,
+        fieldName.toLowerCase()
+      );
+    }
+
+    if (isNaN(date.getTime())) {
+      throw new ValidationError(
+        `${fieldName} must be a valid date`,
+        fieldName.toLowerCase()
+      );
+    }
+
+    return date.toISOString();
+  },
+
+  /**
+   * Validate array contains valid UUIDs
+   */
+  uuidArray(value, fieldName) {
+    if (!Array.isArray(value)) {
+      throw new ValidationError(
+        `${fieldName} must be a list`,
+        fieldName.toLowerCase()
+      );
+    }
+
+    value.forEach((item, index) => {
+      try {
+        this.uuid(item, `${fieldName}[${index}]`);
+      } catch (error) {
+        throw new ValidationError(
+          `${fieldName} contains invalid ID at position ${index + 1}`,
+          fieldName.toLowerCase()
+        );
+      }
+    });
+
+    return value;
+  },
+
+  /**
+   * Validate split percentages sum to 100
+   */
+  splitPercentages(splitPercentage, fieldName = 'Split percentages') {
+    if (!splitPercentage || typeof splitPercentage !== 'object') {
+      throw new ValidationError(
+        'Split configuration is required',
+        'splitPercentage'
+      );
+    }
+
+    const percentages = Object.values(splitPercentage);
+    
+    // Check all percentages are valid numbers
+    percentages.forEach((percentage, index) => {
+      const num = parseFloat(percentage);
+      if (isNaN(num) || num < 0 || num > 100) {
+        throw new ValidationError(
+          'Each person\'s share must be between 0% and 100%',
+          'splitPercentage'
+        );
+      }
+    });
+
+    // Check percentages sum to 100
+    const total = percentages.reduce((sum, p) => sum + parseFloat(p), 0);
+    const tolerance = 0.01; // Allow for small rounding errors
+    
+    if (Math.abs(total - 100) > tolerance) {
+      throw new ValidationError(
+        `Total shares must equal 100%. Currently: ${total.toFixed(2)}%`,
+        'splitPercentage'
+      );
+    }
+
+    return splitPercentage;
+  },
+
+  /**
+   * Validate object has required fields
+   */
+  hasFields(obj, requiredFields) {
+    const missing = requiredFields.filter(field => 
+      obj[field] === null || obj[field] === undefined || obj[field] === ''
+    );
+    
+    if (missing.length > 0) {
+      throw new ValidationError(
+        `Missing required fields: ${missing.join(', ')}`,
+        missing[0]
+      );
+    }
+    
+    return obj;
+  },
+
+  /**
+   * Sanitize string input (trim whitespace, prevent XSS)
+   */
+  sanitizeString(value) {
+    if (typeof value !== 'string') return value;
+    
+    return value
+      .trim()
+      .replace(/[<>]/g, ''); // Basic XSS prevention
+  },
+
+  /**
+   * Validate and format currency amount
+   */
+  currency(value, fieldName) {
+    const num = this.positiveNumber(value, fieldName);
+    
+    // Round to 2 decimal places for currency
+    return Math.round(num * 100) / 100;
+  }
+};
+
+module.exports = {
+  ValidationError,
+  validators,
+};
