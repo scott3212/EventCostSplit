@@ -293,13 +293,13 @@ data/
 - [x] Event status indicators
 - **Tests**: All 279 backend tests passing ✅
 
-#### Phase 4.2: Create Event Form (3-4 hours)
-- [ ] Create event modal/form structure in HTML
-- [ ] Implement form validation (name, date, location)
-- [ ] Add participant selection widget (multi-select)
-- [ ] Form submission and API integration
-- [ ] Success/error feedback
-- **Tests**: Form validation, participant selection, API integration
+#### Phase 4.2: Create Event Form (3-4 hours) ✅ COMPLETE
+- [x] Create event modal/form structure in HTML
+- [x] Implement form validation (name, date, location)
+- [x] Add participant selection widget (multi-select)
+- [x] Form submission and API integration
+- [x] Success/error feedback
+- **Tests**: All 279 backend tests passing, API integration verified ✅
 
 #### Phase 4.3: Event Detail View (3-4 hours)
 - [ ] Event detail page/modal layout
