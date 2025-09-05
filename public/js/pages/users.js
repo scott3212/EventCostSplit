@@ -239,10 +239,10 @@ class UsersPage {
                         ${user.phone ? `<div class="user-phone">📱 ${user.phone}</div>` : ''}
                     </div>
                     <div class="user-actions">
-                        <button class="btn btn-sm btn-outline" onclick="usersPage.editUser('${user.id}')" title="Edit user">
+                        <button class="btn btn-sm btn-outline edit-user-btn" data-user-id="${user.id}" title="Edit user">
                             ✏️
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="usersPage.deleteUser('${user.id}')" title="Delete user">
+                        <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="${user.id}" title="Delete user">
                             🗑️
                         </button>
                     </div>
@@ -285,10 +285,33 @@ class UsersPage {
     }
 
     bindUserActions() {
+        // Bind edit buttons
+        const editButtons = document.querySelectorAll('.edit-user-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const userId = button.dataset.userId;
+                this.editUser(userId);
+            });
+        });
+
+        // Bind delete buttons
+        const deleteButtons = document.querySelectorAll('.delete-user-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const userId = button.dataset.userId;
+                this.deleteUser(userId);
+            });
+        });
+
+        // Bind card click for user details (excluding button areas)
         const userCards = document.querySelectorAll('.user-card');
         userCards.forEach(card => {
             card.addEventListener('click', (e) => {
-                if (!e.target.closest('button')) {
+                if (!e.target.closest('button') && !e.target.closest('.user-actions')) {
                     const userId = card.dataset.userId;
                     this.viewUserDetails(userId);
                 }
@@ -759,9 +782,41 @@ class UsersPage {
         }
     }
 
-    deleteUser(userId) {
-        console.log('Delete user:', userId);
-        showError('Delete user functionality coming soon!');
+    async deleteUser(userId) {
+        try {
+            if (!userId) {
+                showError('Invalid user ID');
+                return;
+            }
+
+            const user = this.users.find(u => u.id === userId);
+            if (!user) {
+                showError('User not found');
+                return;
+            }
+
+            const confirmed = confirm(`Are you sure you want to delete "${user.name}"?\n\nThis action cannot be undone and will remove the user from all events and calculations.`);
+            
+            if (!confirmed) {
+                return;
+            }
+
+            const secondConfirmation = confirm(`⚠️ FINAL CONFIRMATION ⚠️\n\nDeleting "${user.name}" will:\n• Remove them from all events\n• Delete their payment history\n• Affect expense calculations\n\nAre you absolutely sure?`);
+            
+            if (!secondConfirmation) {
+                return;
+            }
+
+            await api.deleteUser(userId);
+            
+            await this.loadUsers();
+            
+            showError(`✅ User "${user.name}" has been deleted successfully.`);
+            
+        } catch (error) {
+            console.error('Failed to delete user:', error);
+            showError(`Failed to delete user: ${error.message}`);
+        }
     }
 
     viewUserDetails(userId) {
