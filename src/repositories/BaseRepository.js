@@ -94,8 +94,8 @@ class BaseRepository {
    */
   async create(data) {
     const newRecord = {
-      id: uuidv4(),
       ...data,
+      id: uuidv4(), // ID is set after data spread to ensure it's not overridden
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

@@ -8,13 +8,13 @@ class User {
   constructor(data) {
     this.validate(data);
     
-    this.id = data.id;
+    this.id = data.id || null; // ID can be null initially, will be set by repository
     this.name = data.name;
     this.email = data.email || null;
     this.phone = data.phone || null;
     this.totalBalance = data.totalBalance || 0;
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
+    this.createdAt = data.createdAt || new Date().toISOString();
+    this.updatedAt = data.updatedAt || new Date().toISOString();
   }
 
   /**

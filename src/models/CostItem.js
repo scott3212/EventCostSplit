@@ -8,15 +8,15 @@ class CostItem {
   constructor(data) {
     this.validate(data);
     
-    this.id = data.id;
+    this.id = data.id || null; // ID can be null initially, will be set by repository
     this.eventId = data.eventId;
     this.description = data.description;
     this.amount = data.amount;
     this.paidBy = data.paidBy;
-    this.date = data.date;
+    this.date = data.date || new Date().toISOString();
     this.splitPercentage = data.splitPercentage;
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
+    this.createdAt = data.createdAt || new Date().toISOString();
+    this.updatedAt = data.updatedAt || new Date().toISOString();
   }
 
   /**

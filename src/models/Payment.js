@@ -8,14 +8,14 @@ class Payment {
   constructor(data) {
     this.validate(data);
     
-    this.id = data.id;
+    this.id = data.id || null; // ID can be null initially, will be set by repository
     this.userId = data.userId;
     this.amount = data.amount;
-    this.date = data.date;
+    this.date = data.date || new Date().toISOString();
     this.description = data.description || '';
     this.relatedEventId = data.relatedEventId || null;
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
+    this.createdAt = data.createdAt || new Date().toISOString();
+    this.updatedAt = data.updatedAt || new Date().toISOString();
   }
 
   /**

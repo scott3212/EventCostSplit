@@ -8,13 +8,13 @@ class Event {
   constructor(data) {
     this.validate(data);
     
-    this.id = data.id;
+    this.id = data.id || null; // ID can be null initially, will be set by repository
     this.name = data.name;
     this.date = data.date;
     this.description = data.description || '';
     this.participants = data.participants || [];
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
+    this.createdAt = data.createdAt || new Date().toISOString();
+    this.updatedAt = data.updatedAt || new Date().toISOString();
   }
 
   /**

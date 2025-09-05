@@ -88,8 +88,9 @@ function createApp() {
     });
   });
 
-  // API routes will be added here
-  // app.use('/api', routes);
+  // API routes
+  const createApiRoutes = require('./routes');
+  app.use('/api', createApiRoutes());
 
   // Serve index.html for SPA routes (catch-all)
   app.get('*', (req, res, next) => {

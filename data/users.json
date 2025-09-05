@@ -1,0 +1,117 @@
+[
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.229Z",
+    "updatedAt": "2025-09-05T01:51:43.229Z"
+  },
+  {
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.244Z",
+    "updatedAt": "2025-09-05T01:51:43.244Z"
+  },
+  {
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.261Z",
+    "updatedAt": "2025-09-05T01:51:43.261Z"
+  },
+  {
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.280Z",
+    "updatedAt": "2025-09-05T01:51:43.280Z"
+  },
+  {
+    "name": "Charlie Brown",
+    "email": "charlie@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.300Z",
+    "updatedAt": "2025-09-05T01:51:43.300Z"
+  },
+  {
+    "name": "David Lee",
+    "email": "david@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.314Z",
+    "updatedAt": "2025-09-05T01:51:43.314Z"
+  },
+  {
+    "name": "Event User",
+    "email": "eventuser@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.331Z",
+    "updatedAt": "2025-09-05T01:51:43.331Z"
+  },
+  {
+    "name": "Cost User",
+    "email": "costuser@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.366Z",
+    "updatedAt": "2025-09-05T01:51:43.366Z"
+  },
+  {
+    "name": "Payment User",
+    "email": "payuser@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.402Z",
+    "updatedAt": "2025-09-05T01:51:43.402Z"
+  },
+  {
+    "name": "Alice",
+    "email": "alice@test.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.499Z",
+    "updatedAt": "2025-09-05T01:51:43.500Z"
+  },
+  {
+    "name": "Bob",
+    "email": "bob@test.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:51:43.534Z",
+    "updatedAt": "2025-09-05T01:51:43.534Z"
+  },
+  {
+    "id": null,
+    "name": "Test User",
+    "email": "test@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:58:24.406Z",
+    "updatedAt": "2025-09-05T01:58:24.406Z"
+  },
+  {
+    "id": null,
+    "name": "Test User",
+    "email": "test@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:59:14.029Z",
+    "updatedAt": "2025-09-05T01:59:14.029Z"
+  },
+  {
+    "id": "4e0b6c83-ef73-45ba-8901-ce1bb2eb580d",
+    "name": "Test User",
+    "email": "test@example.com",
+    "phone": null,
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T01:59:34.611Z",
+    "updatedAt": "2025-09-05T01:59:34.611Z"
+  }
+]
