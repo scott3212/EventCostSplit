@@ -170,9 +170,39 @@
                         <div class="page-header">
                             <h1>🎯 Events</h1>
                             <p>Create and manage badminton events</p>
+                            <div class="page-actions">
+                                <button id="add-event-btn" class="btn btn-primary">
+                                    <span class="btn-icon">➕</span>
+                                    Create Event
+                                </button>
+                            </div>
                         </div>
-                        <div class="page-placeholder">
-                            <p>🚧 Event management interface coming soon...</p>
+                        
+                        <div class="page-content">
+                            <div class="stats-row">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-events-count">0</div>
+                                    <div class="stat-label">Total Events</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="events-container">
+                            <div id="events-loading" class="loading-placeholder">
+                                Loading events...
+                            </div>
+                            
+                            <div id="events-list" class="events-list" style="display: none;">
+                                <!-- Events will be dynamically loaded here -->
+                            </div>
+                            
+                            <div id="events-empty" class="page-placeholder" style="display: none;">
+                                <p>🎯 No events found</p>
+                                <p>Create your first badminton event to get started!</p>
+                                <button class="btn btn-primary" onclick="document.getElementById('add-event-btn').click()">
+                                    Create First Event
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -339,6 +369,7 @@
     <script src="/js/components/navigation.js"></script>
     <script src="/js/pages/dashboard.js"></script>
     <script src="/js/pages/users.js"></script>
+    <script src="/js/pages/events.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>
