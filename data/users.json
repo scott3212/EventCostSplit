@@ -117,15 +117,6 @@
     "updatedAt": "2025-09-05T01:59:14.029Z"
   },
   {
-    "id": "4e0b6c83-ef73-45ba-8901-ce1bb2eb580d",
-    "name": "Test User",
-    "email": "test@example.com",
-    "phone": null,
-    "totalBalance": 0,
-    "createdAt": "2025-09-05T01:59:34.611Z",
-    "updatedAt": "2025-09-05T01:59:34.611Z"
-  },
-  {
     "id": "845bf4ef-4fd4-4826-bf41-e472f1ab45ae",
     "name": "Scott",
     "email": "scot3212@gmail.com",
