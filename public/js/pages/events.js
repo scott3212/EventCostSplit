@@ -1,6 +1,8 @@
 class EventsPage {
     constructor() {
         this.events = [];
+        this.users = [];
+        this.selectedParticipants = new Set();
         this.isInitialized = false;
         this.currentEditEvent = null;
         this.init();
@@ -14,7 +16,30 @@ class EventsPage {
             list: document.getElementById('events-list'),
             empty: document.getElementById('events-empty'),
             totalCount: document.getElementById('total-events-count'),
-            addButton: document.getElementById('add-event-btn')
+            addButton: document.getElementById('add-event-btn'),
+            // Add Event Modal elements
+            addModal: document.getElementById('add-event-modal'),
+            addForm: document.getElementById('add-event-form'),
+            addClose: document.getElementById('add-event-close'),
+            addCancel: document.getElementById('add-event-cancel'),
+            addSave: document.getElementById('add-event-save'),
+            addSpinner: document.getElementById('add-event-spinner'),
+            addSaveText: document.getElementById('add-event-save-text'),
+            // Form inputs
+            nameInput: document.getElementById('event-name'),
+            dateInput: document.getElementById('event-date'),
+            locationInput: document.getElementById('event-location'),
+            descriptionInput: document.getElementById('event-description'),
+            // Error elements
+            nameError: document.getElementById('event-name-error'),
+            dateError: document.getElementById('event-date-error'),
+            locationError: document.getElementById('event-location-error'),
+            // Participants selection
+            participantsLoading: document.getElementById('participants-loading'),
+            participantsList: document.getElementById('participants-list'),
+            participantsError: document.getElementById('participants-error'),
+            selectedParticipants: document.getElementById('selected-participants'),
+            selectedParticipantsList: document.getElementById('selected-participants-list')
         };
         
         this.bindEvents();
@@ -25,6 +50,71 @@ class EventsPage {
         if (this.elements.addButton) {
             this.elements.addButton.addEventListener('click', () => {
                 this.showAddEventDialog();
+            });
+        }
+
+        // Modal close events
+        if (this.elements.addClose) {
+            this.elements.addClose.addEventListener('click', () => {
+                this.hideAddEventDialog();
+            });
+        }
+
+        if (this.elements.addCancel) {
+            this.elements.addCancel.addEventListener('click', () => {
+                this.hideAddEventDialog();
+            });
+        }
+
+        // Modal backdrop click
+        if (this.elements.addModal) {
+            this.elements.addModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.addModal) {
+                    this.hideAddEventDialog();
+                }
+            });
+        }
+
+        // Form submission
+        if (this.elements.addSave) {
+            this.elements.addSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleAddEvent();
+            });
+        }
+
+        if (this.elements.addForm) {
+            this.elements.addForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleAddEvent();
+            });
+        }
+
+        // Real-time validation
+        if (this.elements.nameInput) {
+            this.elements.nameInput.addEventListener('blur', () => {
+                this.validateName();
+            });
+            this.elements.nameInput.addEventListener('input', () => {
+                this.clearError('event-name');
+            });
+        }
+
+        if (this.elements.dateInput) {
+            this.elements.dateInput.addEventListener('blur', () => {
+                this.validateDate();
+            });
+            this.elements.dateInput.addEventListener('input', () => {
+                this.clearError('event-date');
+            });
+        }
+
+        if (this.elements.locationInput) {
+            this.elements.locationInput.addEventListener('blur', () => {
+                this.validateLocation();
+            });
+            this.elements.locationInput.addEventListener('input', () => {
+                this.clearError('event-location');
             });
         }
     }
@@ -225,10 +315,177 @@ class EventsPage {
         await this.loadEvents();
     }
 
-    // Placeholder methods for future implementation
-    showAddEventDialog() {
-        console.log('Add event dialog - coming in Phase 4.2');
-        showError('Create Event form coming soon!');
+    async showAddEventDialog() {
+        this.resetAddEventForm();
+        await this.loadParticipants();
+        
+        if (this.elements.addModal) {
+            this.elements.addModal.style.display = 'flex';
+            this.elements.addModal.classList.add('fade-in');
+            
+            // Set default date to today
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            if (this.elements.dateInput) {
+                this.elements.dateInput.value = todayStr;
+            }
+            
+            // Focus on name input
+            setTimeout(() => {
+                if (this.elements.nameInput) {
+                    this.elements.nameInput.focus();
+                }
+            }, 100);
+        }
+    }
+
+    hideAddEventDialog() {
+        if (this.elements.addModal) {
+            this.elements.addModal.style.display = 'none';
+            this.elements.addModal.classList.remove('fade-in');
+        }
+        this.resetAddEventForm();
+    }
+
+    resetAddEventForm() {
+        if (this.elements.addForm) {
+            this.elements.addForm.reset();
+        }
+        
+        this.selectedParticipants.clear();
+        this.updateSelectedParticipantsDisplay();
+        this.clearAllErrors();
+        this.setAddButtonState(false);
+    }
+
+    async loadParticipants() {
+        try {
+            if (this.elements.participantsLoading) {
+                this.elements.participantsLoading.style.display = 'block';
+            }
+            if (this.elements.participantsList) {
+                this.elements.participantsList.style.display = 'none';
+            }
+            
+            const response = await api.getUsers();
+            const users = response.data || response || [];
+            this.users = users;
+            
+            this.renderParticipants(users);
+        } catch (error) {
+            console.error('Failed to load participants:', error);
+            if (this.elements.participantsError) {
+                this.elements.participantsError.textContent = 'Failed to load users. Please try again.';
+                this.elements.participantsError.style.display = 'block';
+            }
+        } finally {
+            if (this.elements.participantsLoading) {
+                this.elements.participantsLoading.style.display = 'none';
+            }
+        }
+    }
+
+    renderParticipants(users) {
+        if (!this.elements.participantsList || users.length === 0) {
+            if (this.elements.participantsError) {
+                this.elements.participantsError.textContent = 'No users found. Please create users first.';
+                this.elements.participantsError.style.display = 'block';
+            }
+            return;
+        }
+        
+        const participantsHtml = users.map(user => this.createParticipantItem(user)).join('');
+        this.elements.participantsList.innerHTML = participantsHtml;
+        this.elements.participantsList.style.display = 'block';
+        
+        this.bindParticipantEvents();
+    }
+
+    createParticipantItem(user) {
+        const balance = user.totalBalance || 0;
+        const balanceStatus = this.getUserBalanceStatus(balance);
+        const isSelected = this.selectedParticipants.has(user.id);
+        
+        return `
+            <div class="participant-item ${isSelected ? 'selected' : ''}" data-user-id="${user.id}">
+                <input type="checkbox" class="participant-checkbox" ${isSelected ? 'checked' : ''}>
+                <div class="participant-info">
+                    <div class="participant-name">${user.name}</div>
+                    <div class="participant-details">
+                        ${user.email ? user.email : 'No email'}
+                        ${user.phone ? ` • ${user.phone}` : ''}
+                    </div>
+                </div>
+                <div class="participant-balance ${balanceStatus.class}">
+                    ${formatCurrency(balance)}
+                </div>
+            </div>
+        `;
+    }
+
+    bindParticipantEvents() {
+        const participantItems = document.querySelectorAll('.participant-item');
+        participantItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const userId = item.dataset.userId;
+                const checkbox = item.querySelector('.participant-checkbox');
+                
+                if (this.selectedParticipants.has(userId)) {
+                    this.selectedParticipants.delete(userId);
+                    item.classList.remove('selected');
+                    checkbox.checked = false;
+                } else {
+                    this.selectedParticipants.add(userId);
+                    item.classList.add('selected');
+                    checkbox.checked = true;
+                }
+                
+                this.updateSelectedParticipantsDisplay();
+                this.clearError('participants');
+            });
+        });
+    }
+
+    updateSelectedParticipantsDisplay() {
+        if (!this.elements.selectedParticipants || !this.elements.selectedParticipantsList) return;
+        
+        if (this.selectedParticipants.size === 0) {
+            this.elements.selectedParticipants.style.display = 'none';
+            return;
+        }
+        
+        const selectedUsers = Array.from(this.selectedParticipants)
+            .map(userId => this.users.find(user => user.id === userId))
+            .filter(Boolean);
+            
+        const selectedHtml = selectedUsers.map(user => 
+            `<div class="selected-participant" data-user-id="${user.id}">
+                ${user.name}
+                <button type="button" class="remove-btn" title="Remove participant">×</button>
+            </div>`
+        ).join('');
+        
+        this.elements.selectedParticipantsList.innerHTML = selectedHtml;
+        this.elements.selectedParticipants.style.display = 'block';
+        
+        // Bind remove buttons
+        const removeButtons = this.elements.selectedParticipantsList.querySelectorAll('.remove-btn');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const userId = button.closest('.selected-participant').dataset.userId;
+                this.selectedParticipants.delete(userId);
+                this.updateSelectedParticipantsDisplay();
+                
+                // Update checkbox in participants list
+                const participantItem = document.querySelector(`.participant-item[data-user-id="${userId}"]`);
+                if (participantItem) {
+                    participantItem.classList.remove('selected');
+                    const checkbox = participantItem.querySelector('.participant-checkbox');
+                    if (checkbox) checkbox.checked = false;
+                }
+            });
+        });
     }
 
     viewEventDetails(eventId) {
@@ -248,6 +505,215 @@ class EventsPage {
 
     findEventById(eventId) {
         return this.events.find(event => event.id === eventId);
+    }
+
+    // Add Event Form Methods
+    async handleAddEvent() {
+        if (!this.validateForm()) {
+            return;
+        }
+
+        try {
+            this.setAddButtonState(true);
+
+            const eventData = {
+                name: this.elements.nameInput.value.trim(),
+                date: this.elements.dateInput.value,
+                location: this.elements.locationInput.value.trim(),
+                description: this.elements.descriptionInput.value.trim() || null,
+                participants: Array.from(this.selectedParticipants)
+            };
+
+            const newEvent = await api.createEvent(eventData);
+            
+            this.hideAddEventDialog();
+            await this.refresh();
+            
+            showSuccess(`Event "${newEvent.name}" created successfully!`);
+            
+        } catch (error) {
+            console.error('Failed to create event:', error);
+            
+            if (error.message.includes('name already exists') || error.message.includes('name is not unique')) {
+                this.showError('event-name', 'An event with this name already exists');
+            } else {
+                showError('Failed to create event. Please try again.');
+            }
+        } finally {
+            this.setAddButtonState(false);
+        }
+    }
+
+    validateForm() {
+        let isValid = true;
+
+        if (!this.validateName()) isValid = false;
+        if (!this.validateDate()) isValid = false;
+        if (!this.validateLocation()) isValid = false;
+        if (!this.validateParticipants()) isValid = false;
+
+        return isValid;
+    }
+
+    validateName() {
+        const name = this.elements.nameInput?.value?.trim();
+        
+        if (!name) {
+            this.showError('event-name', 'Event name is required');
+            return false;
+        }
+        
+        if (name.length < 2) {
+            this.showError('event-name', 'Event name must be at least 2 characters long');
+            return false;
+        }
+        
+        if (name.length > 100) {
+            this.showError('event-name', 'Event name cannot be longer than 100 characters');
+            return false;
+        }
+        
+        this.clearError('event-name');
+        return true;
+    }
+
+    validateDate() {
+        const date = this.elements.dateInput?.value;
+        
+        if (!date) {
+            this.showError('event-date', 'Event date is required');
+            return false;
+        }
+        
+        const eventDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (eventDate < today) {
+            this.showError('event-date', 'Event date cannot be in the past');
+            return false;
+        }
+        
+        this.clearError('event-date');
+        return true;
+    }
+
+    validateLocation() {
+        const location = this.elements.locationInput?.value?.trim();
+        
+        if (!location) {
+            this.showError('event-location', 'Location is required');
+            return false;
+        }
+        
+        if (location.length < 2) {
+            this.showError('event-location', 'Location must be at least 2 characters long');
+            return false;
+        }
+        
+        if (location.length > 200) {
+            this.showError('event-location', 'Location cannot be longer than 200 characters');
+            return false;
+        }
+        
+        this.clearError('event-location');
+        return true;
+    }
+
+    validateParticipants() {
+        if (this.selectedParticipants.size === 0) {
+            this.showError('participants', 'Please select at least one participant');
+            return false;
+        }
+        
+        this.clearError('participants');
+        return true;
+    }
+
+    showError(field, message) {
+        let errorElement;
+        
+        if (field === 'participants') {
+            errorElement = this.elements.participantsError;
+        } else {
+            errorElement = this.elements[`${field.replace('event-', '')}Error`];
+        }
+        
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Highlight input field for form fields
+        if (field !== 'participants') {
+            const inputElement = this.elements[`${field.replace('event-', '')}Input`];
+            if (inputElement) {
+                inputElement.style.borderColor = '#ef4444';
+            }
+        }
+    }
+
+    clearError(field) {
+        let errorElement;
+        
+        if (field === 'participants') {
+            errorElement = this.elements.participantsError;
+        } else {
+            errorElement = this.elements[`${field.replace('event-', '')}Error`];
+        }
+        
+        if (errorElement) {
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+        }
+        
+        // Reset input field border
+        if (field !== 'participants') {
+            const inputElement = this.elements[`${field.replace('event-', '')}Input`];
+            if (inputElement) {
+                inputElement.style.borderColor = '';
+            }
+        }
+    }
+
+    clearAllErrors() {
+        this.clearError('event-name');
+        this.clearError('event-date');
+        this.clearError('event-location');
+        this.clearError('participants');
+    }
+
+    setAddButtonState(loading) {
+        if (this.elements.addSave) {
+            this.elements.addSave.disabled = loading;
+        }
+        
+        if (this.elements.addSpinner) {
+            this.elements.addSpinner.style.display = loading ? 'inline-block' : 'none';
+        }
+        
+        if (this.elements.addSaveText) {
+            this.elements.addSaveText.textContent = loading ? 'Creating...' : 'Create Event';
+        }
+    }
+
+    getUserBalanceStatus(balance) {
+        if (balance > 0) {
+            return {
+                class: 'balance-owed',
+                text: 'Credit'
+            };
+        } else if (balance < 0) {
+            return {
+                class: 'balance-owes',
+                text: 'Owes'
+            };
+        } else {
+            return {
+                class: 'balance-settled',
+                text: 'Settled'
+            };
+        }
     }
 }
 
