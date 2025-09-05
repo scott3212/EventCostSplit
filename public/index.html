@@ -223,6 +223,46 @@
         </div>
     </div>
 
+    <!-- Add User Modal -->
+    <div id="add-user-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Add New User</h3>
+                <button class="modal-close" id="add-user-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-user-form">
+                    <div class="form-group">
+                        <label for="user-name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" id="user-name" name="name" class="form-input" placeholder="Enter full name" required>
+                        <div id="name-error" class="form-error" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user-email" class="form-label">Email (optional)</label>
+                        <input type="email" id="user-email" name="email" class="form-input" placeholder="Enter email address">
+                        <div id="email-error" class="form-error" style="display: none;"></div>
+                        <div class="form-help">We'll use this for notifications and balance updates</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user-phone" class="form-label">Phone (optional)</label>
+                        <input type="tel" id="user-phone" name="phone" class="form-input" placeholder="+1234567890">
+                        <div id="phone-error" class="form-error" style="display: none;"></div>
+                        <div class="form-help">Format: +1234567890 or (123) 456-7890</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="add-user-cancel">Cancel</button>
+                <button class="btn btn-primary" id="add-user-save">
+                    <span class="loading-spinner-sm" id="add-user-spinner" style="display: none;"></span>
+                    <span id="add-user-save-text">Add User</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="/js/api.js"></script>
     <script src="/js/components/navigation.js"></script>
