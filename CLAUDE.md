@@ -243,10 +243,141 @@ data/
 
 **Next Phase**: Advanced Frontend Features
 - ✅ **USER MANAGEMENT UI COMPLETE** - Interactive user management interface
-- Event creation and management forms
+- 🚧 **EVENT MANAGEMENT UI** - Event creation and management interface (IN PROGRESS)
 - Expense tracking with split configuration
 - Payment recording and settlement tracking
 - Mobile-optimized user experience
+
+## Event Management UI Implementation Plan (Current Priority)
+
+### User Story & Requirements
+**As a badminton organizer, I want to create and manage events so that I can organize sessions with participants and track expenses.**
+
+### Core Features Required
+1. **Event List View**
+   - Display all events with key information (name, date, participants count, total expenses)
+   - Visual indicators for event status (upcoming, active, completed)
+   - Quick action buttons (view, edit, add expense)
+   - Mobile-responsive card layout
+
+2. **Create Event Form**
+   - Required: Name, Date, Location
+   - Optional: Description, Notes
+   - Participant selection from existing users (multi-select with search)
+   - Smart defaults and validation
+   - Success/error feedback
+
+3. **Event Detail View**
+   - Event information display
+   - Participant list with balance indicators
+   - Expense summary and list
+   - Quick actions (add expense, record payment, edit event)
+
+4. **Edit Event Functionality**
+   - Update event details
+   - Add/remove participants (with validation for existing expenses)
+   - Confirmation dialogs for destructive changes
+
+5. **Participant Management**
+   - Add participants from user pool
+   - Remove participants (with expense validation)
+   - Visual participant cards with balance info
+
+### Implementation Phases (Small, Testable Components)
+
+#### Phase 4.1: Event List Foundation (2-3 hours)
+- [ ] Create `public/js/pages/events.js` basic structure
+- [ ] Implement event list loading and display
+- [ ] Add loading states and error handling
+- [ ] Basic responsive event cards
+- [ ] Event status indicators
+- **Tests**: Event list rendering, loading states, error handling
+
+#### Phase 4.2: Create Event Form (3-4 hours)
+- [ ] Create event modal/form structure in HTML
+- [ ] Implement form validation (name, date, location)
+- [ ] Add participant selection widget (multi-select)
+- [ ] Form submission and API integration
+- [ ] Success/error feedback
+- **Tests**: Form validation, participant selection, API integration
+
+#### Phase 4.3: Event Detail View (3-4 hours)
+- [ ] Event detail page/modal layout
+- [ ] Display event information and participants
+- [ ] Show basic expense summary (if any)
+- [ ] Navigation between list and detail views
+- [ ] Responsive design for mobile
+- **Tests**: Event detail loading, participant display, navigation
+
+#### Phase 4.4: Edit Event & Participant Management (4-5 hours)
+- [ ] Edit event form (pre-populated)
+- [ ] Add/remove participants functionality
+- [ ] Validation for participant changes (check existing expenses)
+- [ ] Confirmation dialogs for changes
+- [ ] Bulk participant operations
+- **Tests**: Edit validation, participant management, confirmation flows
+
+#### Phase 4.5: Polish & Integration (2-3 hours)
+- [ ] Error handling improvements
+- [ ] Loading state optimizations
+- [ ] Mobile UX refinements
+- [ ] Integration with dashboard stats
+- [ ] Performance optimizations
+- **Tests**: Error scenarios, mobile responsive tests, integration tests
+
+### Technical Requirements
+
+#### API Endpoints (Backend Ready)
+- `GET /api/events` - List all events
+- `POST /api/events` - Create new event
+- `GET /api/events/:id` - Get event details
+- `PUT /api/events/:id` - Update event
+- `DELETE /api/events/:id` - Delete event
+- `POST /api/events/:id/participants` - Add participant
+- `DELETE /api/events/:id/participants/:userId` - Remove participant
+
+#### Frontend Components
+- `EventsPage` class (main controller)
+- Event list rendering and management
+- Event form modal components
+- Participant selection widget
+- Event detail view components
+- Error handling and loading states
+
+#### Validation Rules
+- Event name: required, 2-100 characters, unique
+- Event date: required, valid date format
+- Location: required, 2-200 characters
+- Participants: at least 1 participant required
+- Cannot remove participants if they have expenses in the event
+
+#### UX/UI Patterns (Consistent with User Management)
+- Card-based layouts for event list
+- Modal forms for create/edit operations
+- Loading spinners and error messages
+- Mobile-first responsive design
+- Confirmation dialogs for destructive actions
+- Real-time validation feedback
+
+### Success Criteria
+1. ✅ All 279+ tests pass (including new Event UI tests)
+2. ✅ Events can be created with participants from user pool
+3. ✅ Event list displays correctly with proper status indicators
+4. ✅ Event details show participants and basic info
+5. ✅ Edit functionality works with proper validation
+6. ✅ Mobile-responsive design works on phone screens
+7. ✅ Error handling provides clear user feedback
+8. ✅ Integration with existing dashboard and navigation
+
+### Definition of Done
+- [ ] All functionality implemented and tested
+- [ ] Frontend tests covering happy path and error scenarios  
+- [ ] Mobile responsive design verified
+- [ ] Error handling and validation complete
+- [ ] Code reviewed and documented
+- [ ] Performance acceptable on mobile devices
+- [ ] Integration with existing app navigation
+- [ ] Backend API integration working correctly
 
 ## Recent Development Update: User Management UI (September 2024)
 
