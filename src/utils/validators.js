@@ -563,6 +563,102 @@ function validateCostItemUpdate(updateData) {
   };
 }
 
+/**
+ * Validate payment creation data
+ */
+function validatePaymentData(paymentData) {
+  const errors = [];
+  
+  try {
+    if (!paymentData || typeof paymentData !== 'object') {
+      return { isValid: false, errors: ['Payment data is required'] };
+    }
+
+    // Sanitize inputs
+    if (paymentData.description) paymentData.description = validators.sanitizeString(paymentData.description);
+
+    // Required fields
+    validators.required(paymentData.userId, 'User ID');
+    validators.uuid(paymentData.userId, 'User ID');
+
+    validators.required(paymentData.amount, 'Amount');
+    validators.positiveNumber(paymentData.amount, 'Amount');
+
+    validators.required(paymentData.date, 'Date');
+    validators.date(paymentData.date, 'Date');
+
+    // Optional fields with validation
+    if (paymentData.description) {
+      validators.minLength(paymentData.description, 1, 'Description');
+      validators.maxLength(paymentData.description, 255, 'Description');
+    }
+
+    if (paymentData.relatedEventId) {
+      validators.uuid(paymentData.relatedEventId, 'Related event ID');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid payment data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Validate payment update data (all fields optional)
+ */
+function validatePaymentUpdate(updateData) {
+  const errors = [];
+  
+  try {
+    if (!updateData || typeof updateData !== 'object') {
+      return { isValid: false, errors: ['Update data is required'] };
+    }
+
+    // Sanitize inputs if present
+    if (updateData.description !== undefined) {
+      updateData.description = validators.sanitizeString(updateData.description);
+    }
+
+    // Validate provided fields
+    if (updateData.amount !== undefined) {
+      validators.positiveNumber(updateData.amount, 'Amount');
+    }
+
+    if (updateData.date !== undefined) {
+      validators.date(updateData.date, 'Date');
+    }
+
+    if (updateData.description !== undefined && updateData.description !== '') {
+      validators.minLength(updateData.description, 1, 'Description');
+      validators.maxLength(updateData.description, 255, 'Description');
+    }
+
+    if (updateData.relatedEventId !== undefined && updateData.relatedEventId !== '') {
+      validators.uuid(updateData.relatedEventId, 'Related event ID');
+    }
+
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      errors.push(error.message);
+    } else {
+      errors.push('Invalid update data');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
 module.exports = {
   ValidationError,
   validators,
@@ -572,4 +668,6 @@ module.exports = {
   validateEventUpdate,
   validateCostItemData,
   validateCostItemUpdate,
+  validatePaymentData,
+  validatePaymentUpdate,
 };
