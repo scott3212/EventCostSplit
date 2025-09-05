@@ -71,7 +71,8 @@ class ApiClient {
 
     // User endpoints
     async getUsers() {
-        return this.get('/users');
+        const response = await this.get('/users');
+        return response.data || response || [];
     }
 
     async getUser(id) {
@@ -79,11 +80,13 @@ class ApiClient {
     }
 
     async createUser(userData) {
-        return this.post('/users', userData);
+        const response = await this.post('/users', userData);
+        return response.data || response;
     }
 
     async updateUser(id, userData) {
-        return this.put(`/users/${id}`, userData);
+        const response = await this.put(`/users/${id}`, userData);
+        return response.data || response;
     }
 
     async deleteUser(id) {
@@ -156,12 +159,17 @@ class ApiClient {
     // Dashboard analytics
     async getDashboardStats() {
         try {
-            const [users, events, costItems, payments] = await Promise.all([
-                this.getUsers(),
-                this.getEvents(),
-                this.getCostItems(),
-                this.getPayments()
+            const [usersResponse, eventsResponse, costItemsResponse, paymentsResponse] = await Promise.all([
+                this.get('/users'),
+                this.get('/events'),
+                this.get('/cost-items'),
+                this.get('/payments')
             ]);
+
+            const users = usersResponse.data || usersResponse || [];
+            const events = eventsResponse.data || eventsResponse || [];
+            const costItems = costItemsResponse.data || costItemsResponse || [];
+            const payments = paymentsResponse.data || paymentsResponse || [];
 
             const totalExpenses = costItems.reduce((sum, item) => sum + (item.amount || 0), 0);
             const totalPayments = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);

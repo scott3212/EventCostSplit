@@ -197,7 +197,9 @@ class UsersPage {
         try {
             this.showLoading();
             
-            const users = await api.getUsers();
+            const response = await api.getUsers();
+            // The API returns { success: true, data: [...], count: N }
+            const users = response.data || response || [];
             this.users = users;
             
             if (users.length === 0) {
