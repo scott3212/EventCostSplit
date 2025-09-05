@@ -75,6 +75,11 @@ Thumbs.db
 test-data/
 *.test.backup
 
+# Data files (user data, should not be committed)
+data/
+data/*.json
+*.backup
+
 # Temporary files
 tmp/
 temp/
