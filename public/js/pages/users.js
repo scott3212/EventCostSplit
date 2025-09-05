@@ -15,6 +15,9 @@ class UsersPage {
             empty: document.getElementById('users-empty'),
             totalCount: document.getElementById('total-users-count'),
             addButton: document.getElementById('add-user-btn'),
+            container: document.querySelector('.users-container'),
+            detailedViewToggle: document.getElementById('users-detailed-view'),
+            compactViewToggle: document.getElementById('users-compact-view'),
             // Add User Modal elements
             addModal: document.getElementById('add-user-modal'),
             addForm: document.getElementById('add-user-form'),
@@ -52,6 +55,7 @@ class UsersPage {
         };
         
         this.bindEvents();
+        this.loadViewPreference();
         this.isInitialized = true;
     }
 
@@ -59,6 +63,19 @@ class UsersPage {
         if (this.elements.addButton) {
             this.elements.addButton.addEventListener('click', () => {
                 this.showAddUserDialog();
+            });
+        }
+
+        // View toggle events
+        if (this.elements.detailedViewToggle) {
+            this.elements.detailedViewToggle.addEventListener('change', () => {
+                this.toggleView('detailed');
+            });
+        }
+
+        if (this.elements.compactViewToggle) {
+            this.elements.compactViewToggle.addEventListener('change', () => {
+                this.toggleView('compact');
             });
         }
 
@@ -233,8 +250,8 @@ class UsersPage {
         return `
             <div class="user-card fade-in" data-user-id="${user.id}">
                 <div class="user-card-header">
-                    <div class="user-info">
-                        <h3>${user.name}</h3>
+                    <div class="user-info ${balanceStatus.class}" data-balance="${formatCurrency(balance)}">
+                        <h3 class="user-name">${user.name}</h3>
                         ${user.email ? `<div class="user-email">📧 ${user.email}</div>` : ''}
                         ${user.phone ? `<div class="user-phone">📱 ${user.phone}</div>` : ''}
                     </div>
@@ -248,7 +265,7 @@ class UsersPage {
                     </div>
                 </div>
                 
-                <div class="user-balance">
+                <div class="user-balance user-balance-info">
                     <div class="balance-info">
                         <span class="balance-label">Current Balance</span>
                         <span class="balance-amount ${balanceStatus.class}">${formatCurrency(balance)}</span>
@@ -826,6 +843,33 @@ class UsersPage {
 
     findUserById(userId) {
         return this.users.find(user => user.id === userId);
+    }
+
+    toggleView(view) {
+        if (!this.elements.container) return;
+        
+        if (view === 'compact') {
+            this.elements.container.classList.add('compact-view');
+        } else {
+            this.elements.container.classList.remove('compact-view');
+        }
+        
+        // Store preference in localStorage
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('usersViewPreference', view);
+        }
+    }
+
+    loadViewPreference() {
+        if (typeof localStorage !== 'undefined') {
+            const preference = localStorage.getItem('usersViewPreference');
+            if (preference === 'compact') {
+                if (this.elements.compactViewToggle) {
+                    this.elements.compactViewToggle.checked = true;
+                    this.toggleView('compact');
+                }
+            }
+        }
     }
 }
 

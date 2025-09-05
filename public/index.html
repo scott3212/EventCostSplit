@@ -131,18 +131,44 @@
                     <!-- Other pages will be loaded dynamically -->
                     <div id="users-page" class="page">
                         <div class="page-header">
-                            <h1>👥 Users</h1>
-                            <p>Manage participants and view balances</p>
+                            <div class="page-title-section">
+                                <div class="page-title-content">
+                                    <h1>👥 Users</h1>
+                                    <p>Manage participants and view balances</p>
+                                </div>
+                                <div class="page-actions">
+                                    <button class="btn btn-primary" id="add-user-btn">
+                                        <span>➕</span>
+                                        <span>Add New User</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Users Actions Bar -->
-                        <div class="users-actions mb-4">
-                            <button class="btn btn-primary" id="add-user-btn">
-                                <span>➕</span>
-                                <span>Add New User</span>
-                            </button>
-                            <div class="users-stats">
-                                <span class="text-gray">Total Users: <strong id="total-users-count">Loading...</strong></span>
+                        <!-- Users Controls -->
+                        <div class="page-content">
+                            <div class="page-controls">
+                                <div class="users-summary">
+                                    <div class="summary-text">
+                                        <span class="summary-count" id="total-users-count">0</span>
+                                        <span class="summary-label">Total Users</span>
+                                    </div>
+                                </div>
+                                <div class="view-toggle">
+                                    <span class="toggle-label">View:</span>
+                                    <div class="toggle-switch">
+                                        <input type="radio" id="users-detailed-view" name="users-view" value="detailed" checked>
+                                        <label for="users-detailed-view" class="toggle-option">
+                                            <span class="toggle-icon">👤</span>
+                                            <span class="toggle-text">Detailed</span>
+                                        </label>
+                                        <input type="radio" id="users-compact-view" name="users-view" value="compact">
+                                        <label for="users-compact-view" class="toggle-option">
+                                            <span class="toggle-icon">📝</span>
+                                            <span class="toggle-text">Compact</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -168,21 +194,42 @@
 
                     <div id="events-page" class="page">
                         <div class="page-header">
-                            <h1>🎯 Events</h1>
-                            <p>Create and manage badminton events</p>
-                            <div class="page-actions">
-                                <button id="add-event-btn" class="btn btn-primary">
-                                    <span class="btn-icon">➕</span>
-                                    Create Event
-                                </button>
+                            <div class="page-title-section">
+                                <div class="page-title-content">
+                                    <h1>🎯 Events</h1>
+                                    <p>Create and manage badminton events</p>
+                                </div>
+                                <div class="page-actions">
+                                    <button id="add-event-btn" class="btn btn-primary">
+                                        <span class="btn-icon">➕</span>
+                                        Create Event
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="page-content">
-                            <div class="stats-row">
-                                <div class="stat-card">
-                                    <div class="stat-value" id="total-events-count">0</div>
-                                    <div class="stat-label">Total Events</div>
+                            <div class="page-controls">
+                                <div class="events-summary">
+                                    <div class="summary-text">
+                                        <span class="summary-count" id="total-events-count">0</span>
+                                        <span class="summary-label">Total Events</span>
+                                    </div>
+                                </div>
+                                <div class="view-toggle">
+                                    <span class="toggle-label">View:</span>
+                                    <div class="toggle-switch">
+                                        <input type="radio" id="events-detailed-view" name="events-view" value="detailed" checked>
+                                        <label for="events-detailed-view" class="toggle-option">
+                                            <span class="toggle-icon">📋</span>
+                                            <span class="toggle-text">Detailed</span>
+                                        </label>
+                                        <input type="radio" id="events-compact-view" name="events-view" value="compact">
+                                        <label for="events-compact-view" class="toggle-option">
+                                            <span class="toggle-icon">📄</span>
+                                            <span class="toggle-text">Compact</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -202,6 +249,107 @@
                                 <button class="btn btn-primary" onclick="document.getElementById('add-event-btn').click()">
                                     Create First Event
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Detail Page -->
+                    <div id="event-detail-page" class="page" style="display: none;">
+                        <div class="page-header">
+                            <div class="page-back">
+                                <button id="event-detail-back" class="btn-back">
+                                    ← Back to Events
+                                </button>
+                            </div>
+                            <div class="event-detail-header">
+                                <div class="event-title-section">
+                                    <h1 id="event-detail-name">Event Name</h1>
+                                    <div class="event-meta">
+                                        <span id="event-detail-date" class="event-date-badge">Date</span>
+                                        <span id="event-detail-status" class="status-badge">Status</span>
+                                    </div>
+                                </div>
+                                <div class="event-actions">
+                                    <button id="add-expense-btn" class="btn btn-primary">
+                                        <span class="btn-icon">💰</span>
+                                        Add Expense
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="event-detail-content">
+                            <div class="event-overview">
+                                <div class="event-info-card">
+                                    <h3>Event Details</h3>
+                                    <div class="event-info-grid">
+                                        <div class="info-item">
+                                            <span class="info-label">📍 Location:</span>
+                                            <span id="event-detail-location">Location</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">👥 Participants:</span>
+                                            <span id="event-detail-participant-count">0</span>
+                                        </div>
+                                        <div class="info-item" id="event-description-container" style="display: none;">
+                                            <span class="info-label">📝 Description:</span>
+                                            <span id="event-detail-description">Description</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="event-stats-card">
+                                    <h3>Event Summary</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="total-expenses-count">0</div>
+                                            <div class="stat-label">Total Expenses</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="total-expenses-amount">$0.00</div>
+                                            <div class="stat-label">Total Amount</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="avg-per-person">$0.00</div>
+                                            <div class="stat-label">Avg per Person</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Participants Section -->
+                            <div class="participants-section">
+                                <div class="section-header">
+                                    <h3>👥 Participants</h3>
+                                </div>
+                                <div id="event-participants-loading" class="loading-placeholder" style="display: none;">
+                                    Loading participants...
+                                </div>
+                                <div id="event-participants-list" class="participants-grid">
+                                    <!-- Participants will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Expenses Section -->
+                            <div class="expenses-section">
+                                <div class="section-header">
+                                    <h3>💰 Expenses</h3>
+                                </div>
+                                <div id="expenses-loading" class="loading-placeholder" style="display: none;">
+                                    Loading expenses...
+                                </div>
+                                <div id="expenses-list" class="expenses-list">
+                                    <!-- Expenses will be loaded here -->
+                                </div>
+                                <div id="expenses-empty" class="section-placeholder" style="display: none;">
+                                    <div class="placeholder-content">
+                                        <p>💸 No expenses yet</p>
+                                        <p>Add the first expense to get started!</p>
+                                        <button class="btn btn-primary" onclick="document.getElementById('add-expense-btn').click()">
+                                            Add First Expense
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -436,6 +584,7 @@
     <script src="/js/pages/dashboard.js"></script>
     <script src="/js/pages/users.js"></script>
     <script src="/js/pages/events.js"></script>
+    <script src="/js/pages/event-detail.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

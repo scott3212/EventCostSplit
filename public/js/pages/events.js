@@ -17,6 +17,9 @@ class EventsPage {
             empty: document.getElementById('events-empty'),
             totalCount: document.getElementById('total-events-count'),
             addButton: document.getElementById('add-event-btn'),
+            container: document.querySelector('.events-container'),
+            detailedViewToggle: document.getElementById('events-detailed-view'),
+            compactViewToggle: document.getElementById('events-compact-view'),
             // Add Event Modal elements
             addModal: document.getElementById('add-event-modal'),
             addForm: document.getElementById('add-event-form'),
@@ -43,6 +46,7 @@ class EventsPage {
         };
         
         this.bindEvents();
+        this.loadViewPreference();
         this.isInitialized = true;
     }
 
@@ -50,6 +54,19 @@ class EventsPage {
         if (this.elements.addButton) {
             this.elements.addButton.addEventListener('click', () => {
                 this.showAddEventDialog();
+            });
+        }
+
+        // View toggle events
+        if (this.elements.detailedViewToggle) {
+            this.elements.detailedViewToggle.addEventListener('change', () => {
+                this.toggleView('detailed');
+            });
+        }
+
+        if (this.elements.compactViewToggle) {
+            this.elements.compactViewToggle.addEventListener('change', () => {
+                this.toggleView('compact');
             });
         }
 
@@ -315,6 +332,33 @@ class EventsPage {
         await this.loadEvents();
     }
 
+    toggleView(view) {
+        if (!this.elements.container) return;
+        
+        if (view === 'compact') {
+            this.elements.container.classList.add('compact-view');
+        } else {
+            this.elements.container.classList.remove('compact-view');
+        }
+        
+        // Store preference in localStorage if available
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('eventsViewPreference', view);
+        }
+    }
+
+    loadViewPreference() {
+        if (typeof localStorage === 'undefined') return;
+        
+        const preference = localStorage.getItem('eventsViewPreference');
+        if (preference === 'compact') {
+            if (this.elements.compactViewToggle) {
+                this.elements.compactViewToggle.checked = true;
+                this.toggleView('compact');
+            }
+        }
+    }
+
     async showAddEventDialog() {
         this.resetAddEventForm();
         await this.loadParticipants();
@@ -489,8 +533,12 @@ class EventsPage {
     }
 
     viewEventDetails(eventId) {
-        console.log('View event details:', eventId);
-        showError('Event details view coming in Phase 4.3!');
+        if (window.eventDetailPage) {
+            window.eventDetailPage.showEvent(eventId);
+        } else {
+            console.error('Event detail page not initialized');
+            showError('Event details page not available');
+        }
     }
 
     editEvent(eventId) {

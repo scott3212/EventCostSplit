@@ -114,6 +114,35 @@ class ApiClient {
         return this.delete(`/events/${id}`);
     }
 
+    async getEventById(id) {
+        const response = await this.get(`/events/${id}`);
+        return response.data || response;
+    }
+
+    async getEventParticipants(id) {
+        // Use fallback approach since the participants endpoint doesn't exist yet
+        try {
+            const event = await this.getEventById(id);
+            const users = await this.getUsers();
+            return users.filter(user => event.participants && event.participants.includes(user.id));
+        } catch (error) {
+            console.error('Failed to get event participants:', error);
+            return [];
+        }
+    }
+
+    async getEventCostItems(id) {
+        // Use fallback approach since the cost-items endpoint filtering doesn't exist yet
+        try {
+            const allCostItems = await this.getCostItems();
+            const costItems = allCostItems.data || allCostItems || [];
+            return costItems.filter(item => item.eventId === id);
+        } catch (error) {
+            console.error('Failed to get event cost items:', error);
+            return [];
+        }
+    }
+
     // Cost Item endpoints
     async getCostItems() {
         return this.get('/cost-items');

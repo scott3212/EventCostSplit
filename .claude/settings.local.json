@@ -9,7 +9,9 @@
       "Bash(git commit:*)",
       "Bash(npm run lint)",
       "Bash(taskkill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git rm:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

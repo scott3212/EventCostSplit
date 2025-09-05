@@ -1,3 +1,53 @@
+/* CSS Variables */
+:root {
+    /* Primary Colors */
+    --primary-color: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --primary-bg: #eff6ff;
+    
+    /* Success Colors */
+    --success-color: #059669;
+    --success-bg: #ecfdf5;
+    --success-text: #065f46;
+    
+    /* Error Colors */
+    --error-color: #dc2626;
+    --error-bg: #fef2f2;
+    --error-text: #991b1b;
+    
+    /* Warning Colors */
+    --warning-color: #d97706;
+    --warning-bg: #fffbeb;
+    --warning-text: #92400e;
+    
+    /* Text Colors */
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --card-bg: #ffffff;
+    
+    /* Border Colors */
+    --border-color: #e5e7eb;
+    --border-light: #f3f4f6;
+    
+    /* Gray Scale */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+}
+
 /* Reset and Base Styles */
 * {
     box-sizing: border-box;
@@ -181,7 +231,8 @@ body {
 
 /* Page Content */
 .page-content {
-    min-height: 400px;
+    min-height: auto;
+    padding-bottom: 1rem;
 }
 
 .page {
