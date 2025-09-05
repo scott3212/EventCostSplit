@@ -717,20 +717,24 @@ class EventsPage {
     }
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.eventsPage = new EventsPage();
-    
-    // Hook into navigation system to refresh events when page is shown
-    const originalNavigateToPage = navigation.navigateToPage;
-    navigation.navigateToPage = function(pageId) {
-        originalNavigateToPage.call(this, pageId);
+// Initialize when DOM is ready (only in browser)
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.eventsPage = new EventsPage();
         
-        if (pageId === 'events' && window.eventsPage) {
-            window.eventsPage.refresh();
+        // Hook into navigation system to refresh events when page is shown
+        if (typeof navigation !== 'undefined') {
+            const originalNavigateToPage = navigation.navigateToPage;
+            navigation.navigateToPage = function(pageId) {
+                originalNavigateToPage.call(this, pageId);
+                
+                if (pageId === 'events' && window.eventsPage) {
+                    window.eventsPage.refresh();
+                }
+            };
         }
-    };
-});
+    });
+}
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
