@@ -5,116 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏸 Badminton Cost Splitter</title>
     <meta name="description" content="Simple expense splitting for badminton events">
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 500px;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.2em;
-        }
-        .status {
-            background: #e8f5e8;
-            color: #2d5a2d;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-weight: 500;
-        }
-        .features {
-            text-align: left;
-            margin: 30px 0;
-        }
-        .feature {
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-        }
-        .feature-icon {
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-        .footer {
-            margin-top: 30px;
-            color: #999;
-            font-size: 0.9em;
-        }
-        .api-link {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            margin: 10px 5px;
-            transition: background 0.3s;
-        }
-        .api-link:hover {
-            background: #5a6fd8;
-        }
-    </style>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏸</text></svg>">
 </head>
 <body>
-    <div class="container">
-        <h1>🏸 Badminton Cost Splitter</h1>
-        <p class="subtitle">Simple expense splitting for badminton events</p>
-        
-        <div class="status">
-            ✅ Phase 1 Complete - Foundation Ready!
-        </div>
-        
-        <div class="features">
-            <div class="feature">
-                <span class="feature-icon">📊</span>
-                <span>Clean architecture with layered design</span>
-            </div>
-            <div class="feature">
-                <span class="feature-icon">✅</span>
-                <span>Comprehensive validation and error handling</span>
-            </div>
-            <div class="feature-icon">🧪</span>
-                <span>Unit tests with 90%+ coverage</span>
-            </div>
-            <div class="feature">
-                <span class="feature-icon">🎨</span>
-                <span>User-friendly terminology and UX foundation</span>
-            </div>
-            <div class="feature">
-                <span class="feature-icon">🔒</span>
-                <span>Security middleware and proper logging</span>
-            </div>
-        </div>
-
-        <div>
-            <a href="/health" class="api-link">Health Check</a>
-            <a href="/api" class="api-link">API Ready for Phase 2</a>
-        </div>
-        
-        <div class="footer">
-            Built with ❤️ for badminton enthusiasts<br>
-            <strong>Next:</strong> Phase 2 - Backend API Development
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">🏸</div>
+            <p>Loading Badminton Cost Splitter...</p>
         </div>
     </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app" style="display: none;">
+        <!-- Navigation Header -->
+        <header class="header">
+            <div class="container">
+                <div class="nav-brand">
+                    <span class="nav-logo">🏸</span>
+                    <span class="nav-title">Badminton Cost Splitter</span>
+                </div>
+                
+                <nav class="nav-menu">
+                    <button class="nav-item active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+                    <button class="nav-item" data-page="users">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Users</span>
+                    </button>
+                    <button class="nav-item" data-page="events">
+                        <span class="nav-icon">🎯</span>
+                        <span class="nav-text">Events</span>
+                    </button>
+                    <button class="nav-item" data-page="expenses">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Expenses</span>
+                    </button>
+                    <button class="nav-item" data-page="payments">
+                        <span class="nav-icon">💳</span>
+                        <span class="nav-text">Payments</span>
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main">
+            <div class="container">
+                <!-- API Status Indicator -->
+                <div id="api-status" class="api-status" style="display: none;">
+                    <div class="status-indicator"></div>
+                    <span class="status-text">API Connected</span>
+                </div>
+
+                <!-- Page Content -->
+                <div id="page-content" class="page-content">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard-page" class="page active">
+                        <div class="page-header">
+                            <h1>📊 Dashboard</h1>
+                            <p>Overview of your badminton expenses and balances</p>
+                        </div>
+                        
+                        <div class="dashboard-grid">
+                            <div class="dashboard-card">
+                                <div class="card-icon">👥</div>
+                                <div class="card-content">
+                                    <h3>Users</h3>
+                                    <p class="card-number" id="users-count">Loading...</p>
+                                    <p class="card-label">Total Members</p>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-card">
+                                <div class="card-icon">🎯</div>
+                                <div class="card-content">
+                                    <h3>Events</h3>
+                                    <p class="card-number" id="events-count">Loading...</p>
+                                    <p class="card-label">Active Events</p>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-card">
+                                <div class="card-icon">💰</div>
+                                <div class="card-content">
+                                    <h3>Total Expenses</h3>
+                                    <p class="card-number" id="total-expenses">Loading...</p>
+                                    <p class="card-label">This Month</p>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-card">
+                                <div class="card-icon">⚖️</div>
+                                <div class="card-content">
+                                    <h3>Balance Status</h3>
+                                    <p class="card-number" id="balance-status">Loading...</p>
+                                    <p class="card-label">Users Settled</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="recent-activity">
+                            <h2>Recent Activity</h2>
+                            <div id="recent-activity-list" class="activity-list">
+                                <div class="loading-placeholder">Loading recent activity...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other pages will be loaded dynamically -->
+                    <div id="users-page" class="page">
+                        <div class="page-header">
+                            <h1>👥 Users</h1>
+                            <p>Manage participants and view balances</p>
+                        </div>
+                        <div class="page-placeholder">
+                            <p>🚧 User management interface coming soon...</p>
+                        </div>
+                    </div>
+
+                    <div id="events-page" class="page">
+                        <div class="page-header">
+                            <h1>🎯 Events</h1>
+                            <p>Create and manage badminton events</p>
+                        </div>
+                        <div class="page-placeholder">
+                            <p>🚧 Event management interface coming soon...</p>
+                        </div>
+                    </div>
+
+                    <div id="expenses-page" class="page">
+                        <div class="page-header">
+                            <h1>💰 Expenses</h1>
+                            <p>Add expenses and configure split percentages</p>
+                        </div>
+                        <div class="page-placeholder">
+                            <p>🚧 Expense management interface coming soon...</p>
+                        </div>
+                    </div>
+
+                    <div id="payments-page" class="page">
+                        <div class="page-header">
+                            <h1>💳 Payments</h1>
+                            <p>Track payments and settlement suggestions</p>
+                        </div>
+                        <div class="page-placeholder">
+                            <p>🚧 Payment management interface coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2024 Badminton Cost Splitter - Built with ❤️ for badminton enthusiasts</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Error</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message">An unexpected error occurred.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="error-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/js/api.js"></script>
+    <script src="/js/components/navigation.js"></script>
+    <script src="/js/pages/dashboard.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>
