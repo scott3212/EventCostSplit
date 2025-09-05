@@ -5,7 +5,8 @@
     "phone": "+1234567890",
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.229Z",
-    "updatedAt": "2025-09-05T01:51:43.229Z"
+    "updatedAt": "2025-09-05T01:51:43.229Z",
+    "id": "3ac3a1bd-ae7d-48e6-a30b-be333df73dda"
   },
   {
     "name": "Jane Doe",
@@ -13,7 +14,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.244Z",
-    "updatedAt": "2025-09-05T01:51:43.244Z"
+    "updatedAt": "2025-09-05T01:51:43.244Z",
+    "id": "d2e1bfc6-1bc1-4b23-b007-f9ac40c1a4f1"
   },
   {
     "name": "Bob Smith",
@@ -21,7 +23,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.261Z",
-    "updatedAt": "2025-09-05T01:51:43.261Z"
+    "updatedAt": "2025-09-05T01:51:43.261Z",
+    "id": "9db40523-9d9d-4512-a040-6abb145d401d"
   },
   {
     "name": "Alice Johnson",
@@ -29,7 +32,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.280Z",
-    "updatedAt": "2025-09-05T01:51:43.280Z"
+    "updatedAt": "2025-09-05T01:51:43.280Z",
+    "id": "58ea89fe-2126-4835-8358-067fd14070fc"
   },
   {
     "name": "Charlie Brown",
@@ -37,7 +41,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.300Z",
-    "updatedAt": "2025-09-05T01:51:43.300Z"
+    "updatedAt": "2025-09-05T01:51:43.300Z",
+    "id": "61159903-8d53-4bd0-a720-55446cab4a1d"
   },
   {
     "name": "David Lee",
@@ -45,7 +50,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.314Z",
-    "updatedAt": "2025-09-05T01:51:43.314Z"
+    "updatedAt": "2025-09-05T01:51:43.314Z",
+    "id": "833e6db0-2e43-42fd-ad18-d18fd52c8fb7"
   },
   {
     "name": "Event User",
@@ -53,7 +59,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.331Z",
-    "updatedAt": "2025-09-05T01:51:43.331Z"
+    "updatedAt": "2025-09-05T01:51:43.331Z",
+    "id": "320ba92e-f407-4cdb-9397-77ba11d204b5"
   },
   {
     "name": "Cost User",
@@ -61,7 +68,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.366Z",
-    "updatedAt": "2025-09-05T01:51:43.366Z"
+    "updatedAt": "2025-09-05T01:51:43.366Z",
+    "id": "e48e0222-ef6a-46ae-bacb-b313453164ec"
   },
   {
     "name": "Payment User",
@@ -69,7 +77,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.402Z",
-    "updatedAt": "2025-09-05T01:51:43.402Z"
+    "updatedAt": "2025-09-05T01:51:43.402Z",
+    "id": "35e624d7-5639-4374-af8d-c6d02dba44f6"
   },
   {
     "name": "Alice",
@@ -77,7 +86,8 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.499Z",
-    "updatedAt": "2025-09-05T01:51:43.500Z"
+    "updatedAt": "2025-09-05T01:51:43.500Z",
+    "id": "1c834652-4d56-4d2b-950f-508f3803438f"
   },
   {
     "name": "Bob",
@@ -85,10 +95,11 @@
     "phone": null,
     "totalBalance": 0,
     "createdAt": "2025-09-05T01:51:43.534Z",
-    "updatedAt": "2025-09-05T01:51:43.534Z"
+    "updatedAt": "2025-09-05T01:51:43.534Z",
+    "id": "e0031c8e-e85f-4544-8fd0-783a391be90c"
   },
   {
-    "id": null,
+    "id": "f8e8a8e6-3928-493c-b4a3-255852d67db3",
     "name": "Test User",
     "email": "test@example.com",
     "phone": null,
@@ -97,7 +108,7 @@
     "updatedAt": "2025-09-05T01:58:24.406Z"
   },
   {
-    "id": null,
+    "id": "838fa6f8-6200-4d21-930b-b55210ff9395",
     "name": "Test User",
     "email": "test@example.com",
     "phone": null,
