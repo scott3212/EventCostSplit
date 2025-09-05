@@ -79,6 +79,32 @@ describe('UserController', () => {
       });
     });
 
+    test('should return 400 for duplicate name error with proper message format', async () => {
+      req.body = { name: 'John Doe', email: 'john@example.com' };
+      mockUserService.createUser.mockRejectedValue(new ValidationError('A user with this name already exists'));
+
+      await userController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'A user with this name already exists'
+      });
+    });
+
+    test('should return 400 for duplicate email error with proper message format', async () => {
+      req.body = { name: 'Jane Smith', email: 'duplicate@example.com' };
+      mockUserService.createUser.mockRejectedValue(new ValidationError('A user with this email already exists'));
+
+      await userController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'A user with this email already exists'
+      });
+    });
+
     test('should return 500 for server error', async () => {
       req.body = { name: 'John' };
       mockUserService.createUser.mockRejectedValue(new Error('Server error'));
