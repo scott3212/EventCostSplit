@@ -403,9 +403,9 @@ class UsersPage {
         } catch (error) {
             console.error('Failed to add user:', error);
             
-            if (error.message.includes('name is not unique')) {
+            if (error.message.includes('name already exists') || error.message.includes('name is not unique')) {
                 this.showError('name', 'A user with this name already exists');
-            } else if (error.message.includes('email is not unique')) {
+            } else if (error.message.includes('email already exists') || error.message.includes('email is not unique')) {
                 this.showError('email', 'A user with this email already exists');
             } else {
                 showError('Failed to add user. Please try again.');
@@ -651,9 +651,9 @@ class UsersPage {
         } catch (error) {
             console.error('Failed to update user:', error);
             
-            if (error.message.includes('name is not unique')) {
+            if (error.message.includes('name already exists') || error.message.includes('name is not unique')) {
                 this.showEditError('name', 'A user with this name already exists');
-            } else if (error.message.includes('email is not unique')) {
+            } else if (error.message.includes('email already exists') || error.message.includes('email is not unique')) {
                 this.showEditError('email', 'A user with this email already exists');
             } else {
                 showError('Failed to update user. Please try again.');
