@@ -178,6 +178,99 @@
     padding: 1rem;
 }
 
+/* Notification modals should appear above other modals */
+#error-modal,
+#success-modal {
+    z-index: 1100;
+}
+
+/* User Detail Modal Styles */
+.user-detail-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.user-detail-section:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.user-detail-section h4 {
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.user-detail-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.user-detail-info .info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.balance-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.balance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.balance-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.activity-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.activity-amount {
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.activity-amount.positive {
+    color: var(--success-color);
+}
+
+.activity-amount.negative {
+    color: var(--error-color);
+}
+
 .modal-content {
     background: white;
     border-radius: 12px;

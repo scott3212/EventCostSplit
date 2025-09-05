@@ -385,6 +385,63 @@
         </footer>
     </div>
 
+    <!-- User Detail Modal -->
+    <div id="user-detail-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="user-detail-title">👤 User Details</h3>
+                <button class="modal-close" id="user-detail-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- User Info Section -->
+                <div class="user-detail-section">
+                    <h4>📋 Basic Information</h4>
+                    <div class="user-detail-info">
+                        <div class="info-row">
+                            <span class="info-label">Name:</span>
+                            <span id="user-detail-name">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span id="user-detail-email">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone:</span>
+                            <span id="user-detail-phone">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance Section -->
+                <div class="user-detail-section">
+                    <h4>💰 Balance Information</h4>
+                    <div class="balance-summary">
+                        <div class="balance-item">
+                            <span class="balance-label">Current Balance:</span>
+                            <span id="user-detail-balance" class="balance-amount">$0.00</span>
+                        </div>
+                        <div id="user-detail-status" class="balance-status">
+                            <div class="status-icon"></div>
+                            <span>All settled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Section -->
+                <div class="user-detail-section">
+                    <h4>📊 Recent Activity</h4>
+                    <div id="user-detail-activity" class="activity-list">
+                        <div class="loading-placeholder">Loading activity...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="user-detail-edit">Edit User</button>
+                <button class="btn btn-primary" id="user-detail-ok">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Error Modal -->
     <div id="error-modal" class="modal" style="display: none;">
         <div class="modal-content">

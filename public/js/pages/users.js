@@ -51,7 +51,19 @@ class UsersPage {
             // Edit error elements
             editNameError: document.getElementById('edit-name-error'),
             editEmailError: document.getElementById('edit-email-error'),
-            editPhoneError: document.getElementById('edit-phone-error')
+            editPhoneError: document.getElementById('edit-phone-error'),
+            // User Detail Modal elements
+            detailModal: document.getElementById('user-detail-modal'),
+            detailClose: document.getElementById('user-detail-close'),
+            detailOk: document.getElementById('user-detail-ok'),
+            detailEdit: document.getElementById('user-detail-edit'),
+            detailTitle: document.getElementById('user-detail-title'),
+            detailName: document.getElementById('user-detail-name'),
+            detailEmail: document.getElementById('user-detail-email'),
+            detailPhone: document.getElementById('user-detail-phone'),
+            detailBalance: document.getElementById('user-detail-balance'),
+            detailStatus: document.getElementById('user-detail-status'),
+            detailActivity: document.getElementById('user-detail-activity')
         };
         
         this.bindEvents();
@@ -206,6 +218,37 @@ class UsersPage {
             });
             this.elements.editPhoneInput.addEventListener('input', () => {
                 this.clearEditError('phone');
+            });
+        }
+
+        // User Detail Modal events
+        if (this.elements.detailClose) {
+            this.elements.detailClose.addEventListener('click', () => {
+                this.hideUserDetailDialog();
+            });
+        }
+
+        if (this.elements.detailOk) {
+            this.elements.detailOk.addEventListener('click', () => {
+                this.hideUserDetailDialog();
+            });
+        }
+
+        if (this.elements.detailEdit) {
+            this.elements.detailEdit.addEventListener('click', () => {
+                if (this.currentDetailUser) {
+                    this.hideUserDetailDialog();
+                    this.editUser(this.currentDetailUser.id);
+                }
+            });
+        }
+
+        // Detail modal backdrop click
+        if (this.elements.detailModal) {
+            this.elements.detailModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.detailModal) {
+                    this.hideUserDetailDialog();
+                }
             });
         }
     }
@@ -836,9 +879,169 @@ class UsersPage {
         }
     }
 
-    viewUserDetails(userId) {
-        console.log('View user details:', userId);
-        showError('User details view coming soon!');
+    async viewUserDetails(userId) {
+        const user = this.findUserById(userId);
+        if (!user) {
+            showError('User not found');
+            return;
+        }
+        
+        this.currentDetailUser = user;
+        await this.showUserDetailDialog(user);
+    }
+
+    async showUserDetailDialog(user) {
+        try {
+            // Populate basic information
+            this.populateUserDetail(user);
+            
+            // Show the modal
+            if (this.elements.detailModal) {
+                this.elements.detailModal.style.display = 'flex';
+                this.elements.detailModal.classList.add('fade-in');
+            }
+            
+            // Load user activity data
+            await this.loadUserActivity(user.id);
+            
+        } catch (error) {
+            console.error('Failed to show user details:', error);
+            showError('Failed to load user details. Please try again.');
+        }
+    }
+
+    hideUserDetailDialog() {
+        if (this.elements.detailModal) {
+            this.elements.detailModal.style.display = 'none';
+            this.elements.detailModal.classList.remove('fade-in');
+        }
+        this.currentDetailUser = null;
+    }
+
+    populateUserDetail(user) {
+        const balance = user.totalBalance || 0;
+        const balanceStatus = this.getBalanceStatus(balance);
+        
+        // Update title
+        if (this.elements.detailTitle) {
+            this.elements.detailTitle.textContent = `👤 ${user.name}`;
+        }
+        
+        // Update basic information
+        if (this.elements.detailName) {
+            this.elements.detailName.textContent = user.name;
+        }
+        
+        if (this.elements.detailEmail) {
+            this.elements.detailEmail.textContent = user.email || 'Not provided';
+        }
+        
+        if (this.elements.detailPhone) {
+            this.elements.detailPhone.textContent = user.phone || 'Not provided';
+        }
+        
+        // Update balance information
+        if (this.elements.detailBalance) {
+            this.elements.detailBalance.textContent = formatCurrency(balance);
+            this.elements.detailBalance.className = `balance-amount ${balanceStatus.class}`;
+        }
+        
+        if (this.elements.detailStatus) {
+            const statusIcon = this.elements.detailStatus.querySelector('.status-icon');
+            const statusText = this.elements.detailStatus.querySelector('span');
+            
+            if (statusIcon) {
+                statusIcon.className = `status-icon ${balanceStatus.iconClass}`;
+            }
+            
+            if (statusText) {
+                statusText.textContent = balanceStatus.text;
+            }
+            
+            this.elements.detailStatus.className = `balance-status ${balanceStatus.class}`;
+        }
+    }
+
+    async loadUserActivity(userId) {
+        try {
+            // Show loading state
+            if (this.elements.detailActivity) {
+                this.elements.detailActivity.innerHTML = '<div class="loading-placeholder">Loading activity...</div>';
+            }
+            
+            // Load user payments and events in parallel
+            const [payments, events] = await Promise.all([
+                api.getUserPayments(userId).catch(() => []),
+                api.getUserEvents(userId).catch(() => [])
+            ]);
+            
+            this.renderUserActivity(payments, events);
+            
+        } catch (error) {
+            console.error('Failed to load user activity:', error);
+            if (this.elements.detailActivity) {
+                this.elements.detailActivity.innerHTML = '<div class="loading-placeholder">Failed to load activity.</div>';
+            }
+        }
+    }
+
+    renderUserActivity(payments, events) {
+        if (!this.elements.detailActivity) return;
+        
+        const activities = [];
+        
+        // Add payment activities
+        payments.forEach(payment => {
+            activities.push({
+                type: 'payment',
+                date: new Date(payment.date),
+                description: payment.description || 'Payment',
+                amount: payment.amount,
+                raw: payment
+            });
+        });
+        
+        // Add event participations
+        events.forEach(event => {
+            activities.push({
+                type: 'event',
+                date: new Date(event.date),
+                description: `Event: ${event.name}`,
+                amount: null,
+                raw: event
+            });
+        });
+        
+        // Sort by date (most recent first)
+        activities.sort((a, b) => b.date - a.date);
+        
+        // Limit to recent 10 activities
+        const recentActivities = activities.slice(0, 10);
+        
+        if (recentActivities.length === 0) {
+            this.elements.detailActivity.innerHTML = '<div class="loading-placeholder">No recent activity found.</div>';
+            return;
+        }
+        
+        const activitiesHtml = recentActivities.map(activity => {
+            const dateStr = formatDate(activity.date.toISOString());
+            let amountHtml = '';
+            
+            if (activity.amount !== null) {
+                const amountClass = activity.amount > 0 ? 'positive' : 'negative';
+                const amountPrefix = activity.amount > 0 ? '+' : '';
+                amountHtml = `<span class="activity-amount ${amountClass}">${amountPrefix}${formatCurrency(activity.amount)}</span>`;
+            }
+            
+            return `
+                <div class="activity-item">
+                    <div>${activity.description}${amountHtml}</div>
+                    <div class="activity-date">${dateStr}</div>
+                </div>
+            `;
+        }).join('');
+        
+        this.elements.detailActivity.innerHTML = activitiesHtml;
     }
 
     findUserById(userId) {

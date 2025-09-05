@@ -135,7 +135,15 @@ const validators = {
     if (value instanceof Date) {
       date = value;
     } else if (typeof value === 'string') {
-      date = new Date(value);
+      // Check if it's a date-only string (YYYY-MM-DD format)
+      const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateOnlyRegex.test(value)) {
+        // For date-only strings, create date in local timezone to avoid timezone shift
+        const [year, month, day] = value.split('-').map(Number);
+        date = new Date(year, month - 1, day); // month is 0-indexed
+      } else {
+        date = new Date(value);
+      }
     } else {
       throw new ValidationError(
         `${fieldName} must be a valid date`,
@@ -150,6 +158,11 @@ const validators = {
       );
     }
 
+    // For date-only values, return ISO date string format (YYYY-MM-DD)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value; // Return original date string to avoid timezone conversion
+    }
+    
     return date.toISOString();
   },
 
@@ -316,10 +329,10 @@ function validateUserUpdate(updateData) {
     if (updateData.name !== undefined) {
       updateData.name = validators.sanitizeString(updateData.name);
     }
-    if (updateData.email !== undefined) {
+    if (updateData.email !== undefined && updateData.email !== null) {
       updateData.email = validators.sanitizeString(updateData.email);
     }
-    if (updateData.phone !== undefined) {
+    if (updateData.phone !== undefined && updateData.phone !== null) {
       updateData.phone = validators.sanitizeString(updateData.phone);
     }
 
@@ -330,12 +343,12 @@ function validateUserUpdate(updateData) {
       validators.maxLength(updateData.name, 100, 'Name');
     }
 
-    if (updateData.email !== undefined && updateData.email !== '') {
+    if (updateData.email !== undefined && updateData.email !== null && updateData.email !== '') {
       validators.email(updateData.email, 'Email');
       validators.maxLength(updateData.email, 255, 'Email');
     }
 
-    if (updateData.phone !== undefined && updateData.phone !== '') {
+    if (updateData.phone !== undefined && updateData.phone !== null && updateData.phone !== '') {
       validators.phone(updateData.phone, 'Phone');
     }
 
