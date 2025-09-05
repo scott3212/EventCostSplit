@@ -396,6 +396,136 @@
 .w-full { width: 100%; }
 .h-full { height: 100%; }
 
+/* Users Page Styles */
+.users-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.users-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.users-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.user-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.user-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.user-info h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.user-info .user-email {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.user-info .user-phone {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-balance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.balance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.balance-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.balance-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.balance-settled {
+    color: #10b981;
+}
+
+.balance-owes {
+    color: #ef4444;
+}
+
+.balance-owed {
+    color: #3b82f6;
+}
+
+.balance-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-settled {
+    background: #10b981;
+}
+
+.status-owes {
+    background: #ef4444;
+}
+
+.status-owed {
+    background: #3b82f6;
+}
+
 /* Animation Classes */
 .fade-in {
     animation: fadeIn 0.3s ease-in;

@@ -134,8 +134,35 @@
                             <h1>👥 Users</h1>
                             <p>Manage participants and view balances</p>
                         </div>
-                        <div class="page-placeholder">
-                            <p>🚧 User management interface coming soon...</p>
+                        
+                        <!-- Users Actions Bar -->
+                        <div class="users-actions mb-4">
+                            <button class="btn btn-primary" id="add-user-btn">
+                                <span>➕</span>
+                                <span>Add New User</span>
+                            </button>
+                            <div class="users-stats">
+                                <span class="text-gray">Total Users: <strong id="total-users-count">Loading...</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Users List -->
+                        <div class="users-container">
+                            <div id="users-loading" class="loading-placeholder">
+                                Loading users...
+                            </div>
+                            
+                            <div id="users-list" class="users-list" style="display: none;">
+                                <!-- Users will be dynamically loaded here -->
+                            </div>
+                            
+                            <div id="users-empty" class="page-placeholder" style="display: none;">
+                                <p>👤 No users found</p>
+                                <p>Add your first user to get started!</p>
+                                <button class="btn btn-primary" onclick="document.getElementById('add-user-btn').click()">
+                                    Add First User
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -200,6 +227,7 @@
     <script src="/js/api.js"></script>
     <script src="/js/components/navigation.js"></script>
     <script src="/js/pages/dashboard.js"></script>
+    <script src="/js/pages/users.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>
