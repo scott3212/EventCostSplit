@@ -263,6 +263,61 @@
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit User</h3>
+                <button class="modal-close" id="edit-user-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-user-form">
+                    <div class="form-group">
+                        <label for="edit-user-name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" id="edit-user-name" name="name" class="form-input" placeholder="Enter full name" required>
+                        <div id="edit-name-error" class="form-error" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-user-email" class="form-label">Email (optional)</label>
+                        <input type="email" id="edit-user-email" name="email" class="form-input" placeholder="Enter email address">
+                        <div id="edit-email-error" class="form-error" style="display: none;"></div>
+                        <div class="form-help">We'll use this for notifications and balance updates</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-user-phone" class="form-label">Phone (optional)</label>
+                        <input type="tel" id="edit-user-phone" name="phone" class="form-input" placeholder="+1234567890">
+                        <div id="edit-phone-error" class="form-error" style="display: none;"></div>
+                        <div class="form-help">Format: +1234567890 or (123) 456-7890</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Current Balance</label>
+                        <div id="edit-user-balance" class="user-balance" style="margin-top: 0.5rem;">
+                            <div class="balance-info">
+                                <span class="balance-label">Balance</span>
+                                <span class="balance-amount" id="edit-balance-amount">$0.00</span>
+                            </div>
+                            <div class="balance-status" id="edit-balance-status">
+                                <div class="status-icon"></div>
+                                <span>All settled</span>
+                            </div>
+                        </div>
+                        <div class="form-help">User balance is calculated automatically from events and payments</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="edit-user-cancel">Cancel</button>
+                <button class="btn btn-primary" id="edit-user-save">
+                    <span class="loading-spinner-sm" id="edit-user-spinner" style="display: none;"></span>
+                    <span id="edit-user-save-text">Save Changes</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="/js/api.js"></script>
     <script src="/js/components/navigation.js"></script>

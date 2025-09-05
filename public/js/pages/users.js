@@ -2,6 +2,7 @@ class UsersPage {
     constructor() {
         this.users = [];
         this.isInitialized = false;
+        this.currentEditUser = null;
         this.init();
     }
 
@@ -29,7 +30,25 @@ class UsersPage {
             // Error elements
             nameError: document.getElementById('name-error'),
             emailError: document.getElementById('email-error'),
-            phoneError: document.getElementById('phone-error')
+            phoneError: document.getElementById('phone-error'),
+            // Edit User Modal elements
+            editModal: document.getElementById('edit-user-modal'),
+            editForm: document.getElementById('edit-user-form'),
+            editClose: document.getElementById('edit-user-close'),
+            editCancel: document.getElementById('edit-user-cancel'),
+            editSave: document.getElementById('edit-user-save'),
+            editSpinner: document.getElementById('edit-user-spinner'),
+            editSaveText: document.getElementById('edit-user-save-text'),
+            // Edit form inputs
+            editNameInput: document.getElementById('edit-user-name'),
+            editEmailInput: document.getElementById('edit-user-email'),
+            editPhoneInput: document.getElementById('edit-user-phone'),
+            editBalanceAmount: document.getElementById('edit-balance-amount'),
+            editBalanceStatus: document.getElementById('edit-balance-status'),
+            // Edit error elements
+            editNameError: document.getElementById('edit-name-error'),
+            editEmailError: document.getElementById('edit-email-error'),
+            editPhoneError: document.getElementById('edit-phone-error')
         };
         
         this.bindEvents();
@@ -105,6 +124,71 @@ class UsersPage {
             });
             this.elements.phoneInput.addEventListener('input', () => {
                 this.clearError('phone');
+            });
+        }
+
+        // Edit User Modal events
+        if (this.elements.editClose) {
+            this.elements.editClose.addEventListener('click', () => {
+                this.hideEditUserDialog();
+            });
+        }
+
+        if (this.elements.editCancel) {
+            this.elements.editCancel.addEventListener('click', () => {
+                this.hideEditUserDialog();
+            });
+        }
+
+        // Edit modal backdrop click
+        if (this.elements.editModal) {
+            this.elements.editModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.editModal) {
+                    this.hideEditUserDialog();
+                }
+            });
+        }
+
+        // Edit form submission
+        if (this.elements.editSave) {
+            this.elements.editSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleEditUser();
+            });
+        }
+
+        if (this.elements.editForm) {
+            this.elements.editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEditUser();
+            });
+        }
+
+        // Edit form real-time validation
+        if (this.elements.editNameInput) {
+            this.elements.editNameInput.addEventListener('blur', () => {
+                this.validateEditName();
+            });
+            this.elements.editNameInput.addEventListener('input', () => {
+                this.clearEditError('name');
+            });
+        }
+
+        if (this.elements.editEmailInput) {
+            this.elements.editEmailInput.addEventListener('blur', () => {
+                this.validateEditEmail();
+            });
+            this.elements.editEmailInput.addEventListener('input', () => {
+                this.clearEditError('email');
+            });
+        }
+
+        if (this.elements.editPhoneInput) {
+            this.elements.editPhoneInput.addEventListener('blur', () => {
+                this.validateEditPhone();
+            });
+            this.elements.editPhoneInput.addEventListener('input', () => {
+                this.clearEditError('phone');
             });
         }
     }
@@ -426,8 +510,251 @@ class UsersPage {
     }
 
     editUser(userId) {
-        console.log('Edit user:', userId);
-        showError('Edit user functionality coming soon!');
+        const user = this.findUserById(userId);
+        if (!user) {
+            showError('User not found');
+            return;
+        }
+        
+        this.currentEditUser = user;
+        this.showEditUserDialog(user);
+    }
+
+    showEditUserDialog(user) {
+        this.resetEditUserForm();
+        this.populateEditForm(user);
+        
+        if (this.elements.editModal) {
+            this.elements.editModal.style.display = 'flex';
+            this.elements.editModal.classList.add('fade-in');
+            
+            // Focus on name input
+            setTimeout(() => {
+                if (this.elements.editNameInput) {
+                    this.elements.editNameInput.focus();
+                    this.elements.editNameInput.select();
+                }
+            }, 100);
+        }
+    }
+
+    hideEditUserDialog() {
+        if (this.elements.editModal) {
+            this.elements.editModal.style.display = 'none';
+            this.elements.editModal.classList.remove('fade-in');
+        }
+        this.resetEditUserForm();
+        this.currentEditUser = null;
+    }
+
+    resetEditUserForm() {
+        if (this.elements.editForm) {
+            this.elements.editForm.reset();
+        }
+        
+        this.clearAllEditErrors();
+        this.setEditButtonState(false);
+    }
+
+    populateEditForm(user) {
+        if (this.elements.editNameInput) {
+            this.elements.editNameInput.value = user.name || '';
+        }
+        
+        if (this.elements.editEmailInput) {
+            this.elements.editEmailInput.value = user.email || '';
+        }
+        
+        if (this.elements.editPhoneInput) {
+            this.elements.editPhoneInput.value = user.phone || '';
+        }
+        
+        this.updateEditBalanceDisplay(user);
+    }
+
+    updateEditBalanceDisplay(user) {
+        const balance = user.totalBalance || 0;
+        const balanceStatus = this.getBalanceStatus(balance);
+        
+        if (this.elements.editBalanceAmount) {
+            this.elements.editBalanceAmount.textContent = formatCurrency(balance);
+            this.elements.editBalanceAmount.className = `balance-amount ${balanceStatus.class}`;
+        }
+        
+        if (this.elements.editBalanceStatus) {
+            const statusIcon = this.elements.editBalanceStatus.querySelector('.status-icon');
+            const statusText = this.elements.editBalanceStatus.querySelector('span');
+            
+            if (statusIcon) {
+                statusIcon.className = `status-icon ${balanceStatus.iconClass}`;
+            }
+            
+            if (statusText) {
+                statusText.textContent = balanceStatus.text;
+            }
+            
+            this.elements.editBalanceStatus.className = `balance-status ${balanceStatus.class}`;
+        }
+    }
+
+    async handleEditUser() {
+        if (!this.currentEditUser) {
+            showError('No user selected for editing');
+            return;
+        }
+
+        if (!this.validateEditForm()) {
+            return;
+        }
+
+        try {
+            this.setEditButtonState(true);
+
+            const userData = {
+                name: this.elements.editNameInput.value.trim(),
+                email: this.elements.editEmailInput.value.trim() || null,
+                phone: this.elements.editPhoneInput.value.trim() || null
+            };
+
+            const updatedUser = await api.updateUser(this.currentEditUser.id, userData);
+            
+            this.hideEditUserDialog();
+            await this.refresh();
+            
+            showError(`User "${updatedUser.name}" updated successfully!`);
+            
+        } catch (error) {
+            console.error('Failed to update user:', error);
+            
+            if (error.message.includes('name is not unique')) {
+                this.showEditError('name', 'A user with this name already exists');
+            } else if (error.message.includes('email is not unique')) {
+                this.showEditError('email', 'A user with this email already exists');
+            } else {
+                showError('Failed to update user. Please try again.');
+            }
+        } finally {
+            this.setEditButtonState(false);
+        }
+    }
+
+    validateEditForm() {
+        let isValid = true;
+
+        if (!this.validateEditName()) isValid = false;
+        if (!this.validateEditEmail()) isValid = false;
+        if (!this.validateEditPhone()) isValid = false;
+
+        return isValid;
+    }
+
+    validateEditName() {
+        const name = this.elements.editNameInput?.value?.trim();
+        
+        if (!name) {
+            this.showEditError('name', 'Name is required');
+            return false;
+        }
+        
+        if (name.length < 2) {
+            this.showEditError('name', 'Name must be at least 2 characters long');
+            return false;
+        }
+        
+        if (name.length > 100) {
+            this.showEditError('name', 'Name cannot be longer than 100 characters');
+            return false;
+        }
+        
+        this.clearEditError('name');
+        return true;
+    }
+
+    validateEditEmail() {
+        const email = this.elements.editEmailInput?.value?.trim();
+        
+        if (!email) {
+            this.clearEditError('email');
+            return true; // Email is optional
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            this.showEditError('email', 'Please enter a valid email address');
+            return false;
+        }
+        
+        this.clearEditError('email');
+        return true;
+    }
+
+    validateEditPhone() {
+        const phone = this.elements.editPhoneInput?.value?.trim();
+        
+        if (!phone) {
+            this.clearEditError('phone');
+            return true; // Phone is optional
+        }
+        
+        const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+        if (!phoneRegex.test(phone)) {
+            this.showEditError('phone', 'Please enter a valid phone number');
+            return false;
+        }
+        
+        if (phone.replace(/\D/g, '').length < 10) {
+            this.showEditError('phone', 'Phone number must be at least 10 digits');
+            return false;
+        }
+        
+        this.clearEditError('phone');
+        return true;
+    }
+
+    showEditError(field, message) {
+        const errorElement = this.elements[`edit${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        const inputElement = this.elements[`edit${field.charAt(0).toUpperCase() + field.slice(1)}Input`];
+        if (inputElement) {
+            inputElement.style.borderColor = '#ef4444';
+        }
+    }
+
+    clearEditError(field) {
+        const errorElement = this.elements[`edit${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+        }
+        
+        const inputElement = this.elements[`edit${field.charAt(0).toUpperCase() + field.slice(1)}Input`];
+        if (inputElement) {
+            inputElement.style.borderColor = '';
+        }
+    }
+
+    clearAllEditErrors() {
+        this.clearEditError('name');
+        this.clearEditError('email');
+        this.clearEditError('phone');
+    }
+
+    setEditButtonState(loading) {
+        if (this.elements.editSave) {
+            this.elements.editSave.disabled = loading;
+        }
+        
+        if (this.elements.editSpinner) {
+            this.elements.editSpinner.style.display = loading ? 'inline-block' : 'none';
+        }
+        
+        if (this.elements.editSaveText) {
+            this.elements.editSaveText.textContent = loading ? 'Saving...' : 'Save Changes';
+        }
     }
 
     deleteUser(userId) {
