@@ -398,7 +398,7 @@ class UsersPage {
             this.hideAddUserDialog();
             await this.refresh();
             
-            showError(`User "${newUser.name}" added successfully!`);
+            showSuccess(`User "${newUser.name}" added successfully!`);
             
         } catch (error) {
             console.error('Failed to add user:', error);
@@ -646,7 +646,7 @@ class UsersPage {
             this.hideEditUserDialog();
             await this.refresh();
             
-            showError(`User "${updatedUser.name}" updated successfully!`);
+            showSuccess(`User "${updatedUser.name}" updated successfully!`);
             
         } catch (error) {
             console.error('Failed to update user:', error);
@@ -811,7 +811,7 @@ class UsersPage {
             
             await this.loadUsers();
             
-            showError(`✅ User "${user.name}" has been deleted successfully.`);
+            showSuccess(`User "${user.name}" has been deleted successfully.`);
             
         } catch (error) {
             console.error('Failed to delete user:', error);

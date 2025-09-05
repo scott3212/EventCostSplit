@@ -245,6 +245,27 @@ function hideError() {
     }
 }
 
+function showSuccess(message) {
+    console.log('Success:', message);
+    
+    const successModal = document.getElementById('success-modal');
+    const successMessage = document.getElementById('success-message');
+    
+    if (successModal && successMessage) {
+        successMessage.textContent = message;
+        successModal.style.display = 'flex';
+    } else {
+        alert(message);
+    }
+}
+
+function hideSuccess() {
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+        successModal.style.display = 'none';
+    }
+}
+
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -269,5 +290,5 @@ function formatDate(dateString) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ApiClient, api, showError, hideError, formatCurrency, formatDate };
+    module.exports = { ApiClient, api, showError, hideError, showSuccess, hideSuccess, formatCurrency, formatDate };
 }

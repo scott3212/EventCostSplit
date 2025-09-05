@@ -99,24 +99,6 @@
     "id": "e0031c8e-e85f-4544-8fd0-783a391be90c"
   },
   {
-    "id": "f8e8a8e6-3928-493c-b4a3-255852d67db3",
-    "name": "Test User",
-    "email": "test@example.com",
-    "phone": null,
-    "totalBalance": 0,
-    "createdAt": "2025-09-05T01:58:24.406Z",
-    "updatedAt": "2025-09-05T01:58:24.406Z"
-  },
-  {
-    "id": "838fa6f8-6200-4d21-930b-b55210ff9395",
-    "name": "Test User",
-    "email": "test@example.com",
-    "phone": null,
-    "totalBalance": 0,
-    "createdAt": "2025-09-05T01:59:14.029Z",
-    "updatedAt": "2025-09-05T01:59:14.029Z"
-  },
-  {
     "id": "845bf4ef-4fd4-4826-bf41-e472f1ab45ae",
     "name": "Scott",
     "email": "scot3212@gmail.com",
@@ -124,5 +106,23 @@
     "totalBalance": 0,
     "createdAt": "2025-09-05T04:27:59.504Z",
     "updatedAt": "2025-09-05T04:27:59.504Z"
+  },
+  {
+    "id": "e294f072-b4cb-48c9-a064-955ede2aa682",
+    "name": "Test User New",
+    "email": "test@usernew.com",
+    "phone": "4169876543",
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T04:57:34.526Z",
+    "updatedAt": "2025-09-05T04:57:34.526Z"
+  },
+  {
+    "id": "5f647b68-de75-4d11-a667-9785bf9dac30",
+    "name": "Test Success User",
+    "email": "test@success.com",
+    "phone": "1234567890",
+    "totalBalance": 0,
+    "createdAt": "2025-09-05T04:58:17.065Z",
+    "updatedAt": "2025-09-05T04:58:17.065Z"
   }
 ]

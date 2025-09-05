@@ -49,6 +49,31 @@ class Navigation {
                 }
             });
         }
+
+        // Success modal event listeners
+        const successModal = document.getElementById('success-modal');
+        const successOkButton = document.getElementById('success-ok');
+        const successCloseButton = document.querySelector('#success-modal .modal-close');
+
+        if (successOkButton) {
+            successOkButton.addEventListener('click', () => {
+                hideSuccess();
+            });
+        }
+
+        if (successCloseButton) {
+            successCloseButton.addEventListener('click', () => {
+                hideSuccess();
+            });
+        }
+
+        if (successModal) {
+            successModal.addEventListener('click', (e) => {
+                if (e.target === successModal) {
+                    hideSuccess();
+                }
+            });
+        }
     }
 
     initializeMobileMenu() {
