@@ -170,7 +170,7 @@ class EventsPage {
     }
 
     createEventCard(event) {
-        const eventDate = new Date(event.date);
+        const eventDate = this.parseDateSafely(event.date);
         const today = new Date();
         const isUpcoming = eventDate > today;
         const isToday = eventDate.toDateString() === today.toDateString();
@@ -236,6 +236,21 @@ class EventsPage {
                 class: 'status-completed',
                 text: 'Completed'
             };
+        }
+    }
+
+    parseDateSafely(dateString) {
+        if (!dateString) return new Date();
+        
+        // Check if it's a date-only string (YYYY-MM-DD format)
+        const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (dateOnlyRegex.test(dateString)) {
+            // For date-only strings, parse components manually to avoid timezone conversion
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day); // month is 0-indexed
+        } else {
+            // For full datetime strings, use regular Date parsing
+            return new Date(dateString);
         }
     }
 
@@ -633,7 +648,7 @@ class EventsPage {
             return false;
         }
         
-        const eventDate = new Date(date);
+        const eventDate = this.parseDateSafely(date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         

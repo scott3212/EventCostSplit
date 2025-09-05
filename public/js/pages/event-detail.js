@@ -89,6 +89,13 @@ class EventDetailPage {
         if (eventDetailPage) {
             eventDetailPage.style.display = 'block';
         }
+        
+        // Update navigation to indicate we're showing event detail
+        if (window.navigation) {
+            window.navigation.currentPage = 'events';
+            window.navigation.isShowingEventDetail = true;
+            window.navigation.updateActiveNavItem('events');
+        }
     }
 
     async loadEventData() {
@@ -117,13 +124,13 @@ class EventDetailPage {
         
         // Format and display date
         if (this.elements.eventDate) {
-            const eventDate = new Date(event.date);
+            const eventDate = this.parseDateSafely(event.date);
             this.elements.eventDate.textContent = this.formatEventDate(eventDate);
         }
         
         // Display status
         if (this.elements.eventStatus) {
-            const eventDate = new Date(event.date);
+            const eventDate = this.parseDateSafely(event.date);
             const status = this.getEventStatus(event, eventDate);
             this.elements.eventStatus.textContent = status.text;
             this.elements.eventStatus.className = `status-badge ${status.class}`;
@@ -269,6 +276,21 @@ class EventDetailPage {
         }
     }
 
+    parseDateSafely(dateString) {
+        if (!dateString) return new Date();
+        
+        // Check if it's a date-only string (YYYY-MM-DD format)
+        const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (dateOnlyRegex.test(dateString)) {
+            // For date-only strings, parse components manually to avoid timezone conversion
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day); // month is 0-indexed
+        } else {
+            // For full datetime strings, use regular Date parsing
+            return new Date(dateString);
+        }
+    }
+
     formatEventDate(date) {
         const today = new Date();
         const tomorrow = new Date(today);
@@ -324,19 +346,9 @@ class EventDetailPage {
     }
 
     goBackToEvents() {
-        // Show events page
-        document.querySelectorAll('.page').forEach(page => {
-            page.style.display = 'none';
-        });
-        
-        const eventsPage = document.getElementById('events-page');
-        if (eventsPage) {
-            eventsPage.style.display = 'block';
-        }
-        
-        // Update navigation
+        // Use navigation system to properly navigate back to events
         if (window.navigation) {
-            window.navigation.showPage('events');
+            window.navigation.navigateToPage('events');
         }
     }
 

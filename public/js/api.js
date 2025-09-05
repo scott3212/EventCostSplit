@@ -93,6 +93,16 @@ class ApiClient {
         return this.delete(`/users/${id}`);
     }
 
+    async getUserEvents(id) {
+        const response = await this.get(`/users/${id}/events`);
+        return response.data || response || [];
+    }
+
+    async getUserPayments(id) {
+        const response = await this.get(`/users/${id}/payments`);
+        return response.data || response || [];
+    }
+
     // Event endpoints
     async getEvents() {
         return this.get('/events');
@@ -318,6 +328,30 @@ function formatDate(dateString) {
     }
 }
 
+function formatDateOnly(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        // Check if it's a date-only string (YYYY-MM-DD format)
+        const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (dateOnlyRegex.test(dateString)) {
+            // For date-only strings, parse components manually to avoid timezone conversion
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day); // month is 0-indexed
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }).format(date);
+        } else {
+            // For full datetime strings, use the regular formatDate logic
+            return formatDate(dateString);
+        }
+    } catch (error) {
+        return 'Invalid Date';
+    }
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ApiClient, api, showError, hideError, showSuccess, hideSuccess, formatCurrency, formatDate };
+    module.exports = { ApiClient, api, showError, hideError, showSuccess, hideSuccess, formatCurrency, formatDate, formatDateOnly };
 }

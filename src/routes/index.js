@@ -40,7 +40,7 @@ function createApiRoutes() {
 
   // Initialize services with dependency injection
   const calculationService = new CalculationService(userRepo, eventRepo, costItemRepo, paymentRepo);
-  const userService = new UserService(userRepo, calculationService);
+  const userService = new UserService(userRepo, calculationService, eventRepo, paymentRepo);
   const eventService = new EventService(eventRepo, userRepo, costItemRepo, paymentRepo, calculationService);
   const costItemService = new CostItemService(costItemRepo, eventRepo, userRepo, calculationService);
   const paymentService = new PaymentService(paymentRepo, userRepo, eventRepo, calculationService);

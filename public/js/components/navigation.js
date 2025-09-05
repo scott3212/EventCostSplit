@@ -112,8 +112,14 @@ class Navigation {
     }
 
     navigateToPage(pageId) {
-        if (this.currentPage === pageId) return;
+        // Only skip navigation if we're already on the same page AND not currently showing event detail
+        // This allows navigation back from event detail to the same page (e.g., events -> event detail -> events)
+        const wasShowingEventDetail = this.isShowingEventDetail;
+        if (this.currentPage === pageId && !wasShowingEventDetail) return;
 
+        // Clear event detail state when navigating away
+        this.isShowingEventDetail = false;
+        
         this.currentPage = pageId;
         this.updateActiveNavItem(pageId);
         this.showPage(pageId);
@@ -144,9 +150,11 @@ class Navigation {
             if (page.id === `${pageId}-page`) {
                 page.classList.add('active');
                 page.classList.add('fade-in');
+                page.style.display = ''; // Clear any inline display style
             } else {
                 page.classList.remove('active');
                 page.classList.remove('fade-in');
+                page.style.display = 'none'; // Explicitly hide with inline style
             }
         });
     }

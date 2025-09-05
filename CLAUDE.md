@@ -419,6 +419,47 @@ data/
 - **Responsive Design**: Mobile and desktop compatibility verified
 - **Security**: Content Security Policy compliance achieved
 
+### Recent Bug Fixes (September 2024)
+
+#### **Critical Navigation and API Bug Fixes**
+- ✅ **API 500 Errors Fixed**: Resolved missing getUserPayments() and getUserEvents() methods causing console errors
+- ✅ **Event Detail Navigation Fixed**: Fixed "Back to Events" button functionality with proper navigation state management
+- ✅ **Date Display Issues Fixed**: Resolved timezone conversion problems with event date parsing
+- ✅ **Testing Verified**: All functionality working correctly, navigation flow seamless
+
+#### Implementation Details for Bug Fixes
+**API 500 Errors Resolution:**
+- Added missing getUserEvents() and getUserPayments() methods to frontend API client (`public/js/api.js`)
+- Updated UserService constructor to accept eventRepo and paymentRepo dependencies (`src/services/UserService.js`)
+- Implemented getUserEvents() and getUserPayments() business logic in UserService
+- Fixed dependency injection in routes/index.js to pass required repositories
+
+**Navigation Bug Resolution:**
+- Fixed navigation logic bug in `public/js/components/navigation.js` where event detail to events navigation was blocked
+- Modified navigateToPage() method to properly handle navigation state transitions
+- Root cause: Navigation system was checking isShowingEventDetail state after clearing it, preventing proper page transitions
+- Solution: Capture isShowingEventDetail state before clearing to make correct navigation decision
+
+**Date Display Fix:**
+- Added parseDateSafely() methods to handle YYYY-MM-DD date strings without timezone conversion
+- Updated both events.js and event-detail.js to use safe date parsing
+- Added formatDateOnly() utility function to API client for consistent date formatting
+
+**Files Modified:**
+- `public/js/api.js` - Added missing API methods and date formatting utilities
+- `src/services/UserService.js` - Constructor update and method implementations  
+- `src/routes/index.js` - Dependency injection fix
+- `public/js/components/navigation.js` - Navigation state logic fix
+- `public/js/pages/events.js` - Safe date parsing implementation
+- `public/js/pages/event-detail.js` - Safe date parsing and navigation fixes
+
+**Testing Results:**
+- All backend tests passing (277 tests)
+- Frontend integration fully functional
+- Navigation flow working correctly between all pages
+- API endpoints returning 200 responses
+- Date display showing correct values without timezone issues
+
 This context should help resume development on any machine or with any developer.
 - Always remember to update docs including CLAUDE.md after any implementation
 - Always remember to run all tests before make a commit.

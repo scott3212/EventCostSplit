@@ -7,9 +7,11 @@ const { validateUserData, validateUserUpdate } = require('../utils/validators');
  * Handles user CRUD operations with validation and business rules
  */
 class UserService {
-  constructor(userRepository, calculationService) {
+  constructor(userRepository, calculationService, eventRepository = null, paymentRepository = null) {
     this.userRepo = userRepository;
     this.calculationService = calculationService;
+    this.eventRepo = eventRepository;
+    this.paymentRepo = paymentRepository;
   }
 
   /**
@@ -356,6 +358,49 @@ class UserService {
       settledUsers: settledUsers.length,
       balanceSummary
     };
+  }
+
+  /**
+   * Get events that a user is participating in
+   */
+  async getUserEvents(userId) {
+    // Validate user exists
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (!this.eventRepo) {
+      throw new Error('Event repository not available');
+    }
+
+    // Find all events where the user is a participant
+    const allEvents = await this.eventRepo.findAll();
+    const userEvents = allEvents.filter(event => 
+      event.participants && event.participants.includes(userId)
+    );
+
+    return userEvents;
+  }
+
+  /**
+   * Get payments made by a user
+   */
+  async getUserPayments(userId) {
+    // Validate user exists
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (!this.paymentRepo) {
+      throw new Error('Payment repository not available');
+    }
+
+    // Find all payments made by the user
+    const userPayments = await this.paymentRepo.findBy({ userId: userId });
+
+    return userPayments;
   }
 }
 
