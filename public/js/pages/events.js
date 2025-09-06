@@ -699,23 +699,17 @@ class EventsPage {
     async confirmEventDeletion() {
         console.log('confirmEventDeletion called, currentDeleteEvent:', this.currentDeleteEvent);
         
-        // Guard: Only handle deletion if we're currently on the events page and have an event selected
+        // IMMEDIATE Guard: Check before any DOM manipulation
         const currentPage = document.querySelector('.page.active')?.id;
         console.log('Current active page:', currentPage, 'currentDeleteEvent exists:', !!this.currentDeleteEvent);
         
         if (currentPage !== 'events-page' || !this.currentDeleteEvent) {
             console.log('Ignoring delete request - currentPage:', currentPage, 'currentDeleteEvent:', !!this.currentDeleteEvent);
-            
-            // Reset button state if it was modified by this handler before being blocked
-            const confirmButton = document.querySelector('#confirm-delete-event-ok');
-            if (confirmButton && confirmButton.disabled) {
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = 'Delete Event';
-            }
-            
+            // Don't manipulate button state at all - let the proper handler manage it
             return;
         }
         
+        console.log('Proceeding with events list page deletion');
         const confirmButton = document.querySelector('#confirm-delete-event-ok');
         
         try {
