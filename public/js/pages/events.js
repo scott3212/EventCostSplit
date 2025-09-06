@@ -145,7 +145,7 @@ class EventsPage {
             if (confirmButton) {
                 confirmButton.addEventListener('click', (e) => {
                     e.preventDefault();
-                    this.confirmDeleteEvent();
+                    this.confirmEventDeletion();
                 });
             }
 
@@ -621,7 +621,9 @@ class EventsPage {
 
     showDeleteEventDialog(event, costItems) {
         console.log('showDeleteEventDialog called with event:', event, 'costItems:', costItems);
-        this.currentDeleteEvent = event;
+        // Extract the actual event data from the API response wrapper
+        const eventData = event.data || event;
+        this.currentDeleteEvent = eventData;
         console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
         
         const modal = document.getElementById('confirm-delete-event-modal');
@@ -632,7 +634,7 @@ class EventsPage {
         const confirmButton = modal.querySelector('#confirm-delete-event-ok');
         
         // Set event name
-        eventNameSpan.textContent = event.name;
+        eventNameSpan.textContent = eventData.name;
         
         // Show appropriate warnings
         if (costItems && costItems.length > 0) {
@@ -641,9 +643,9 @@ class EventsPage {
             expenseWarning.style.display = 'none';
         }
         
-        if (event.participants && event.participants.length > 0) {
+        if (eventData.participants && eventData.participants.length > 0) {
             participantWarning.style.display = 'block';
-            participantCountSpan.textContent = event.participants.length;
+            participantCountSpan.textContent = eventData.participants.length;
         } else {
             participantWarning.style.display = 'none';
         }
@@ -662,8 +664,8 @@ class EventsPage {
         this.currentDeleteEvent = null;
     }
 
-    async confirmDeleteEvent() {
-        console.log('confirmDeleteEvent called, currentDeleteEvent:', this.currentDeleteEvent);
+    async confirmEventDeletion() {
+        console.log('confirmEventDeletion called, currentDeleteEvent:', this.currentDeleteEvent);
         if (!this.currentDeleteEvent) {
             console.error('No event selected for deletion');
             showError('No event selected for deletion');
