@@ -607,7 +607,7 @@ class EventsPage {
             
             // Load event details to check for expenses
             const eventDetails = await api.getEvent(eventId);
-            const costItems = await api.getCostItemsByEvent(eventId);
+            const costItems = await api.getEventCostItems(eventId);
             
             // Show confirmation modal with appropriate warnings
             this.showDeleteEventDialog(eventDetails, costItems);
