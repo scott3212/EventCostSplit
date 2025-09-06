@@ -695,9 +695,11 @@ class EventsPage {
 
     async confirmEventDeletion() {
         console.log('confirmEventDeletion called, currentDeleteEvent:', this.currentDeleteEvent);
-        if (!this.currentDeleteEvent) {
-            console.error('No event selected for deletion');
-            showError('No event selected for deletion');
+        
+        // Guard: Only handle deletion if we're currently on the events page and have an event selected
+        const currentPage = document.querySelector('.page.active')?.id;
+        if (currentPage !== 'events' || !this.currentDeleteEvent) {
+            console.log('Ignoring delete request - not on events page or no event selected');
             return;
         }
         
