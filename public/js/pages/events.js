@@ -134,6 +134,39 @@ class EventsPage {
                 this.clearError('event-location');
             });
         }
+
+        // Delete confirmation modal events
+        const deleteModal = document.getElementById('confirm-delete-event-modal');
+        if (deleteModal) {
+            const confirmButton = deleteModal.querySelector('#confirm-delete-event-btn');
+            const cancelButton = deleteModal.querySelector('#cancel-delete-event-btn');
+            const closeButton = deleteModal.querySelector('.close');
+
+            if (confirmButton) {
+                confirmButton.addEventListener('click', () => {
+                    this.confirmDeleteEvent();
+                });
+            }
+
+            if (cancelButton) {
+                cancelButton.addEventListener('click', () => {
+                    this.hideDeleteEventDialog();
+                });
+            }
+
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    this.hideDeleteEventDialog();
+                });
+            }
+
+            // Modal backdrop click
+            deleteModal.addEventListener('click', (e) => {
+                if (e.target === deleteModal) {
+                    this.hideDeleteEventDialog();
+                }
+            });
+        }
     }
 
     async loadEvents() {
@@ -561,9 +594,103 @@ class EventsPage {
         showError('Edit Event form coming in Phase 4.4!');
     }
 
-    deleteEvent(eventId) {
+    async deleteEvent(eventId) {
         console.log('Delete event:', eventId);
-        showError('Delete Event functionality coming in Phase 4.4!');
+        
+        try {
+            // Find the event details first
+            const event = this.findEventById(eventId);
+            if (!event) {
+                showError('Event not found');
+                return;
+            }
+            
+            // Load event details to check for expenses
+            const eventDetails = await api.getEvent(eventId);
+            const costItems = await api.getCostItemsByEvent(eventId);
+            
+            // Show confirmation modal with appropriate warnings
+            this.showDeleteEventDialog(eventDetails, costItems);
+            
+        } catch (error) {
+            console.error('Error preparing delete event:', error);
+            showError('Failed to prepare event deletion. Please try again.');
+        }
+    }
+
+    showDeleteEventDialog(event, costItems) {
+        this.currentDeleteEvent = event;
+        
+        const modal = document.getElementById('confirm-delete-event-modal');
+        const eventNameSpan = modal.querySelector('#delete-event-name');
+        const expenseWarning = modal.querySelector('#delete-expense-warning');
+        const participantWarning = modal.querySelector('#delete-participant-warning');
+        const confirmButton = modal.querySelector('#confirm-delete-event-btn');
+        
+        // Set event name
+        eventNameSpan.textContent = event.name;
+        
+        // Show appropriate warnings
+        if (costItems && costItems.length > 0) {
+            expenseWarning.style.display = 'block';
+            expenseWarning.querySelector('strong').textContent = costItems.length;
+        } else {
+            expenseWarning.style.display = 'none';
+        }
+        
+        if (event.participants && event.participants.length > 0) {
+            participantWarning.style.display = 'block';
+            participantWarning.querySelector('strong').textContent = event.participants.length;
+        } else {
+            participantWarning.style.display = 'none';
+        }
+        
+        // Reset button state
+        confirmButton.disabled = false;
+        confirmButton.innerHTML = '<i class="fas fa-trash"></i> Delete Event';
+        
+        // Show modal
+        modal.style.display = 'block';
+    }
+
+    hideDeleteEventDialog() {
+        const modal = document.getElementById('confirm-delete-event-modal');
+        modal.style.display = 'none';
+        this.currentDeleteEvent = null;
+    }
+
+    async confirmDeleteEvent() {
+        if (!this.currentDeleteEvent) {
+            return;
+        }
+        
+        const confirmButton = document.querySelector('#confirm-delete-event-btn');
+        
+        try {
+            // Set loading state
+            confirmButton.disabled = true;
+            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+            
+            await api.deleteEvent(this.currentDeleteEvent.id);
+            
+            this.hideDeleteEventDialog();
+            await this.refresh();
+            
+            showSuccess(`Event "${this.currentDeleteEvent.name}" deleted successfully`);
+            
+        } catch (error) {
+            console.error('Failed to delete event:', error);
+            
+            // Reset button state
+            confirmButton.disabled = false;
+            confirmButton.innerHTML = '<i class="fas fa-trash"></i> Delete Event';
+            
+            if (error.message.includes('has cost items') || error.message.includes('has expenses')) {
+                showError('Cannot delete event with existing expenses. Remove all expenses first.');
+            } else {
+                showError('Failed to delete event. Please try again.');
+            }
+        }
     }
 
     findEventById(eventId) {
