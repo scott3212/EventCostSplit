@@ -1183,6 +1183,12 @@ class EventDetailPage {
         if (this.elements.confirmDeleteEventModal) {
             this.elements.confirmDeleteEventModal.style.display = 'none';
         }
+        
+        // Reset delete button state for next use
+        if (this.elements.confirmDeleteEventOk) {
+            this.elements.confirmDeleteEventOk.disabled = false;
+            this.elements.confirmDeleteEventOk.innerHTML = 'Delete Event';
+        }
     }
 
     async confirmDeleteEvent() {
