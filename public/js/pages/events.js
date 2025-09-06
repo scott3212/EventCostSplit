@@ -135,39 +135,65 @@ class EventsPage {
             });
         }
 
-        // Delete confirmation modal events
+        // Delete confirmation modal events - Store references for cleanup
+        this.deleteModalHandlers = {
+            confirm: null,
+            cancel: null,
+            close: null,
+            backdrop: null
+        };
+        
+        this.bindDeleteModalEvents();
+    }
+
+    bindDeleteModalEvents() {
         const deleteModal = document.getElementById('confirm-delete-event-modal');
-        if (deleteModal) {
-            const confirmButton = deleteModal.querySelector('#confirm-delete-event-ok');
-            const cancelButton = deleteModal.querySelector('#confirm-delete-event-cancel');
-            const closeButton = deleteModal.querySelector('#confirm-delete-event-close');
+        if (!deleteModal) return;
+        
+        const confirmButton = deleteModal.querySelector('#confirm-delete-event-ok');
+        const cancelButton = deleteModal.querySelector('#confirm-delete-event-cancel');
+        const closeButton = deleteModal.querySelector('#confirm-delete-event-close');
 
-            if (confirmButton) {
-                confirmButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.confirmEventDeletion();
-                });
-            }
-
-            if (cancelButton) {
-                cancelButton.addEventListener('click', () => {
-                    this.hideDeleteEventDialog();
-                });
-            }
-
-            if (closeButton) {
-                closeButton.addEventListener('click', () => {
-                    this.hideDeleteEventDialog();
-                });
-            }
-
-            // Modal backdrop click
-            deleteModal.addEventListener('click', (e) => {
-                if (e.target === deleteModal) {
-                    this.hideDeleteEventDialog();
-                }
-            });
+        // Remove existing event listeners first (to prevent conflicts)
+        if (confirmButton) {
+            // Clone the button to remove all existing listeners
+            const newConfirmButton = confirmButton.cloneNode(true);
+            confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+            
+            this.deleteModalHandlers.confirm = (e) => {
+                e.preventDefault();
+                this.confirmEventDeletion();
+            };
+            newConfirmButton.addEventListener('click', this.deleteModalHandlers.confirm);
         }
+
+        if (cancelButton) {
+            const newCancelButton = cancelButton.cloneNode(true);
+            cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+            
+            this.deleteModalHandlers.cancel = () => {
+                this.hideDeleteEventDialog();
+            };
+            newCancelButton.addEventListener('click', this.deleteModalHandlers.cancel);
+        }
+
+        if (closeButton) {
+            const newCloseButton = closeButton.cloneNode(true);
+            closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+            
+            this.deleteModalHandlers.close = () => {
+                this.hideDeleteEventDialog();
+            };
+            newCloseButton.addEventListener('click', this.deleteModalHandlers.close);
+        }
+
+        // Modal backdrop click
+        this.deleteModalHandlers.backdrop = (e) => {
+            if (e.target === deleteModal) {
+                this.hideDeleteEventDialog();
+            }
+        };
+        deleteModal.addEventListener('click', this.deleteModalHandlers.backdrop);
     }
 
     async loadEvents() {
@@ -625,6 +651,9 @@ class EventsPage {
         const eventData = event.data || event;
         this.currentDeleteEvent = eventData;
         console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
+
+        // Ensure we have exclusive control over modal events
+        this.bindDeleteModalEvents();
         
         const modal = document.getElementById('confirm-delete-event-modal');
         const eventNameSpan = modal.querySelector('#delete-event-name');
@@ -679,12 +708,13 @@ class EventsPage {
             confirmButton.disabled = true;
             confirmButton.innerHTML = 'Deleting...';
             
+            const eventName = this.currentDeleteEvent.name; // Store name before clearing
             await api.deleteEvent(this.currentDeleteEvent.id);
             
             this.hideDeleteEventDialog();
             await this.refresh();
             
-            showSuccess(`Event "${this.currentDeleteEvent.name}" deleted successfully`);
+            showSuccess(`Event "${eventName}" deleted successfully`);
             
         } catch (error) {
             console.error('Failed to delete event:', error);
