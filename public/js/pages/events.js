@@ -143,7 +143,8 @@ class EventsPage {
             const closeButton = deleteModal.querySelector('#confirm-delete-event-close');
 
             if (confirmButton) {
-                confirmButton.addEventListener('click', () => {
+                confirmButton.addEventListener('click', (e) => {
+                    e.preventDefault();
                     this.confirmDeleteEvent();
                 });
             }
@@ -619,7 +620,9 @@ class EventsPage {
     }
 
     showDeleteEventDialog(event, costItems) {
+        console.log('showDeleteEventDialog called with event:', event, 'costItems:', costItems);
         this.currentDeleteEvent = event;
+        console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
         
         const modal = document.getElementById('confirm-delete-event-modal');
         const eventNameSpan = modal.querySelector('#delete-event-name');
@@ -660,7 +663,10 @@ class EventsPage {
     }
 
     async confirmDeleteEvent() {
+        console.log('confirmDeleteEvent called, currentDeleteEvent:', this.currentDeleteEvent);
         if (!this.currentDeleteEvent) {
+            console.error('No event selected for deletion');
+            showError('No event selected for deletion');
             return;
         }
         
