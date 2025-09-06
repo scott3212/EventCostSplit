@@ -143,7 +143,7 @@ class EventsPage {
             backdrop: null
         };
         
-        this.bindDeleteModalEvents();
+        // Don't bind modal events during construction - only during refresh
     }
 
     bindDeleteModalEvents() {
@@ -665,11 +665,8 @@ class EventsPage {
         this.currentDeleteEvent = eventData;
         console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
 
-        // Only rebind modal events if we're on the events page
-        const currentPage = document.querySelector('.page.active')?.id;
-        if (currentPage === 'events-page') {
-            this.bindDeleteModalEvents();
-        }
+        // Don't rebind modal events in showDeleteEventDialog - let refresh handle it
+        // This prevents interference when called from event detail page
         
         const modal = document.getElementById('confirm-delete-event-modal');
         const eventNameSpan = modal.querySelector('#delete-event-name');
