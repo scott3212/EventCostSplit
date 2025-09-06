@@ -712,11 +712,14 @@ class EventsPage {
     }
 
     async confirmEventDeletion() {
-        // IMMEDIATE Guard: Don't interfere if event detail page is active
+        // IMMEDIATE Guard: Don't interfere if event detail page is active OR we don't have the right event
         const eventDetailPage = document.getElementById('event-detail-page');
         const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
         
-        if (isEventDetailActive || !this.currentDeleteEvent) {
+        // Also check if we're trying to delete from events list vs event detail context
+        const currentPage = document.querySelector('.page.active')?.id;
+        
+        if (isEventDetailActive || currentPage !== 'events-page' || !this.currentDeleteEvent) {
             return; // Silently ignore - let event detail page handle it
         }
         const confirmButton = document.querySelector('#confirm-delete-event-ok');
