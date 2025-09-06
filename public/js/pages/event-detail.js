@@ -64,6 +64,9 @@ class EventDetailPage {
             // Edit Event Button
             editEventBtn: document.getElementById('edit-event-btn'),
             
+            // Delete Event Button
+            deleteEventBtn: document.getElementById('delete-event-btn'),
+            
             // Edit Event Modal
             editEventModal: document.getElementById('edit-event-modal'),
             editEventForm: document.getElementById('edit-event-form'),
@@ -94,7 +97,17 @@ class EventDetailPage {
             confirmRemoveParticipantCancel: document.getElementById('confirm-remove-participant-cancel'),
             confirmRemoveParticipantOk: document.getElementById('confirm-remove-participant-ok'),
             removeParticipantName: document.getElementById('remove-participant-name'),
-            removeParticipantWarning: document.getElementById('remove-participant-warning')
+            removeParticipantWarning: document.getElementById('remove-participant-warning'),
+            
+            // Delete Event Confirmation Modal
+            confirmDeleteEventModal: document.getElementById('confirm-delete-event-modal'),
+            confirmDeleteEventClose: document.getElementById('confirm-delete-event-close'),
+            confirmDeleteEventCancel: document.getElementById('confirm-delete-event-cancel'),
+            confirmDeleteEventOk: document.getElementById('confirm-delete-event-ok'),
+            deleteEventName: document.getElementById('delete-event-name'),
+            deleteEventWarning: document.getElementById('delete-event-warning'),
+            deleteEventParticipantsWarning: document.getElementById('delete-event-participants-warning'),
+            deleteEventParticipantCount: document.getElementById('delete-event-participant-count')
         };
     }
 
@@ -162,6 +175,11 @@ class EventDetailPage {
             this.elements.editEventBtn.addEventListener('click', () => this.showEditEventDialog());
         }
 
+        // Delete Event Button
+        if (this.elements.deleteEventBtn) {
+            this.elements.deleteEventBtn.addEventListener('click', () => this.showDeleteEventDialog());
+        }
+
         // Edit Event Modal Events
         if (this.elements.editEventClose) {
             this.elements.editEventClose.addEventListener('click', () => this.hideEditEventDialog());
@@ -205,6 +223,19 @@ class EventDetailPage {
 
         if (this.elements.confirmRemoveParticipantOk) {
             this.elements.confirmRemoveParticipantOk.addEventListener('click', () => this.confirmRemoveParticipant());
+        }
+
+        // Delete Event Confirmation Modal Events
+        if (this.elements.confirmDeleteEventClose) {
+            this.elements.confirmDeleteEventClose.addEventListener('click', () => this.hideDeleteEventDialog());
+        }
+
+        if (this.elements.confirmDeleteEventCancel) {
+            this.elements.confirmDeleteEventCancel.addEventListener('click', () => this.hideDeleteEventDialog());
+        }
+
+        if (this.elements.confirmDeleteEventOk) {
+            this.elements.confirmDeleteEventOk.addEventListener('click', () => this.confirmDeleteEvent());
         }
 
         // Edit Event Real-time validation
@@ -1094,6 +1125,104 @@ class EventDetailPage {
                 this.elements.editEventSave.innerHTML = '<span class="loading-spinner-sm"></span> Updating...';
             } else {
                 this.elements.editEventSave.innerHTML = '<span class="btn-icon">✏️</span> Update Event';
+            }
+        }
+    }
+
+    // Delete Event Methods
+    async showDeleteEventDialog() {
+        if (!this.currentEvent) {
+            showError('No event selected');
+            return;
+        }
+
+        // Set event name in confirmation dialog
+        if (this.elements.deleteEventName) {
+            this.elements.deleteEventName.textContent = this.currentEvent.name;
+        }
+
+        // Check if event has expenses
+        try {
+            const eventExpenses = await api.getEventCostItems(this.currentEventId);
+            const hasExpenses = eventExpenses && eventExpenses.length > 0;
+
+            if (this.elements.deleteEventWarning) {
+                if (hasExpenses) {
+                    this.elements.deleteEventWarning.style.display = 'block';
+                } else {
+                    this.elements.deleteEventWarning.style.display = 'none';
+                }
+            }
+
+            // Show participants warning
+            if (this.elements.deleteEventParticipantsWarning && this.elements.deleteEventParticipantCount) {
+                const participantCount = this.currentEvent.participants ? this.currentEvent.participants.length : 0;
+                if (participantCount > 0) {
+                    this.elements.deleteEventParticipantCount.textContent = participantCount;
+                    this.elements.deleteEventParticipantsWarning.style.display = 'block';
+                } else {
+                    this.elements.deleteEventParticipantsWarning.style.display = 'none';
+                }
+            }
+
+        } catch (error) {
+            console.error('Failed to check event expenses:', error);
+            // Still allow deletion, but show warning
+            if (this.elements.deleteEventWarning) {
+                this.elements.deleteEventWarning.style.display = 'block';
+            }
+        }
+
+        // Show confirmation modal
+        if (this.elements.confirmDeleteEventModal) {
+            this.elements.confirmDeleteEventModal.style.display = 'flex';
+        }
+    }
+
+    hideDeleteEventDialog() {
+        if (this.elements.confirmDeleteEventModal) {
+            this.elements.confirmDeleteEventModal.style.display = 'none';
+        }
+    }
+
+    async confirmDeleteEvent() {
+        if (!this.currentEventId || !this.currentEvent) {
+            showError('No event selected for deletion');
+            return;
+        }
+
+        try {
+            // Disable the delete button to prevent double-deletion
+            if (this.elements.confirmDeleteEventOk) {
+                this.elements.confirmDeleteEventOk.disabled = true;
+                this.elements.confirmDeleteEventOk.innerHTML = '<span class="loading-spinner-sm"></span> Deleting...';
+            }
+
+            // Delete the event via API
+            await api.deleteEvent(this.currentEventId);
+
+            // Hide confirmation dialog
+            this.hideDeleteEventDialog();
+
+            // Show success message
+            showSuccess(`Event "${this.currentEvent.name}" deleted successfully!`);
+
+            // Navigate back to events page
+            this.goBackToEvents();
+
+        } catch (error) {
+            console.error('Failed to delete event:', error);
+            
+            // Re-enable delete button
+            if (this.elements.confirmDeleteEventOk) {
+                this.elements.confirmDeleteEventOk.disabled = false;
+                this.elements.confirmDeleteEventOk.innerHTML = 'Delete Event';
+            }
+
+            if (error.message.includes('has expenses') || error.message.includes('cannot be deleted')) {
+                showError('Cannot delete event: This event has expenses or other dependencies. Please remove all expenses first.');
+            } else {
+                showError('Failed to delete event. Please try again.');
             }
         }
     }

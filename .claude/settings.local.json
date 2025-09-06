@@ -11,7 +11,9 @@
       "Bash(taskkill:*)",
       "Bash(curl:*)",
       "Bash(git rm:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(node:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

@@ -274,6 +274,10 @@
                                         <span class="btn-icon">✏️</span>
                                         Edit Event
                                     </button>
+                                    <button id="delete-event-btn" class="btn btn-danger btn-sm">
+                                        <span class="btn-icon">🗑️</span>
+                                        Delete Event
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -771,6 +775,30 @@
             <div class="modal-footer">
                 <button type="button" id="confirm-remove-participant-cancel" class="btn btn-secondary">Cancel</button>
                 <button type="button" id="confirm-remove-participant-ok" class="btn btn-danger">Remove Participant</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Event Confirmation Modal -->
+    <div id="confirm-delete-event-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>🗑️ Delete Event</h3>
+                <button class="modal-close" id="confirm-delete-event-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the event <strong id="delete-event-name"></strong>?</p>
+                <div id="delete-event-warning" class="alert alert-warning" style="display: none;">
+                    <strong>⚠️ Warning:</strong> This event has expenses. Deleting it will permanently remove all associated expense data and cannot be undone.
+                </div>
+                <div id="delete-event-participants-warning" class="alert alert-warning" style="display: none;">
+                    <strong>👥 Note:</strong> This event has <span id="delete-event-participant-count">0</span> participant(s). All their associations with this event will be removed.
+                </div>
+                <p><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="confirm-delete-event-cancel" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirm-delete-event-ok" class="btn btn-danger">Delete Event</button>
             </div>
         </div>
     </div>
