@@ -163,40 +163,49 @@ class EventsPage {
         const cancelButton = deleteModal.querySelector('#confirm-delete-event-cancel');
         const closeButton = deleteModal.querySelector('#confirm-delete-event-close');
 
-        // Remove existing event listeners first (to prevent conflicts)
+        // Add event listeners without cloning to preserve existing handlers from other pages
         if (confirmButton) {
-            // Clone the button to remove all existing listeners
-            const newConfirmButton = confirmButton.cloneNode(true);
-            confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+            // Remove our previous handler if it exists
+            if (this.deleteModalHandlers.confirm) {
+                confirmButton.removeEventListener('click', this.deleteModalHandlers.confirm);
+            }
             
             this.deleteModalHandlers.confirm = (e) => {
                 e.preventDefault();
                 this.confirmEventDeletion();
             };
-            newConfirmButton.addEventListener('click', this.deleteModalHandlers.confirm);
+            
+            // Add our handler alongside existing ones
+            confirmButton.addEventListener('click', this.deleteModalHandlers.confirm);
         }
 
         if (cancelButton) {
-            const newCancelButton = cancelButton.cloneNode(true);
-            cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+            if (this.deleteModalHandlers.cancel) {
+                cancelButton.removeEventListener('click', this.deleteModalHandlers.cancel);
+            }
             
             this.deleteModalHandlers.cancel = () => {
                 this.hideDeleteEventDialog();
             };
-            newCancelButton.addEventListener('click', this.deleteModalHandlers.cancel);
+            cancelButton.addEventListener('click', this.deleteModalHandlers.cancel);
         }
 
         if (closeButton) {
-            const newCloseButton = closeButton.cloneNode(true);
-            closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+            if (this.deleteModalHandlers.close) {
+                closeButton.removeEventListener('click', this.deleteModalHandlers.close);
+            }
             
             this.deleteModalHandlers.close = () => {
                 this.hideDeleteEventDialog();
             };
-            newCloseButton.addEventListener('click', this.deleteModalHandlers.close);
+            closeButton.addEventListener('click', this.deleteModalHandlers.close);
         }
 
         // Modal backdrop click
+        if (this.deleteModalHandlers.backdrop) {
+            deleteModal.removeEventListener('click', this.deleteModalHandlers.backdrop);
+        }
+        
         this.deleteModalHandlers.backdrop = (e) => {
             if (e.target === deleteModal) {
                 this.hideDeleteEventDialog();
