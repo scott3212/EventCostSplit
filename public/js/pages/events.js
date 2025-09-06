@@ -147,8 +147,16 @@ class EventsPage {
     }
 
     bindDeleteModalEvents() {
+        console.log('bindDeleteModalEvents called - rebinding events list handlers');
         const deleteModal = document.getElementById('confirm-delete-event-modal');
         if (!deleteModal) return;
+        
+        // Only bind if we're actually on the events page right now
+        const currentPage = document.querySelector('.page.active')?.id;
+        if (currentPage !== 'events-page') {
+            console.log('Skipping modal binding - not on events page');
+            return;
+        }
         
         const confirmButton = deleteModal.querySelector('#confirm-delete-event-ok');
         const cancelButton = deleteModal.querySelector('#confirm-delete-event-cancel');
@@ -405,6 +413,8 @@ class EventsPage {
 
     async refresh() {
         await this.loadEvents();
+        // Ensure modal events are bound when we refresh on events page
+        this.bindDeleteModalEvents();
     }
 
     toggleView(view) {
@@ -714,6 +724,7 @@ class EventsPage {
         
         try {
             // Set loading state
+            console.log('Setting button to loading state from events list handler');
             confirmButton.disabled = true;
             confirmButton.innerHTML = 'Deleting...';
             
