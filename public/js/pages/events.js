@@ -151,10 +151,13 @@ class EventsPage {
         const deleteModal = document.getElementById('confirm-delete-event-modal');
         if (!deleteModal) return;
         
-        // Only bind if we're actually on the events page right now
+        // Only bind if we're actually on the events page right now AND event detail is not active
         const currentPage = document.querySelector('.page.active')?.id;
-        if (currentPage !== 'events-page') {
-            console.log('Skipping modal binding - not on events page');
+        const eventDetailPage = document.getElementById('event-detail-page');
+        const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
+        
+        if (currentPage !== 'events-page' || isEventDetailActive) {
+            console.log('Skipping modal binding - not on events page or event detail is active');
             return;
         }
         
