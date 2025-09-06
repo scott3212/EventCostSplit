@@ -147,7 +147,6 @@ class EventsPage {
     }
 
     bindDeleteModalEvents() {
-        console.log('bindDeleteModalEvents called - rebinding events list handlers');
         const deleteModal = document.getElementById('confirm-delete-event-modal');
         if (!deleteModal) return;
         
@@ -157,7 +156,6 @@ class EventsPage {
         const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
         
         if (currentPage !== 'events-page' || isEventDetailActive) {
-            console.log('Skipping modal binding - not on events page or event detail is active');
             return;
         }
         
@@ -659,11 +657,9 @@ class EventsPage {
     }
 
     showDeleteEventDialog(event, costItems) {
-        console.log('showDeleteEventDialog called with event:', event, 'costItems:', costItems);
         // Extract the actual event data from the API response wrapper
         const eventData = event.data || event;
         this.currentDeleteEvent = eventData;
-        console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
 
         // Don't rebind modal events in showDeleteEventDialog - let refresh handle it
         // This prevents interference when called from event detail page
@@ -707,28 +703,17 @@ class EventsPage {
     }
 
     async confirmEventDeletion() {
-        console.log('confirmEventDeletion called, currentDeleteEvent:', this.currentDeleteEvent);
-        
-        // IMMEDIATE Guard: Check before any DOM manipulation
-        const currentPage = document.querySelector('.page.active')?.id;
+        // IMMEDIATE Guard: Don't interfere if event detail page is active
         const eventDetailPage = document.getElementById('event-detail-page');
         const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
         
-        console.log('Current active page:', currentPage, 'currentDeleteEvent exists:', !!this.currentDeleteEvent);
-        console.log('Event detail page active:', isEventDetailActive);
-        
-        if (currentPage !== 'events-page' || isEventDetailActive || !this.currentDeleteEvent) {
-            console.log('Ignoring delete request - currentPage:', currentPage, 'eventDetailActive:', isEventDetailActive, 'currentDeleteEvent:', !!this.currentDeleteEvent);
-            // Don't manipulate button state at all - let the proper handler manage it
-            return;
+        if (isEventDetailActive || !this.currentDeleteEvent) {
+            return; // Silently ignore - let event detail page handle it
         }
-        
-        console.log('Proceeding with events list page deletion');
         const confirmButton = document.querySelector('#confirm-delete-event-ok');
         
         try {
             // Set loading state
-            console.log('Setting button to loading state from events list handler');
             confirmButton.disabled = true;
             confirmButton.innerHTML = 'Deleting...';
             
