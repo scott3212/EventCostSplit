@@ -698,8 +698,10 @@ class EventsPage {
         
         // Guard: Only handle deletion if we're currently on the events page and have an event selected
         const currentPage = document.querySelector('.page.active')?.id;
-        if (currentPage !== 'events' || !this.currentDeleteEvent) {
-            console.log('Ignoring delete request - not on events page or no event selected');
+        console.log('Current active page:', currentPage, 'currentDeleteEvent exists:', !!this.currentDeleteEvent);
+        
+        if (currentPage !== 'events-page' || !this.currentDeleteEvent) {
+            console.log('Ignoring delete request - currentPage:', currentPage, 'currentDeleteEvent:', !!this.currentDeleteEvent);
             return;
         }
         
