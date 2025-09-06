@@ -270,10 +270,7 @@
                                     </div>
                                 </div>
                                 <div class="event-actions">
-                                    <button id="add-expense-btn" class="btn btn-primary">
-                                        <span class="btn-icon">💰</span>
-                                        Add Expense
-                                    </button>
+                                    <!-- Add Expense button moved to expenses section -->
                                 </div>
                             </div>
                         </div>
@@ -334,6 +331,10 @@
                             <div class="expenses-section">
                                 <div class="section-header">
                                     <h3>💰 Expenses</h3>
+                                    <button id="add-expense-btn" class="btn btn-primary btn-sm">
+                                        <span class="btn-icon">💰</span>
+                                        Add Expense
+                                    </button>
                                 </div>
                                 <div id="expenses-loading" class="loading-placeholder" style="display: none;">
                                     Loading expenses...
@@ -345,7 +346,7 @@
                                     <div class="placeholder-content">
                                         <p>💸 No expenses yet</p>
                                         <p>Add the first expense to get started!</p>
-                                        <button class="btn btn-primary" onclick="document.getElementById('add-expense-btn').click()">
+                                        <button id="add-first-expense-btn" class="btn btn-primary">
                                             Add First Expense
                                         </button>
                                     </div>
@@ -630,6 +631,54 @@
                 <button class="btn btn-primary" id="add-event-save">
                     <span class="loading-spinner-sm" id="add-event-spinner" style="display: none;"></span>
                     <span id="add-event-save-text">Create Event</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div id="add-expense-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Add New Expense</h3>
+                <button class="modal-close" id="add-expense-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-expense-form">
+                    <div class="form-group">
+                        <label for="expense-description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <input type="text" id="expense-description" name="description" class="form-input" placeholder="e.g., Court Rental, Shuttlecocks" required>
+                        <div id="expense-description-error" class="form-error" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expense-amount" class="form-label">Amount <span class="text-danger">*</span></label>
+                            <input type="number" id="expense-amount" name="amount" class="form-input" placeholder="0.00" min="0.01" step="0.01" required>
+                            <div id="expense-amount-error" class="form-error" style="display: none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-date" class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" id="expense-date" name="date" class="form-input" required>
+                            <div id="expense-date-error" class="form-error" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-paid-by" class="form-label">Paid By <span class="text-danger">*</span></label>
+                        <select id="expense-paid-by" name="paidBy" class="form-input" required>
+                            <option value="">Select who paid for this expense</option>
+                            <!-- Participants will be loaded here -->
+                        </select>
+                        <div id="expense-paid-by-error" class="form-error" style="display: none;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="add-expense-cancel" class="btn btn-secondary">Cancel</button>
+                <button type="submit" id="add-expense-save" class="btn btn-primary">
+                    <span class="btn-icon">💰</span>
+                    Add Expense
                 </button>
             </div>
         </div>

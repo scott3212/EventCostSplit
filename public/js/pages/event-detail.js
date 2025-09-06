@@ -37,9 +37,29 @@ class EventDetailPage {
             
             // Expenses
             addExpenseBtn: document.getElementById('add-expense-btn'),
+            addFirstExpenseBtn: document.getElementById('add-first-expense-btn'),
             expensesLoading: document.getElementById('expenses-loading'),
             expensesList: document.getElementById('expenses-list'),
-            expensesEmpty: document.getElementById('expenses-empty')
+            expensesEmpty: document.getElementById('expenses-empty'),
+            
+            // Add Expense Modal
+            expenseModal: document.getElementById('add-expense-modal'),
+            expenseForm: document.getElementById('add-expense-form'),
+            expenseClose: document.getElementById('add-expense-close'),
+            expenseCancel: document.getElementById('add-expense-cancel'),
+            expenseSave: document.getElementById('add-expense-save'),
+            
+            // Expense Form Fields
+            expenseDescription: document.getElementById('expense-description'),
+            expenseAmount: document.getElementById('expense-amount'),
+            expenseDate: document.getElementById('expense-date'),
+            expensePaidBy: document.getElementById('expense-paid-by'),
+            
+            // Expense Form Errors
+            expenseDescriptionError: document.getElementById('expense-description-error'),
+            expenseAmountError: document.getElementById('expense-amount-error'),
+            expenseDateError: document.getElementById('expense-date-error'),
+            expensePaidByError: document.getElementById('expense-paid-by-error')
         };
     }
 
@@ -50,6 +70,56 @@ class EventDetailPage {
 
         if (this.elements.addExpenseBtn) {
             this.elements.addExpenseBtn.addEventListener('click', () => this.showAddExpenseDialog());
+        }
+
+        if (this.elements.addFirstExpenseBtn) {
+            this.elements.addFirstExpenseBtn.addEventListener('click', () => this.showAddExpenseDialog());
+        }
+
+        // Expense Modal Events
+        if (this.elements.expenseClose) {
+            this.elements.expenseClose.addEventListener('click', () => this.hideAddExpenseDialog());
+        }
+
+        if (this.elements.expenseCancel) {
+            this.elements.expenseCancel.addEventListener('click', () => this.hideAddExpenseDialog());
+        }
+
+        if (this.elements.expenseSave) {
+            this.elements.expenseSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleAddExpense();
+            });
+        }
+
+        if (this.elements.expenseForm) {
+            this.elements.expenseForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleAddExpense();
+            });
+        }
+
+        // Expense modal backdrop click
+        if (this.elements.expenseModal) {
+            this.elements.expenseModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.expenseModal) {
+                    this.hideAddExpenseDialog();
+                }
+            });
+        }
+
+        // Real-time validation
+        if (this.elements.expenseDescription) {
+            this.elements.expenseDescription.addEventListener('input', () => this.clearExpenseError('description'));
+        }
+        if (this.elements.expenseAmount) {
+            this.elements.expenseAmount.addEventListener('input', () => this.clearExpenseError('amount'));
+        }
+        if (this.elements.expenseDate) {
+            this.elements.expenseDate.addEventListener('change', () => this.clearExpenseError('date'));
+        }
+        if (this.elements.expensePaidBy) {
+            this.elements.expensePaidBy.addEventListener('change', () => this.clearExpenseError('paidBy'));
         }
     }
 
@@ -352,9 +422,201 @@ class EventDetailPage {
         }
     }
 
-    showAddExpenseDialog() {
-        // TODO: Implement add expense dialog
-        showError('Add Expense functionality coming soon!');
+    async showAddExpenseDialog() {
+        if (!this.currentEvent) {
+            showError('No event selected');
+            return;
+        }
+
+        this.resetAddExpenseForm();
+        this.loadExpenseFormParticipants();
+        
+        if (this.elements.expenseModal) {
+            this.elements.expenseModal.style.display = 'flex';
+            this.elements.expenseModal.classList.add('fade-in');
+        }
+
+        // Set default date to today
+        if (this.elements.expenseDate) {
+            const today = new Date();
+            this.elements.expenseDate.value = today.toISOString().split('T')[0];
+        }
+    }
+
+    hideAddExpenseDialog() {
+        if (this.elements.expenseModal) {
+            this.elements.expenseModal.style.display = 'none';
+            this.elements.expenseModal.classList.remove('fade-in');
+        }
+        this.resetAddExpenseForm();
+    }
+
+    resetAddExpenseForm() {
+        if (this.elements.expenseForm) {
+            this.elements.expenseForm.reset();
+        }
+        this.clearAllExpenseErrors();
+    }
+
+    loadExpenseFormParticipants() {
+        if (!this.elements.expensePaidBy) return;
+
+        // Clear existing options
+        this.elements.expensePaidBy.innerHTML = '<option value="">Select who paid for this expense</option>';
+
+        // Add participants as options - use this.participants which contains full user objects
+        if (this.participants && this.participants.length > 0) {
+            this.participants.forEach(participant => {
+                const option = document.createElement('option');
+                option.value = participant.id;
+                option.textContent = participant.name;
+                this.elements.expensePaidBy.appendChild(option);
+            });
+        }
+    }
+
+    async handleAddExpense() {
+        if (!this.validateExpenseForm()) {
+            return;
+        }
+
+        this.setExpenseSaveButtonState(true);
+
+        try {
+            const formData = new FormData(this.elements.expenseForm);
+            const expenseData = {
+                eventId: this.currentEventId,
+                description: formData.get('description'),
+                amount: parseFloat(formData.get('amount')),
+                paidBy: formData.get('paidBy'),
+                date: formData.get('date'),
+                splitPercentage: this.generateEqualSplit()
+            };
+
+            const newExpense = await api.createCostItem(expenseData);
+            
+            this.hideAddExpenseDialog();
+            await this.refresh();
+            
+            showSuccess(`Expense "${newExpense.description}" added successfully!`);
+            
+        } catch (error) {
+            console.error('Failed to create expense:', error);
+            
+            if (error.message.includes('description already exists')) {
+                this.showExpenseError('description', 'An expense with this description already exists');
+            } else if (error.message.includes('amount')) {
+                this.showExpenseError('amount', 'Invalid amount');
+            } else if (error.message.includes('paidBy')) {
+                this.showExpenseError('paidBy', 'Please select who paid for this expense');
+            } else {
+                showError('Failed to create expense. Please try again.');
+            }
+        } finally {
+            this.setExpenseSaveButtonState(false);
+        }
+    }
+
+    validateExpenseForm() {
+        let isValid = true;
+        this.clearAllExpenseErrors();
+
+        // Validate description
+        if (!this.elements.expenseDescription.value.trim()) {
+            this.showExpenseError('description', 'Description is required');
+            isValid = false;
+        } else if (this.elements.expenseDescription.value.trim().length < 2) {
+            this.showExpenseError('description', 'Description must be at least 2 characters');
+            isValid = false;
+        }
+
+        // Validate amount
+        const amount = parseFloat(this.elements.expenseAmount.value);
+        if (!this.elements.expenseAmount.value || isNaN(amount)) {
+            this.showExpenseError('amount', 'Amount is required');
+            isValid = false;
+        } else if (amount <= 0) {
+            this.showExpenseError('amount', 'Amount must be greater than 0');
+            isValid = false;
+        }
+
+        // Validate date
+        if (!this.elements.expenseDate.value) {
+            this.showExpenseError('date', 'Date is required');
+            isValid = false;
+        }
+
+        // Validate paidBy
+        if (!this.elements.expensePaidBy.value) {
+            this.showExpenseError('paidBy', 'Please select who paid for this expense');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    showExpenseError(field, message) {
+        const errorElement = this.elements[`expense${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    }
+
+    clearExpenseError(field) {
+        const errorElement = this.elements[`expense${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+        }
+    }
+
+    clearAllExpenseErrors() {
+        ['description', 'amount', 'date', 'paidBy'].forEach(field => {
+            this.clearExpenseError(field);
+        });
+    }
+
+    setExpenseSaveButtonState(isLoading) {
+        if (this.elements.expenseSave) {
+            this.elements.expenseSave.disabled = isLoading;
+            if (isLoading) {
+                this.elements.expenseSave.innerHTML = '<span class="loading-spinner-sm"></span> Adding...';
+            } else {
+                this.elements.expenseSave.innerHTML = '<span class="btn-icon">💰</span> Add Expense';
+            }
+        }
+    }
+
+    generateEqualSplit() {
+        if (!this.currentEvent || !this.currentEvent.participants) {
+            return {};
+        }
+
+        // Use the participant IDs directly (currentEvent.participants is an array of ID strings)
+        const participantIds = this.currentEvent.participants;
+        const participantCount = participantIds.length;
+        
+        if (participantCount === 0) {
+            return {};
+        }
+
+        // Calculate equal percentages
+        const basePercentage = Math.floor((100 / participantCount) * 100) / 100;
+        const splitPercentage = {};
+        let totalAssigned = 0;
+
+        // Assign base percentage to all but last participant
+        for (let i = 0; i < participantCount - 1; i++) {
+            splitPercentage[participantIds[i]] = basePercentage;
+            totalAssigned += basePercentage;
+        }
+
+        // Give remaining to last participant (handles rounding)
+        const remaining = Math.round((100 - totalAssigned) * 100) / 100;
+        splitPercentage[participantIds[participantCount - 1]] = remaining;
+
+        return splitPercentage;
     }
 
     async refresh() {

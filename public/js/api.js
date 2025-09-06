@@ -113,7 +113,8 @@ class ApiClient {
     }
 
     async createEvent(eventData) {
-        return this.post('/events', eventData);
+        const response = await this.post('/events', eventData);
+        return response.data || response;
     }
 
     async updateEvent(id, eventData) {
@@ -163,7 +164,8 @@ class ApiClient {
     }
 
     async createCostItem(costItemData) {
-        return this.post('/cost-items', costItemData);
+        const response = await this.post('/cost-items', costItemData);
+        return response.data || response;
     }
 
     async updateCostItem(id, costItemData) {
@@ -184,7 +186,8 @@ class ApiClient {
     }
 
     async createPayment(paymentData) {
-        return this.post('/payments', paymentData);
+        const response = await this.post('/payments', paymentData);
+        return response.data || response;
     }
 
     async updatePayment(id, paymentData) {

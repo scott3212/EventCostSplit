@@ -339,11 +339,13 @@ Event management UI is now complete. The next critical milestone is implementing
 
 #### **Implementation Plan for Expense Management:**
 
-**Phase 4.6.1: Add Expense Dialog (3-4 hours)**
-- [ ] Replace "coming soon" with functional expense creation modal  
-- [ ] Expense form: description, amount, paid by, date fields
-- [ ] Form validation and error handling
-- [ ] API integration with success/error feedback
+**Phase 4.6.1: Add Expense Dialog (3-4 hours) ✅ COMPLETE**
+- [x] Replace "coming soon" with functional expense creation modal  
+- [x] Expense form: description, amount, paid by, date fields
+- [x] Form validation and error handling
+- [x] API integration with success/error feedback
+- [x] Equal split percentage generation for all participants
+- [x] UI/UX improvements and CSP compliance fixes
 
 **Phase 4.6.2: Split Configuration UI (4-5 hours)** 
 - [ ] Interactive participant selection for expense splitting
@@ -531,22 +533,65 @@ During bug fix investigation, we discovered that significantly more functionalit
    - Consistent error/success messaging system
    - Dashboard with real-time statistics and activity overview
 
-#### **⚠️ NEXT CRITICAL IMPLEMENTATION: Expense Management**
-The core user journey is **80% complete**:
-- ✅ Create Users → ✅ Create Events → ❌ Add Expenses → ❌ Configure Splits
+#### **🎯 CURRENT STATUS: Expense Management - Phase 4.6.1 Complete**
+The core user journey is **90% complete**:
+- ✅ Create Users → ✅ Create Events → ✅ Add Expenses → ⚠️ Configure Custom Splits
 
-**Immediate Next Priority (Phase 4.3): Expense/Cost Item Management**
-- Replace "Add Expense functionality coming soon!" with functional expense creation
-- Implement split percentage configuration UI (the interactive sliders from requirements)
-- Complete expense list display within event detail pages
-- Add expense editing and deletion capabilities
+**Phase 4.6.1 ✅ COMPLETED (September 2024): Add Expense Dialog**
+- ✅ Replaced "Add Expense functionality coming soon!" with functional expense creation modal
+- ✅ Complete expense form with description, amount, date, paid by fields  
+- ✅ Comprehensive form validation with real-time error clearing
+- ✅ API integration with success/error feedback
+- ✅ Automatic equal split percentage generation for all event participants
+- ✅ Improved UX: Moved "Add Expense" button to expenses section header
+- ✅ CSP compliance: Fixed inline event handler violations
+- ✅ Multiple expenses per event supported
+
+**Next Priority (Phase 4.6.2): Split Configuration UI**
+- Implement interactive split percentage configuration (custom percentages)
+- Real-time calculation display showing dollar amounts per person
+- Visual percentage/amount controls for advanced users
+- Option to exclude participants from specific expenses
 
 **Secondary Priorities:**
 - Payments page functionality (settlement recording and suggestions)
 - Enhanced analytics and reporting features
 
 #### **Why This Matters:**
-The application is much closer to being feature-complete than previously understood. We're not at "Phase 3 Foundation" - we're at **"Phase 4 Advanced Features - 80% Complete"**. The final 20% is primarily expense management, which is the core value proposition of the application.
+The application is much closer to being feature-complete than previously understood. We're not at "Phase 3 Foundation" - we're at **"Phase 4 Advanced Features - 90% Complete"**. The core user journey is now functional with only split configuration customization remaining.
+
+## Recent Implementation: Phase 4.6.1 - Add Expense Dialog (September 2024)
+
+### **Major Milestone Achieved**
+Successfully implemented complete expense creation functionality, moving from 80% to 90% completion of the core user journey.
+
+#### **Implementation Details**
+**Files Modified:**
+- `public/index.html` - Added expense modal HTML structure and moved "Add Expense" button to expenses section
+- `public/js/pages/event-detail.js` - Complete expense dialog implementation with validation and API integration
+- `public/js/api.js` - Fixed API response handling for createEvent, createCostItem, and createPayment methods
+
+**Key Features Implemented:**
+- ✅ **Complete Expense Modal** - Professional modal with description, amount, date, and "paid by" fields
+- ✅ **Form Validation** - Real-time validation with user-friendly error messages
+- ✅ **API Integration** - Full create expense workflow with error handling and success feedback
+- ✅ **Equal Split Generation** - Automatic percentage calculation for all event participants
+- ✅ **Multiple Expenses Support** - Users can add unlimited expenses to each event
+- ✅ **UI/UX Improvements** - Better button placement and CSP compliance
+- ✅ **Bug Fixes** - Fixed undefined success messages and CSP violations
+
+#### **User Journey Now Complete:**
+1. ✅ **Create Users** - Add users to the system with contact info
+2. ✅ **Create Events** - Create events and add participants from user pool  
+3. ✅ **Add Expenses** - Add multiple expenses with automatic equal splitting
+4. ⚠️ **Custom Splits** - (Next phase) Allow custom percentage splits
+
+#### **Testing Results:**
+- ✅ Backend API integration verified (expense creation working)
+- ✅ Frontend form validation working correctly
+- ✅ Equal split percentage generation tested with 5-participant event
+- ✅ Multiple expenses per event confirmed working
+- ✅ UI improvements verified (button in expenses section, CSP compliant)
 
 This context should help resume development on any machine or with any developer.
 - Always remember to update docs including CLAUDE.md after any implementation
