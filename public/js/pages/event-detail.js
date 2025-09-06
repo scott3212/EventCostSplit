@@ -1192,8 +1192,21 @@ class EventDetailPage {
     }
 
     async confirmDeleteEvent() {
-        if (!this.currentEventId || !this.currentEvent) {
-            showError('No event selected for deletion');
+        // Only proceed if the delete dialog was initiated from this page
+        const deleteModal = document.getElementById('confirm-delete-event-modal');
+        const isModalVisible = deleteModal && deleteModal.style.display !== 'none';
+        const eventDetailPage = document.getElementById('event-detail-page');
+        const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
+        
+        if (!isModalVisible || !isEventDetailActive || !this.currentEventId || !this.currentEvent) {
+            // If modal isn't visible or we're not on event detail page, don't handle
+            return;
+        }
+        
+        // Additional check: make sure the modal is showing OUR event
+        const eventNameSpan = deleteModal.querySelector('#delete-event-name');
+        if (eventNameSpan && eventNameSpan.textContent !== this.currentEvent.name) {
+            // Modal is showing a different event - don't handle
             return;
         }
 
