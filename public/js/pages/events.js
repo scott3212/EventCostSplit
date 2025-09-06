@@ -652,8 +652,11 @@ class EventsPage {
         this.currentDeleteEvent = eventData;
         console.log('Set this.currentDeleteEvent to:', this.currentDeleteEvent);
 
-        // Ensure we have exclusive control over modal events
-        this.bindDeleteModalEvents();
+        // Only rebind modal events if we're on the events page
+        const currentPage = document.querySelector('.page.active')?.id;
+        if (currentPage === 'events-page') {
+            this.bindDeleteModalEvents();
+        }
         
         const modal = document.getElementById('confirm-delete-event-modal');
         const eventNameSpan = modal.querySelector('#delete-event-name');
