@@ -705,6 +705,14 @@ class EventsPage {
         
         if (currentPage !== 'events-page' || !this.currentDeleteEvent) {
             console.log('Ignoring delete request - currentPage:', currentPage, 'currentDeleteEvent:', !!this.currentDeleteEvent);
+            
+            // Reset button state if it was modified by this handler before being blocked
+            const confirmButton = document.querySelector('#confirm-delete-event-ok');
+            if (confirmButton && confirmButton.disabled) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = 'Delete Event';
+            }
+            
             return;
         }
         
