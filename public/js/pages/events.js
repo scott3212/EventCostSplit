@@ -150,12 +150,14 @@ class EventsPage {
         const deleteModal = document.getElementById('confirm-delete-event-modal');
         if (!deleteModal) return;
         
-        // Only bind if we're actually on the events page right now AND event detail is not active
-        const currentPage = document.querySelector('.page.active')?.id;
-        const eventDetailPage = document.getElementById('event-detail-page');
-        const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
+        // NEVER touch modal if event detail page is initialized - it manages its own handlers
+        if (window.eventDetailPage && window.eventDetailPage.isInitialized) {
+            return;
+        }
         
-        if (currentPage !== 'events-page' || isEventDetailActive) {
+        // Only bind if we're actually on the events page right now
+        const currentPage = document.querySelector('.page.active')?.id;
+        if (currentPage !== 'events-page') {
             return;
         }
         
