@@ -711,10 +711,14 @@ class EventsPage {
         
         // IMMEDIATE Guard: Check before any DOM manipulation
         const currentPage = document.querySelector('.page.active')?.id;
-        console.log('Current active page:', currentPage, 'currentDeleteEvent exists:', !!this.currentDeleteEvent);
+        const eventDetailPage = document.getElementById('event-detail-page');
+        const isEventDetailActive = eventDetailPage && eventDetailPage.style.display !== 'none';
         
-        if (currentPage !== 'events-page' || !this.currentDeleteEvent) {
-            console.log('Ignoring delete request - currentPage:', currentPage, 'currentDeleteEvent:', !!this.currentDeleteEvent);
+        console.log('Current active page:', currentPage, 'currentDeleteEvent exists:', !!this.currentDeleteEvent);
+        console.log('Event detail page active:', isEventDetailActive);
+        
+        if (currentPage !== 'events-page' || isEventDetailActive || !this.currentDeleteEvent) {
+            console.log('Ignoring delete request - currentPage:', currentPage, 'eventDetailActive:', isEventDetailActive, 'currentDeleteEvent:', !!this.currentDeleteEvent);
             // Don't manipulate button state at all - let the proper handler manage it
             return;
         }
