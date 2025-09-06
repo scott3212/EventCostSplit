@@ -138,9 +138,9 @@ class EventsPage {
         // Delete confirmation modal events
         const deleteModal = document.getElementById('confirm-delete-event-modal');
         if (deleteModal) {
-            const confirmButton = deleteModal.querySelector('#confirm-delete-event-btn');
-            const cancelButton = deleteModal.querySelector('#cancel-delete-event-btn');
-            const closeButton = deleteModal.querySelector('.close');
+            const confirmButton = deleteModal.querySelector('#confirm-delete-event-ok');
+            const cancelButton = deleteModal.querySelector('#confirm-delete-event-cancel');
+            const closeButton = deleteModal.querySelector('#confirm-delete-event-close');
 
             if (confirmButton) {
                 confirmButton.addEventListener('click', () => {
@@ -623,9 +623,10 @@ class EventsPage {
         
         const modal = document.getElementById('confirm-delete-event-modal');
         const eventNameSpan = modal.querySelector('#delete-event-name');
-        const expenseWarning = modal.querySelector('#delete-expense-warning');
-        const participantWarning = modal.querySelector('#delete-participant-warning');
-        const confirmButton = modal.querySelector('#confirm-delete-event-btn');
+        const expenseWarning = modal.querySelector('#delete-event-warning');
+        const participantWarning = modal.querySelector('#delete-event-participants-warning');
+        const participantCountSpan = modal.querySelector('#delete-event-participant-count');
+        const confirmButton = modal.querySelector('#confirm-delete-event-ok');
         
         // Set event name
         eventNameSpan.textContent = event.name;
@@ -633,21 +634,20 @@ class EventsPage {
         // Show appropriate warnings
         if (costItems && costItems.length > 0) {
             expenseWarning.style.display = 'block';
-            expenseWarning.querySelector('strong').textContent = costItems.length;
         } else {
             expenseWarning.style.display = 'none';
         }
         
         if (event.participants && event.participants.length > 0) {
             participantWarning.style.display = 'block';
-            participantWarning.querySelector('strong').textContent = event.participants.length;
+            participantCountSpan.textContent = event.participants.length;
         } else {
             participantWarning.style.display = 'none';
         }
         
         // Reset button state
         confirmButton.disabled = false;
-        confirmButton.innerHTML = '<i class="fas fa-trash"></i> Delete Event';
+        confirmButton.innerHTML = 'Delete Event';
         
         // Show modal
         modal.style.display = 'block';
@@ -664,12 +664,12 @@ class EventsPage {
             return;
         }
         
-        const confirmButton = document.querySelector('#confirm-delete-event-btn');
+        const confirmButton = document.querySelector('#confirm-delete-event-ok');
         
         try {
             // Set loading state
             confirmButton.disabled = true;
-            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+            confirmButton.innerHTML = 'Deleting...';
             
             await api.deleteEvent(this.currentDeleteEvent.id);
             
@@ -683,7 +683,7 @@ class EventsPage {
             
             // Reset button state
             confirmButton.disabled = false;
-            confirmButton.innerHTML = '<i class="fas fa-trash"></i> Delete Event';
+            confirmButton.innerHTML = 'Delete Event';
             
             if (error.message.includes('has cost items') || error.message.includes('has expenses')) {
                 showError('Cannot delete event with existing expenses. Remove all expenses first.');
