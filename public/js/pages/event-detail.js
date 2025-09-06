@@ -59,7 +59,42 @@ class EventDetailPage {
             expenseDescriptionError: document.getElementById('expense-description-error'),
             expenseAmountError: document.getElementById('expense-amount-error'),
             expenseDateError: document.getElementById('expense-date-error'),
-            expensePaidByError: document.getElementById('expense-paid-by-error')
+            expensePaidByError: document.getElementById('expense-paid-by-error'),
+            
+            // Edit Event Button
+            editEventBtn: document.getElementById('edit-event-btn'),
+            
+            // Edit Event Modal
+            editEventModal: document.getElementById('edit-event-modal'),
+            editEventForm: document.getElementById('edit-event-form'),
+            editEventClose: document.getElementById('edit-event-close'),
+            editEventCancel: document.getElementById('edit-event-cancel'),
+            editEventSave: document.getElementById('edit-event-save'),
+            
+            // Edit Event Form Fields
+            editEventName: document.getElementById('edit-event-name'),
+            editEventDate: document.getElementById('edit-event-date'),
+            editEventLocation: document.getElementById('edit-event-location'),
+            editEventDescription: document.getElementById('edit-event-description'),
+            
+            // Edit Event Form Errors
+            editEventNameError: document.getElementById('edit-event-name-error'),
+            editEventDateError: document.getElementById('edit-event-date-error'),
+            editEventLocationError: document.getElementById('edit-event-location-error'),
+            
+            // Participant Management
+            editParticipantsLoading: document.getElementById('edit-participants-loading'),
+            editCurrentParticipants: document.getElementById('edit-current-participants'),
+            editAvailableParticipants: document.getElementById('edit-available-participants'),
+            editParticipantsError: document.getElementById('edit-participants-error'),
+            
+            // Remove Participant Confirmation Modal
+            confirmRemoveParticipantModal: document.getElementById('confirm-remove-participant-modal'),
+            confirmRemoveParticipantClose: document.getElementById('confirm-remove-participant-close'),
+            confirmRemoveParticipantCancel: document.getElementById('confirm-remove-participant-cancel'),
+            confirmRemoveParticipantOk: document.getElementById('confirm-remove-participant-ok'),
+            removeParticipantName: document.getElementById('remove-participant-name'),
+            removeParticipantWarning: document.getElementById('remove-participant-warning')
         };
     }
 
@@ -121,6 +156,80 @@ class EventDetailPage {
         if (this.elements.expensePaidBy) {
             this.elements.expensePaidBy.addEventListener('change', () => this.clearExpenseError('paidBy'));
         }
+
+        // Edit Event Button
+        if (this.elements.editEventBtn) {
+            this.elements.editEventBtn.addEventListener('click', () => this.showEditEventDialog());
+        }
+
+        // Edit Event Modal Events
+        if (this.elements.editEventClose) {
+            this.elements.editEventClose.addEventListener('click', () => this.hideEditEventDialog());
+        }
+
+        if (this.elements.editEventCancel) {
+            this.elements.editEventCancel.addEventListener('click', () => this.hideEditEventDialog());
+        }
+
+        if (this.elements.editEventSave) {
+            this.elements.editEventSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleEditEvent();
+            });
+        }
+
+        if (this.elements.editEventForm) {
+            this.elements.editEventForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEditEvent();
+            });
+        }
+
+        // Edit Event modal backdrop click
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.editEventModal) {
+                    this.hideEditEventDialog();
+                }
+            });
+        }
+
+        // Remove Participant Confirmation Modal Events
+        if (this.elements.confirmRemoveParticipantClose) {
+            this.elements.confirmRemoveParticipantClose.addEventListener('click', () => this.hideRemoveParticipantDialog());
+        }
+
+        if (this.elements.confirmRemoveParticipantCancel) {
+            this.elements.confirmRemoveParticipantCancel.addEventListener('click', () => this.hideRemoveParticipantDialog());
+        }
+
+        if (this.elements.confirmRemoveParticipantOk) {
+            this.elements.confirmRemoveParticipantOk.addEventListener('click', () => this.confirmRemoveParticipant());
+        }
+
+        // Edit Event Real-time validation
+        if (this.elements.editEventName) {
+            this.elements.editEventName.addEventListener('input', () => this.clearEditEventError('name'));
+        }
+        if (this.elements.editEventDate) {
+            this.elements.editEventDate.addEventListener('change', () => this.clearEditEventError('date'));
+        }
+        if (this.elements.editEventLocation) {
+            this.elements.editEventLocation.addEventListener('input', () => this.clearEditEventError('location'));
+        }
+
+        // Event delegation for participant management buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.participant-action-btn[data-action="add"]')) {
+                const participantId = e.target.getAttribute('data-participant-id');
+                this.addParticipant(participantId);
+            } else if (e.target.matches('.participant-action-btn[data-action="remove"]')) {
+                const participantId = e.target.getAttribute('data-participant-id');
+                const participantName = e.target.getAttribute('data-participant-name');
+                const hasExpenses = e.target.getAttribute('data-has-expenses') === 'true';
+                this.showRemoveParticipantDialog(participantId, participantName, hasExpenses);
+            }
+        });
     }
 
     async showEvent(eventId) {
@@ -617,6 +726,376 @@ class EventDetailPage {
         splitPercentage[participantIds[participantCount - 1]] = remaining;
 
         return splitPercentage;
+    }
+
+    // Edit Event Methods
+    async showEditEventDialog() {
+        if (!this.currentEvent) {
+            showError('No event selected');
+            return;
+        }
+
+        this.resetEditEventForm();
+        await this.loadEditEventData();
+        
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.style.display = 'flex';
+            this.elements.editEventModal.classList.add('fade-in');
+        }
+    }
+
+    hideEditEventDialog() {
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.style.display = 'none';
+            this.elements.editEventModal.classList.remove('fade-in');
+        }
+        this.resetEditEventForm();
+    }
+
+    async loadEditEventData() {
+        // Pre-populate form fields with current event data
+        if (this.elements.editEventName) {
+            this.elements.editEventName.value = this.currentEvent.name || '';
+        }
+        
+        if (this.elements.editEventDate) {
+            // Convert date to YYYY-MM-DD format for date input
+            let dateValue = '';
+            if (this.currentEvent.date) {
+                const eventDate = this.parseDateSafely(this.currentEvent.date);
+                dateValue = eventDate.toISOString().split('T')[0];
+            }
+            this.elements.editEventDate.value = dateValue;
+        }
+        
+        if (this.elements.editEventLocation) {
+            this.elements.editEventLocation.value = this.currentEvent.location || '';
+        }
+        
+        if (this.elements.editEventDescription) {
+            this.elements.editEventDescription.value = this.currentEvent.description || '';
+        }
+
+        // Load participant management data
+        await this.loadParticipantManagement();
+    }
+
+    async loadParticipantManagement() {
+        if (this.elements.editParticipantsLoading) {
+            this.elements.editParticipantsLoading.style.display = 'block';
+        }
+
+        try {
+            // Get all users and current event expenses
+            const [allUsers, eventExpenses] = await Promise.all([
+                api.getUsers(),
+                api.getEventCostItems(this.currentEventId)
+            ]);
+
+            // Create a set of participant IDs who have expenses
+            const participantsWithExpenses = new Set();
+            if (eventExpenses && eventExpenses.length > 0) {
+                eventExpenses.forEach(expense => {
+                    if (expense.paidBy) {
+                        participantsWithExpenses.add(expense.paidBy);
+                    }
+                    if (expense.splitPercentage) {
+                        Object.keys(expense.splitPercentage).forEach(participantId => {
+                            if (expense.splitPercentage[participantId] > 0) {
+                                participantsWithExpenses.add(participantId);
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Render current participants
+            this.renderCurrentParticipants(allUsers, participantsWithExpenses);
+            
+            // Render available participants (not currently in event)
+            this.renderAvailableParticipants(allUsers);
+
+        } catch (error) {
+            console.error('Failed to load participant management data:', error);
+            this.showEditEventError('participants', 'Failed to load participants. Please try again.');
+        } finally {
+            if (this.elements.editParticipantsLoading) {
+                this.elements.editParticipantsLoading.style.display = 'none';
+            }
+        }
+    }
+
+    renderCurrentParticipants(allUsers, participantsWithExpenses) {
+        if (!this.elements.editCurrentParticipants) return;
+
+        const currentParticipantIds = this.currentEvent.participants || [];
+        const currentParticipants = allUsers.filter(user => 
+            currentParticipantIds.includes(user.id)
+        );
+
+        if (currentParticipants.length === 0) {
+            this.elements.editCurrentParticipants.innerHTML = `
+                <div class="section-placeholder">
+                    <p>No participants in this event.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const participantsHtml = currentParticipants.map(participant => {
+            const hasExpenses = participantsWithExpenses.has(participant.id);
+            const contact = [];
+            if (participant.email) contact.push(participant.email);
+            if (participant.phone) contact.push(participant.phone);
+
+            return `
+                <div class="participant-item current-participant ${hasExpenses ? 'has-expenses' : ''}">
+                    <div class="participant-item-info">
+                        <div class="participant-item-name">${participant.name}</div>
+                        ${contact.length > 0 ? `<div class="participant-item-details">${contact.join(' • ')}</div>` : ''}
+                        ${hasExpenses ? `<div class="expense-warning">Has expenses in this event</div>` : ''}
+                    </div>
+                    <div class="participant-item-actions">
+                        <button class="participant-action-btn btn-remove" data-action="remove" data-participant-id="${participant.id}" data-participant-name="${participant.name}" data-has-expenses="${hasExpenses}">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.elements.editCurrentParticipants.innerHTML = participantsHtml;
+    }
+
+    renderAvailableParticipants(allUsers) {
+        if (!this.elements.editAvailableParticipants) return;
+
+        const currentParticipantIds = this.currentEvent.participants || [];
+        const availableParticipants = allUsers.filter(user => 
+            !currentParticipantIds.includes(user.id)
+        );
+
+        if (availableParticipants.length === 0) {
+            this.elements.editAvailableParticipants.innerHTML = `
+                <div class="section-placeholder">
+                    <p>All users are already participants in this event.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const participantsHtml = availableParticipants.map(participant => {
+            const contact = [];
+            if (participant.email) contact.push(participant.email);
+            if (participant.phone) contact.push(participant.phone);
+
+            return `
+                <div class="participant-item">
+                    <div class="participant-item-info">
+                        <div class="participant-item-name">${participant.name}</div>
+                        ${contact.length > 0 ? `<div class="participant-item-details">${contact.join(' • ')}</div>` : ''}
+                    </div>
+                    <div class="participant-item-actions">
+                        <button class="participant-action-btn btn-add" data-action="add" data-participant-id="${participant.id}">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.elements.editAvailableParticipants.innerHTML = participantsHtml;
+    }
+
+    async addParticipant(participantId) {
+        try {
+            // Add participant to current event data
+            if (!this.currentEvent.participants) {
+                this.currentEvent.participants = [];
+            }
+            
+            if (!this.currentEvent.participants.includes(participantId)) {
+                this.currentEvent.participants.push(participantId);
+                
+                // Reload participant management UI
+                await this.loadParticipantManagement();
+            }
+        } catch (error) {
+            console.error('Failed to add participant:', error);
+            showError('Failed to add participant. Please try again.');
+        }
+    }
+
+    showRemoveParticipantDialog(participantId, participantName, hasExpenses) {
+        this.participantToRemove = participantId;
+        
+        if (this.elements.removeParticipantName) {
+            this.elements.removeParticipantName.textContent = participantName;
+        }
+        
+        if (this.elements.removeParticipantWarning) {
+            if (hasExpenses) {
+                this.elements.removeParticipantWarning.style.display = 'block';
+            } else {
+                this.elements.removeParticipantWarning.style.display = 'none';
+            }
+        }
+        
+        if (this.elements.confirmRemoveParticipantModal) {
+            this.elements.confirmRemoveParticipantModal.style.display = 'flex';
+        }
+    }
+
+    hideRemoveParticipantDialog() {
+        this.participantToRemove = null;
+        
+        if (this.elements.confirmRemoveParticipantModal) {
+            this.elements.confirmRemoveParticipantModal.style.display = 'none';
+        }
+    }
+
+    async confirmRemoveParticipant() {
+        if (!this.participantToRemove) return;
+
+        try {
+            // Remove participant from current event data
+            if (this.currentEvent.participants) {
+                const index = this.currentEvent.participants.indexOf(this.participantToRemove);
+                if (index > -1) {
+                    this.currentEvent.participants.splice(index, 1);
+                    
+                    // Reload participant management UI
+                    await this.loadParticipantManagement();
+                }
+            }
+            
+            this.hideRemoveParticipantDialog();
+        } catch (error) {
+            console.error('Failed to remove participant:', error);
+            showError('Failed to remove participant. Please try again.');
+        }
+    }
+
+    async handleEditEvent() {
+        if (!this.validateEditEventForm()) {
+            return;
+        }
+
+        this.setEditEventSaveButtonState(true);
+
+        try {
+            const formData = new FormData(this.elements.editEventForm);
+            const eventData = {
+                name: formData.get('name').trim(),
+                date: formData.get('date'),
+                location: formData.get('location').trim(),
+                description: formData.get('description') ? formData.get('description').trim() : '',
+                participants: this.currentEvent.participants
+            };
+
+            const updatedEvent = await api.updateEvent(this.currentEventId, eventData);
+            
+            this.hideEditEventDialog();
+            await this.refresh();
+            
+            showSuccess(`Event "${updatedEvent.name}" updated successfully!`);
+            
+        } catch (error) {
+            console.error('Failed to update event:', error);
+            
+            if (error.message.includes('name already exists')) {
+                this.showEditEventError('name', 'An event with this name already exists');
+            } else if (error.message.includes('participants')) {
+                this.showEditEventError('participants', 'At least one participant is required');
+            } else {
+                showError('Failed to update event. Please try again.');
+            }
+        } finally {
+            this.setEditEventSaveButtonState(false);
+        }
+    }
+
+    validateEditEventForm() {
+        let isValid = true;
+        this.clearAllEditEventErrors();
+
+        // Validate name
+        if (!this.elements.editEventName.value.trim()) {
+            this.showEditEventError('name', 'Event name is required');
+            isValid = false;
+        } else if (this.elements.editEventName.value.trim().length < 2) {
+            this.showEditEventError('name', 'Event name must be at least 2 characters');
+            isValid = false;
+        }
+
+        // Validate date
+        if (!this.elements.editEventDate.value) {
+            this.showEditEventError('date', 'Date is required');
+            isValid = false;
+        }
+
+        // Validate location
+        if (!this.elements.editEventLocation.value.trim()) {
+            this.showEditEventError('location', 'Location is required');
+            isValid = false;
+        } else if (this.elements.editEventLocation.value.trim().length < 2) {
+            this.showEditEventError('location', 'Location must be at least 2 characters');
+            isValid = false;
+        }
+
+        // Validate participants
+        if (!this.currentEvent.participants || this.currentEvent.participants.length === 0) {
+            this.showEditEventError('participants', 'At least one participant is required');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    showEditEventError(field, message) {
+        const errorElement = this.elements[`editEvent${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    }
+
+    clearEditEventError(field) {
+        const errorElement = this.elements[`editEvent${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+        }
+    }
+
+    clearAllEditEventErrors() {
+        ['name', 'date', 'location'].forEach(field => {
+            this.clearEditEventError(field);
+        });
+        
+        // Clear participants error manually since it has a different pattern
+        if (this.elements.editParticipantsError) {
+            this.elements.editParticipantsError.style.display = 'none';
+            this.elements.editParticipantsError.textContent = '';
+        }
+    }
+
+    resetEditEventForm() {
+        if (this.elements.editEventForm) {
+            this.elements.editEventForm.reset();
+        }
+        this.clearAllEditEventErrors();
+    }
+
+    setEditEventSaveButtonState(isLoading) {
+        if (this.elements.editEventSave) {
+            this.elements.editEventSave.disabled = isLoading;
+            if (isLoading) {
+                this.elements.editEventSave.innerHTML = '<span class="loading-spinner-sm"></span> Updating...';
+            } else {
+                this.elements.editEventSave.innerHTML = '<span class="btn-icon">✏️</span> Update Event';
+            }
+        }
     }
 
     async refresh() {

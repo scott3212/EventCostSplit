@@ -1658,3 +1658,169 @@
         font-weight: 600;
     }
 }
+
+/* Participant Management Styles */
+.participant-management {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.current-participants,
+.add-participants {
+    margin-bottom: 1rem;
+}
+
+.current-participants:last-child,
+.add-participants:last-child {
+    margin-bottom: 0;
+}
+
+.current-participants h5,
+.add-participants h5 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.participant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.participant-item:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.participant-item.current-participant {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.participant-item.current-participant:hover {
+    background: #fef3c7;
+}
+
+.participant-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.participant-item-name {
+    font-weight: 500;
+    color: #111827;
+}
+
+.participant-item-details {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.participant-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.participant-action-btn {
+    background: none;
+    border: 1px solid #d1d5db;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.participant-action-btn.btn-add {
+    color: #16a34a;
+    border-color: #16a34a;
+}
+
+.participant-action-btn.btn-add:hover {
+    background: #16a34a;
+    color: white;
+}
+
+.participant-action-btn.btn-remove {
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.participant-action-btn.btn-remove:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.participant-item.has-expenses .participant-action-btn.btn-remove {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.participant-item.has-expenses .participant-action-btn.btn-remove:hover {
+    background: #dc2626;
+    color: white;
+    opacity: 1;
+}
+
+.expense-warning {
+    font-size: 0.75rem;
+    color: #f59e0b;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* Alert Styles */
+.alert {
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+/* Modal Size Variations */
+.modal-sm .modal-content {
+    max-width: 400px;
+    width: 90%;
+}
+
+@media (max-width: 768px) {
+    .participant-list {
+        max-height: 150px;
+    }
+    
+    .participant-item {
+        padding: 0.5rem;
+    }
+    
+    .participant-management {
+        padding: 0.75rem;
+    }
+}
