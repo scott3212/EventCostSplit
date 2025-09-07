@@ -41,15 +41,27 @@
 - ✅ Create Users → ✅ Create Events → ✅ Add Expenses → ⚠️ Custom Split Configuration
 
 ### 🎉 Recent Achievements (September 2024)
+- **Participant Balance Calculation**: Fixed "all participants showing $0" bug with proper balance display
 - **Expense Management Complete**: Full expense CRUD with participant name resolution
-- **Race Condition Fixed**: Participant names now display correctly in expense cards
+- **Race Condition Fixed**: Participant names now display correctly in expense cards  
+- **UX Improvements**: Auto-refresh after expense deletion, no manual page refresh needed
 - **CSP Compliance**: Eliminated all inline event handlers for proper security
 - **Network Access**: Multi-device development support configured
 
+### 🚀 Current Feature Development
+**URL Routing System (In Planning)**
+- **Objective**: Implement proper SPA routing for bookmarkable URLs and better UX
+- **Scope**: Replace single-URL navigation with proper route-based URLs
+- **Proposed URLs**: 
+  - `/` → Dashboard, `/events` → Events list, `/events/{id}` → Event detail
+  - `/users` → Users page, `/expenses` → Expenses, `/payments` → Payments
+- **Benefits**: Bookmarkable links, refresh preserves page, shareable URLs, professional UX
+- **Status**: Feature branch approach planned, documentation updated
+
 ### 📋 Immediate Next Priorities
-1. **Custom Split Configuration UI**: Interactive percentage controls for unequal splits
-2. **Payment Recording Interface**: Settlement tracking and payment suggestions
-3. **Event Management E2E Tests**: Expand Cypress testing to event workflows
+1. **URL Routing Implementation**: Professional SPA routing system (5-7 hours, moderate complexity)
+2. **Custom Split Configuration UI**: Interactive percentage controls for unequal splits
+3. **Payment Recording Interface**: Settlement tracking and payment suggestions
 
 > 📖 **See [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for detailed implementation history and phase-by-phase progress**
 
@@ -121,6 +133,32 @@ cypress/
 - **CSP Compliance**: All event handlers use proper delegation, no inline handlers
 - **Development Network**: Server binds to 0.0.0.0:3000 for multi-device testing
 
+## URL Routing Implementation Plan
+
+### **Current Architecture**
+- Single Page Application (SPA) with all pages in `index.html`
+- Navigation via JavaScript show/hide of page divs
+- Static URL: always `localhost:3000` regardless of current page
+- Server fallback route serves `index.html` for all non-API routes (✅ already supports SPA routing)
+
+### **Proposed Architecture** 
+- **Route-Based URLs**: Each page gets its own URL path
+- **Browser History Integration**: Back/forward buttons work correctly
+- **Direct URL Access**: Users can bookmark and share specific pages
+- **Refresh Preservation**: Page refresh maintains current context
+
+### **Implementation Phases**
+1. **Basic Router**: Create routing system with URL matching and page switching
+2. **Event Detail Routing**: Add parameterized routes for event IDs (`/events/{id}`)
+3. **Browser Integration**: Handle history API and navigation events
+4. **URL Updates**: Update all navigation to use proper URLs instead of page switches
+
+### **Risk Mitigation**
+- **Feature Branch**: Implement in isolated branch for safe testing
+- **Incremental Rollout**: Existing navigation remains functional during implementation
+- **Fallback Support**: Server already configured to support SPA routing
+- **No Breaking Changes**: Current functionality preserved throughout development
+
 ---
 
-*Last Updated: September 2024 - Expense Management Complete, Race Condition Fixed*
+*Last Updated: September 2024 - Participant Balance Calculation Complete, URL Routing Planned*
