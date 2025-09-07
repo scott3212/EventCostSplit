@@ -1180,6 +1180,11 @@ class EventDetailPage {
     }
     
     validateSplit() {
+        // Defensive check for tests and edge cases
+        if (!this.currentSplitPercentages) {
+            return false;
+        }
+        
         const totalPercentage = Object.values(this.currentSplitPercentages).reduce((sum, p) => sum + p, 0);
         const remaining = Math.round((100 - totalPercentage) * 100) / 100;
         

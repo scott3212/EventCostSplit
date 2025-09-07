@@ -31,19 +31,25 @@
 ## Current Implementation Status
 
 ### 📊 Quick Status Overview
-**Overall Progress**: ~90% Complete (6 phases, 4.5 completed)
+**Overall Progress**: ~92% Complete (6 phases, 4.7 completed)
 - ✅ **Phases 1-3**: Foundation, Backend API, Frontend Core (Complete)
-- 🎯 **Phase 4**: Advanced Frontend Features (90% complete)
+- ✅ **Phase 4**: Advanced Frontend Features (95% complete - expense management working)
 - 📅 **Phase 5**: Integration & Testing (Pending)
 - 🎯 **Phase 6**: E2E Testing (User management complete, events next)
 
 ### 🎯 Core User Journey Status
 - ✅ Create Users → ✅ Create Events → ✅ Add Expenses → ⚠️ Custom Split Configuration
 
+### 🎉 Recent Achievements (September 2024)
+- **Expense Management Complete**: Full expense CRUD with participant name resolution
+- **Race Condition Fixed**: Participant names now display correctly in expense cards
+- **CSP Compliance**: Eliminated all inline event handlers for proper security
+- **Network Access**: Multi-device development support configured
+
 ### 📋 Immediate Next Priorities
 1. **Custom Split Configuration UI**: Interactive percentage controls for unequal splits
-2. **Event Management E2E Tests**: Expand Cypress testing to event workflows  
-3. **Payment Recording Interface**: Settlement tracking and payment suggestions
+2. **Payment Recording Interface**: Settlement tracking and payment suggestions
+3. **Event Management E2E Tests**: Expand Cypress testing to event workflows
 
 > 📖 **See [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for detailed implementation history and phase-by-phase progress**
 
@@ -109,6 +115,12 @@ cypress/
 - **Cross-Event Balances**: Users' balances span multiple events
 - **Audit Trail**: Complete transaction history maintained
 
+## Technical Notes
+- **Data Loading Order**: Participants MUST load before expenses to prevent "Unknown" names
+- **Race Condition Pattern**: Always use sequential loading when data dependencies exist
+- **CSP Compliance**: All event handlers use proper delegation, no inline handlers
+- **Development Network**: Server binds to 0.0.0.0:3000 for multi-device testing
+
 ---
 
-*Last Updated: September 2024 - E2E Testing Infrastructure Complete*
+*Last Updated: September 2024 - Expense Management Complete, Race Condition Fixed*
