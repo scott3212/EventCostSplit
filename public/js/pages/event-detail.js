@@ -61,6 +61,15 @@ class EventDetailPage {
             expenseDateError: document.getElementById('expense-date-error'),
             expensePaidByError: document.getElementById('expense-paid-by-error'),
             
+            // Split Configuration Elements
+            splitConfigurationSection: document.getElementById('split-configuration-section'),
+            splitEqualRadio: document.getElementById('split-equal'),
+            splitCustomRadio: document.getElementById('split-custom'),
+            splitParticipantsContainer: document.getElementById('split-participants-container'),
+            splitTotalAmount: document.getElementById('split-total-amount'),
+            splitRemaining: document.getElementById('split-remaining'),
+            splitConfigurationError: document.getElementById('split-configuration-error'),
+            
             // Edit Event Button
             editEventBtn: document.getElementById('edit-event-btn'),
             
@@ -167,7 +176,23 @@ class EventDetailPage {
             this.elements.expenseDate.addEventListener('change', () => this.clearExpenseError('date'));
         }
         if (this.elements.expensePaidBy) {
-            this.elements.expensePaidBy.addEventListener('change', () => this.clearExpenseError('paidBy'));
+            this.elements.expensePaidBy.addEventListener('change', () => {
+                this.clearExpenseError('paidBy');
+                this.loadSplitConfiguration();
+            });
+        }
+        
+        // Split Configuration Events
+        if (this.elements.splitEqualRadio) {
+            this.elements.splitEqualRadio.addEventListener('change', () => this.handleSplitMethodChange());
+        }
+        
+        if (this.elements.splitCustomRadio) {
+            this.elements.splitCustomRadio.addEventListener('change', () => this.handleSplitMethodChange());
+        }
+        
+        if (this.elements.expenseAmount) {
+            this.elements.expenseAmount.addEventListener('input', () => this.updateSplitAmounts());
         }
 
         // Edit Event Button
@@ -581,6 +606,9 @@ class EventDetailPage {
             const today = new Date();
             this.elements.expenseDate.value = today.toISOString().split('T')[0];
         }
+        
+        // Initialize split configuration
+        this.initializeSplitConfiguration();
     }
 
     hideAddExpenseDialog() {
@@ -619,6 +647,12 @@ class EventDetailPage {
         if (!this.validateExpenseForm()) {
             return;
         }
+        
+        // Validate split configuration
+        if (!this.validateSplit()) {
+            this.showExpenseError('splitConfiguration', 'Split percentages must add up to exactly 100%');
+            return;
+        }
 
         this.setExpenseSaveButtonState(true);
 
@@ -630,7 +664,7 @@ class EventDetailPage {
                 amount: parseFloat(formData.get('amount')),
                 paidBy: formData.get('paidBy'),
                 date: formData.get('date'),
-                splitPercentage: this.generateEqualSplit()
+                splitPercentage: this.getSplitPercentages()
             };
 
             const newExpense = await api.createCostItem(expenseData);
@@ -712,7 +746,7 @@ class EventDetailPage {
     }
 
     clearAllExpenseErrors() {
-        ['description', 'amount', 'date', 'paidBy'].forEach(field => {
+        ['description', 'amount', 'date', 'paidBy', 'splitConfiguration'].forEach(field => {
             this.clearExpenseError(field);
         });
     }
@@ -757,6 +791,240 @@ class EventDetailPage {
         splitPercentage[participantIds[participantCount - 1]] = remaining;
 
         return splitPercentage;
+    }
+    
+    // Split Configuration Methods
+    initializeSplitConfiguration() {
+        // Set equal split as default
+        if (this.elements.splitEqualRadio) {
+            this.elements.splitEqualRadio.checked = true;
+        }
+        
+        // Initialize current split data
+        this.currentSplitPercentages = {};
+        this.splitMode = 'equal';
+        
+        // Load initial split configuration
+        this.loadSplitConfiguration();
+    }
+    
+    loadSplitConfiguration() {
+        if (!this.currentEvent || !this.currentEvent.participants) {
+            return;
+        }
+        
+        // Generate participant list for split configuration
+        this.renderSplitParticipants();
+        
+        // Update split calculations
+        this.updateSplitAmounts();
+    }
+    
+    renderSplitParticipants() {
+        if (!this.elements.splitParticipantsContainer || !this.participants) {
+            return;
+        }
+        
+        const participantIds = this.currentEvent.participants || [];
+        const eventParticipants = this.participants.filter(p => participantIds.includes(p.id));
+        
+        if (eventParticipants.length === 0) {
+            this.elements.splitParticipantsContainer.innerHTML = '<p class="text-muted">No participants selected</p>';
+            return;
+        }
+        
+        // Generate equal split percentages for initialization
+        const equalSplit = this.generateEqualSplit();
+        this.currentSplitPercentages = { ...equalSplit };
+        
+        const participantHtml = eventParticipants.map(participant => {
+            const percentage = this.currentSplitPercentages[participant.id] || 0;
+            const initials = participant.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const isPaidBy = this.elements.expensePaidBy && this.elements.expensePaidBy.value === participant.id;
+            
+            return `
+                <div class="split-participant" data-participant-id="${participant.id}">
+                    <div class="participant-info">
+                        <div class="participant-avatar">${initials}</div>
+                        <div class="participant-details">
+                            <h4>${participant.name}</h4>
+                            <p class="participant-role">${isPaidBy ? 'Paid for expense' : 'Participant'}</p>
+                        </div>
+                    </div>
+                    <div class="split-controls">
+                        <div class="split-toggle">
+                            <input type="checkbox" class="split-checkbox" id="split-include-${participant.id}" checked>
+                            <label for="split-include-${participant.id}">Include</label>
+                        </div>
+                        <div class="split-amount">
+                            <input type="number" class="split-percentage-input" id="split-percentage-${participant.id}" 
+                                   value="${percentage.toFixed(2)}" min="0" max="100" step="0.01">
+                            <span>%</span>
+                            <div class="split-amount-display" id="split-amount-${participant.id}">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        this.elements.splitParticipantsContainer.innerHTML = participantHtml;
+        this.elements.splitParticipantsContainer.className = 'split-participants-container equal-mode';
+        
+        // Bind events for split controls
+        this.bindSplitControlEvents();
+    }
+    
+    bindSplitControlEvents() {
+        // Bind checkbox events
+        this.elements.splitParticipantsContainer.querySelectorAll('.split-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const participantId = e.target.id.replace('split-include-', '');
+                this.handleParticipantToggle(participantId, e.target.checked);
+            });
+        });
+        
+        // Bind percentage input events
+        this.elements.splitParticipantsContainer.querySelectorAll('.split-percentage-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const participantId = e.target.id.replace('split-percentage-', '');
+                this.handlePercentageChange(participantId, parseFloat(e.target.value) || 0);
+            });
+        });
+    }
+    
+    handleSplitMethodChange() {
+        const isEqual = this.elements.splitEqualRadio && this.elements.splitEqualRadio.checked;
+        this.splitMode = isEqual ? 'equal' : 'custom';
+        
+        if (this.elements.splitParticipantsContainer) {
+            this.elements.splitParticipantsContainer.className = `split-participants-container ${this.splitMode}-mode`;
+        }
+        
+        if (isEqual) {
+            // Reset to equal split
+            this.currentSplitPercentages = this.generateEqualSplit();
+            this.updateSplitInputs();
+        }
+        
+        this.updateSplitAmounts();
+        this.validateSplit();
+    }
+    
+    handleParticipantToggle(participantId, isIncluded) {
+        if (this.splitMode === 'equal') {
+            // In equal mode, recalculate equal splits for included participants
+            const includedParticipants = [];
+            this.elements.splitParticipantsContainer.querySelectorAll('.split-checkbox').forEach(checkbox => {
+                if (checkbox.checked) {
+                    const id = checkbox.id.replace('split-include-', '');
+                    includedParticipants.push(id);
+                }
+            });
+            
+            // Reset all to 0
+            Object.keys(this.currentSplitPercentages).forEach(id => {
+                this.currentSplitPercentages[id] = 0;
+            });
+            
+            // Calculate equal split for included participants
+            if (includedParticipants.length > 0) {
+                const basePercentage = Math.floor((100 / includedParticipants.length) * 100) / 100;
+                let totalAssigned = 0;
+                
+                for (let i = 0; i < includedParticipants.length - 1; i++) {
+                    this.currentSplitPercentages[includedParticipants[i]] = basePercentage;
+                    totalAssigned += basePercentage;
+                }
+                
+                if (includedParticipants.length > 0) {
+                    const remaining = Math.round((100 - totalAssigned) * 100) / 100;
+                    this.currentSplitPercentages[includedParticipants[includedParticipants.length - 1]] = remaining;
+                }
+            }
+        } else {
+            // In custom mode, just set to 0 if excluded
+            if (!isIncluded) {
+                this.currentSplitPercentages[participantId] = 0;
+            }
+        }
+        
+        this.updateSplitInputs();
+        this.updateSplitAmounts();
+        this.validateSplit();
+    }
+    
+    handlePercentageChange(participantId, percentage) {
+        this.currentSplitPercentages[participantId] = percentage;
+        this.updateSplitAmounts();
+        this.validateSplit();
+    }
+    
+    updateSplitInputs() {
+        Object.keys(this.currentSplitPercentages).forEach(participantId => {
+            const input = document.getElementById(`split-percentage-${participantId}`);
+            const checkbox = document.getElementById(`split-include-${participantId}`);
+            
+            if (input) {
+                input.value = this.currentSplitPercentages[participantId].toFixed(2);
+            }
+            
+            if (checkbox) {
+                checkbox.checked = this.currentSplitPercentages[participantId] > 0;
+            }
+        });
+    }
+    
+    updateSplitAmounts() {
+        const totalAmount = parseFloat(this.elements.expenseAmount?.value) || 0;
+        
+        if (this.elements.splitTotalAmount) {
+            this.elements.splitTotalAmount.textContent = `$${totalAmount.toFixed(2)}`;
+        }
+        
+        // Update individual amounts
+        Object.keys(this.currentSplitPercentages).forEach(participantId => {
+            const percentage = this.currentSplitPercentages[participantId];
+            const amount = (totalAmount * percentage) / 100;
+            const amountDisplay = document.getElementById(`split-amount-${participantId}`);
+            
+            if (amountDisplay) {
+                amountDisplay.textContent = `$${amount.toFixed(2)}`;
+            }
+        });
+        
+        this.validateSplit();
+    }
+    
+    validateSplit() {
+        const totalPercentage = Object.values(this.currentSplitPercentages).reduce((sum, p) => sum + p, 0);
+        const remaining = Math.round((100 - totalPercentage) * 100) / 100;
+        
+        let isValid = Math.abs(remaining) < 0.01; // Allow for small rounding errors
+        let message = '';
+        
+        if (remaining > 0.01) {
+            message = `${remaining.toFixed(2)}% remaining`;
+            this.elements.splitRemaining?.classList.remove('success', 'error');
+        } else if (remaining < -0.01) {
+            message = `${Math.abs(remaining).toFixed(2)}% over 100%`;
+            isValid = false;
+            this.elements.splitRemaining?.classList.add('error');
+            this.elements.splitRemaining?.classList.remove('success');
+        } else {
+            message = '✓ Split adds up to 100%';
+            this.elements.splitRemaining?.classList.add('success');
+            this.elements.splitRemaining?.classList.remove('error');
+        }
+        
+        if (this.elements.splitRemaining) {
+            this.elements.splitRemaining.textContent = message;
+        }
+        
+        return isValid;
+    }
+    
+    getSplitPercentages() {
+        return { ...this.currentSplitPercentages };
     }
 
     // Edit Event Methods
