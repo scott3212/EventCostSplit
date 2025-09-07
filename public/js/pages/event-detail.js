@@ -660,8 +660,8 @@ class EventDetailPage {
             // Delete the expense via API
             await api.deleteCostItem(expenseId);
             
-            // Refresh data
-            await this.loadEventData();
+            // Refresh all data (participants, expenses, balances)
+            await this.refresh();
             
             showSuccess(`Expense "${expense.description}" deleted successfully!`);
         } catch (error) {
