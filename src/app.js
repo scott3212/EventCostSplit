@@ -21,19 +21,22 @@ const {
 function createApp() {
   const app = express();
 
-  // Security middleware
+  // Security middleware - minimal configuration for development
   app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-      },
-    },
-    crossOriginEmbedderPolicy: false, // Disable for development
+    contentSecurityPolicy: false, // Disable CSP completely for development
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    hsts: false,
+    noSniff: false,
+    xssFilter: false,
+    frameguard: false,
+    hidePoweredBy: false,
+    referrerPolicy: false,
+    expectCt: false,
+    dnsPrefetchControl: false,
+    ieNoOpen: false,
+    permittedCrossDomainPolicies: false,
   }));
 
   // CORS configuration
@@ -72,11 +75,27 @@ function createApp() {
     app.use(performanceLogger);
   }
 
+  // Development headers middleware to prevent HTTPS enforcement
+  if (IS_DEVELOPMENT) {
+    app.use((req, res, next) => {
+      res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    });
+  }
+
   // Serve static files from public directory
   app.use(express.static(path.join(__dirname, '../public'), {
     maxAge: IS_DEVELOPMENT ? 0 : '1d', // No caching in development
     etag: true,
     lastModified: true,
+    setHeaders: (res, path) => {
+      // Explicitly set headers to prevent HTTPS enforcement
+      res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
   }));
 
   // Health check endpoint

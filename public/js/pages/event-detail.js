@@ -467,19 +467,36 @@ class EventDetailPage {
         
         const expensesHtml = costItems.map(item => this.createExpenseCard(item)).join('');
         this.elements.expensesList.innerHTML = expensesHtml;
+        
+        // Add event listeners for expense actions
+        this.bindExpenseActionListeners();
     }
 
     createExpenseCard(costItem) {
         const date = new Date(costItem.date);
         const paidByUser = this.participants.find(p => p.id === costItem.paidBy);
         
-        // Count participants with non-zero split
-        const participantCount = Object.values(costItem.splitPercentages || {}).filter(p => p > 0).length;
+        // Count participants with non-zero split (handle both API response formats)
+        const splitData = costItem.splitPercentages || costItem.splitPercentage || {};
+        const participantCount = Object.values(splitData).filter(p => p > 0).length;
+        
+        // Generate split details for detailed view
+        const splitDetails = this.generateSplitDetails(costItem);
         
         return `
             <div class="expense-card" data-expense-id="${costItem.id}">
                 <div class="expense-header">
-                    <h4 class="expense-name">${costItem.description}</h4>
+                    <div class="expense-title">
+                        <h4 class="expense-name">${costItem.description}</h4>
+                        <div class="expense-actions">
+                            <button class="btn-icon edit-expense-btn" data-expense-id="${costItem.id}" title="Edit expense">
+                                ✏️
+                            </button>
+                            <button class="btn-icon delete-expense-btn" data-expense-id="${costItem.id}" title="Delete expense">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
                     <div class="expense-amount">${formatCurrency(costItem.amount)}</div>
                 </div>
                 <div class="expense-meta">
@@ -487,10 +504,155 @@ class EventDetailPage {
                     <span>💳 Paid by ${paidByUser ? paidByUser.name : 'Unknown'}</span>
                 </div>
                 <div class="expense-split-info">
-                    Split among ${participantCount} participant${participantCount !== 1 ? 's' : ''}
+                    <div class="split-summary">
+                        Split among ${participantCount} participant${participantCount !== 1 ? 's' : ''}
+                        <button class="toggle-split-details btn-link" data-expense-id="${costItem.id}">
+                            Show details
+                        </button>
+                    </div>
+                    <div class="split-details" id="split-details-${costItem.id}" style="display: none;">
+                        ${splitDetails}
+                    </div>
                 </div>
             </div>
         `;
+    }
+
+    generateSplitDetails(costItem) {
+        const splitPercentages = costItem.splitPercentages || costItem.splitPercentage || {};
+        const splitHtml = [];
+        
+        for (const [participantId, percentage] of Object.entries(splitPercentages)) {
+            if (percentage > 0) {
+                const participant = this.participants.find(p => p.id === participantId);
+                const amount = (costItem.amount * percentage) / 100;
+                splitHtml.push(`
+                    <div class="split-participant-detail">
+                        <span class="participant-name">${participant ? participant.name : 'Unknown'}</span>
+                        <span class="split-percentage">${percentage.toFixed(1)}%</span>
+                        <span class="split-amount">${formatCurrency(amount)}</span>
+                    </div>
+                `);
+            }
+        }
+        
+        return splitHtml.length > 0 ? splitHtml.join('') : '<p class="text-muted">No split details available</p>';
+    }
+
+    bindExpenseActionListeners() {
+        // Edit expense buttons
+        const editButtons = this.elements.expensesList.querySelectorAll('.edit-expense-btn');
+        editButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const expenseId = btn.getAttribute('data-expense-id');
+                this.handleEditExpense(expenseId);
+            });
+        });
+
+        // Delete expense buttons
+        const deleteButtons = this.elements.expensesList.querySelectorAll('.delete-expense-btn');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const expenseId = btn.getAttribute('data-expense-id');
+                this.handleDeleteExpense(expenseId);
+            });
+        });
+
+        // Toggle split details buttons
+        const toggleButtons = this.elements.expensesList.querySelectorAll('.toggle-split-details');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const expenseId = btn.getAttribute('data-expense-id');
+                this.toggleSplitDetails(expenseId, btn);
+            });
+        });
+    }
+
+    toggleSplitDetails(expenseId, toggleBtn) {
+        const detailsElement = document.getElementById(`split-details-${expenseId}`);
+        if (detailsElement) {
+            const isHidden = detailsElement.style.display === 'none';
+            detailsElement.style.display = isHidden ? 'block' : 'none';
+            toggleBtn.textContent = isHidden ? 'Hide details' : 'Show details';
+        }
+    }
+
+    handleEditExpense(expenseId) {
+        // Find the expense
+        const expense = this.costItems.find(item => item.id === expenseId);
+        if (!expense) {
+            showError('Expense not found');
+            return;
+        }
+        
+        // Populate the edit form (we'll use the same modal as add expense)
+        this.populateExpenseFormForEdit(expense);
+        this.showAddExpenseDialog();
+    }
+
+    populateExpenseFormForEdit(expense) {
+        this.editingExpenseId = expense.id;
+        
+        // Update modal title and button text
+        const modalTitle = this.elements.expenseModal.querySelector('.modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = 'Edit Expense';
+        }
+        
+        if (this.elements.expenseSave) {
+            this.elements.expenseSave.innerHTML = '<span class="btn-icon">✏️</span> Update Expense';
+        }
+
+        // Fill form fields
+        if (this.elements.expenseDescription) {
+            this.elements.expenseDescription.value = expense.description;
+        }
+        if (this.elements.expenseAmount) {
+            this.elements.expenseAmount.value = expense.amount;
+        }
+        if (this.elements.expenseDate) {
+            this.elements.expenseDate.value = expense.date;
+        }
+        if (this.elements.expensePaidBy) {
+            this.elements.expensePaidBy.value = expense.paidBy;
+        }
+
+        // Set up split configuration for editing (handle both API response formats)
+        const splitData = expense.splitPercentages || expense.splitPercentage || {};
+        this.currentSplitPercentages = { ...splitData };
+        this.loadSplitConfiguration();
+    }
+
+    async handleDeleteExpense(expenseId) {
+        // Find the expense
+        const expense = this.costItems.find(item => item.id === expenseId);
+        if (!expense) {
+            showError('Expense not found');
+            return;
+        }
+
+        // Show confirmation dialog
+        const confirmed = confirm(
+            `Are you sure you want to delete the expense "${expense.description}" (${formatCurrency(expense.amount)})?\n\nThis action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            // Delete the expense via API
+            await api.deleteCostItem(expenseId);
+            
+            // Refresh data
+            await this.loadEventData();
+            
+            showSuccess(`Expense "${expense.description}" deleted successfully!`);
+        } catch (error) {
+            console.error('Failed to delete expense:', error);
+            showError('Failed to delete expense. Please try again.');
+        }
     }
 
     updateStats() {
@@ -624,6 +786,19 @@ class EventDetailPage {
             this.elements.expenseForm.reset();
         }
         this.clearAllExpenseErrors();
+        
+        // Reset editing state
+        this.editingExpenseId = null;
+        
+        // Reset modal title and button text to default
+        const modalTitle = this.elements.expenseModal.querySelector('.modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = 'Add Expense';
+        }
+        
+        if (this.elements.expenseSave) {
+            this.elements.expenseSave.innerHTML = '<span class="btn-icon">💰</span> Add Expense';
+        }
     }
 
     loadExpenseFormParticipants() {
@@ -667,15 +842,24 @@ class EventDetailPage {
                 splitPercentage: this.getSplitPercentages()
             };
 
-            const newExpense = await api.createCostItem(expenseData);
+            let result;
+            const isEditing = !!this.editingExpenseId;
+
+            if (isEditing) {
+                // Update existing expense
+                result = await api.updateCostItem(this.editingExpenseId, expenseData);
+                showSuccess(`Expense "${result.description}" updated successfully!`);
+            } else {
+                // Create new expense
+                result = await api.createCostItem(expenseData);
+                showSuccess(`Expense "${result.description}" added successfully!`);
+            }
             
             this.hideAddExpenseDialog();
             await this.refresh();
             
-            showSuccess(`Expense "${newExpense.description}" added successfully!`);
-            
         } catch (error) {
-            console.error('Failed to create expense:', error);
+            console.error('Failed to save expense:', error);
             
             if (error.message.includes('description already exists')) {
                 this.showExpenseError('description', 'An expense with this description already exists');
@@ -684,7 +868,8 @@ class EventDetailPage {
             } else if (error.message.includes('paidBy')) {
                 this.showExpenseError('paidBy', 'Please select who paid for this expense');
             } else {
-                showError('Failed to create expense. Please try again.');
+                const action = this.editingExpenseId ? 'update' : 'create';
+                showError(`Failed to ${action} expense. Please try again.`);
             }
         } finally {
             this.setExpenseSaveButtonState(false);

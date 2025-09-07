@@ -8,18 +8,35 @@ const { activityLogger } = require('./middleware/logger');
 function startServer() {
   const app = createApp();
   
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    const networkInterfaces = require('os').networkInterfaces();
+    let localIP = 'localhost';
+    
+    // Find the first non-internal IPv4 address
+    for (const interfaceName in networkInterfaces) {
+      const addresses = networkInterfaces[interfaceName];
+      for (const address of addresses) {
+        if (address.family === 'IPv4' && !address.internal) {
+          localIP = address.address;
+          break;
+        }
+      }
+      if (localIP !== 'localhost') break;
+    }
+    
     activityLogger(`🏸 Badminton Cost Splitter server started`, {
       port: PORT,
       environment: NODE_ENV,
       url: `http://localhost:${PORT}`,
+      networkUrl: `http://${localIP}:${PORT}`,
     });
     
     if (NODE_ENV === 'development') {
       console.log(`
 🎉 Ready to split some badminton costs!
    
-📱 Open your browser: http://localhost:${PORT}
+📱 Local access: http://localhost:${PORT}
+🌐 Network access: http://${localIP}:${PORT}
 🎯 Environment: ${NODE_ENV}
 ⚡ Hot reload: enabled
       `);
