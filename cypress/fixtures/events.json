@@ -1,0 +1,27 @@
+{
+  "testEvents": [
+    {
+      "name": "Friday Badminton Session",
+      "date": "2025-12-15",
+      "location": "Court A - Community Center",
+      "description": "Weekly badminton session"
+    },
+    {
+      "name": "Tournament Practice",
+      "date": "2025-12-22", 
+      "location": "Court B - Sports Complex",
+      "description": "Practice for upcoming tournament"
+    },
+    {
+      "name": "Beginner Friendly Session",
+      "date": "2025-12-08",
+      "location": "Court C - Local Gym", 
+      "description": "Session for new players"
+    }
+  ],
+  "invalidEvent": {
+    "name": "",
+    "date": "invalid-date",
+    "location": ""
+  }
+}

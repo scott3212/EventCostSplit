@@ -1,0 +1,36 @@
+{
+  "testExpenses": [
+    {
+      "description": "Court Rental",
+      "amount": 60,
+      "date": "2025-12-15"
+    },
+    {
+      "description": "Shuttlecocks",
+      "amount": 30,
+      "date": "2025-12-15"
+    },
+    {
+      "description": "Equipment Rental",
+      "amount": 45,
+      "date": "2025-12-15"
+    }
+  ],
+  "splitScenarios": {
+    "equalSplit": {
+      "description": "Equal split among all participants",
+      "participants": 3,
+      "expectedPercentages": [33.33, 33.33, 33.34]
+    },
+    "customSplit": {
+      "description": "Custom split with exclusion",
+      "participants": 4,
+      "customPercentages": [40, 30, 30, 0]
+    },
+    "unequalSplit": {
+      "description": "Unequal split based on usage",
+      "participants": 3, 
+      "customPercentages": [50, 30, 20]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "testUsers": [
+    {
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "phone": "+1234567890"
+    },
+    {
+      "name": "Bob Smith", 
+      "email": "bob@example.com",
+      "phone": "+1234567891"
+    },
+    {
+      "name": "Charlie Brown",
+      "email": "charlie@example.com", 
+      "phone": "+1234567892"
+    },
+    {
+      "name": "Diana Prince",
+      "email": "diana@example.com",
+      "phone": "+1234567893"
+    }
+  ],
+  "invalidUser": {
+    "name": "",
+    "email": "invalid-email",
+    "phone": "invalid-phone"
+  }
+}

@@ -19,6 +19,7 @@ const UserController = require('../controllers/UserController');
 const EventController = require('../controllers/EventController');
 const CostItemController = require('../controllers/CostItemController');
 const PaymentController = require('../controllers/PaymentController');
+const TestController = require('../controllers/TestController');
 
 // Route factory imports
 const createUserRoutes = require('./userRoutes');
@@ -50,12 +51,27 @@ function createApiRoutes() {
   const eventController = new EventController(eventService, costItemService, paymentService);
   const costItemController = new CostItemController(costItemService);
   const paymentController = new PaymentController(paymentService);
+  
+  // Initialize test controller (only in development/test environments)
+  const testController = new TestController({
+    userService,
+    eventService,
+    costItemService,
+    paymentService
+  });
 
   // Mount routes
   router.use('/users', createUserRoutes(userController));
   router.use('/events', createEventRoutes(eventController));
   router.use('/cost-items', createCostItemRoutes(costItemController));
   router.use('/payments', createPaymentRoutes(paymentController));
+  
+  // Mount test routes (only in non-production environments)
+  if (process.env.NODE_ENV !== 'production') {
+    router.delete('/test/clear-data', testController.clearAllData.bind(testController));
+    router.get('/test/stats', testController.getTestStats.bind(testController));
+    router.get('/test/health', testController.healthCheck.bind(testController));
+  }
 
   // API information endpoint
   router.get('/', (req, res) => {
