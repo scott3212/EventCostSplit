@@ -679,6 +679,47 @@
                         </select>
                         <div id="expense-paid-by-error" class="form-error" style="display: none;"></div>
                     </div>
+
+                    <!-- Split Configuration Section -->
+                    <div class="form-group" id="split-configuration-section">
+                        <label class="form-label">How should this expense be split? <span class="text-danger">*</span></label>
+                        
+                        <!-- Split Method Selection -->
+                        <div class="split-method-toggle">
+                            <input type="radio" id="split-equal" name="splitMethod" value="equal" checked>
+                            <label for="split-equal" class="split-method-option">
+                                <span class="split-icon">⚖️</span>
+                                <div class="split-text">
+                                    <strong>Equal Split</strong>
+                                    <small>Everyone pays the same amount</small>
+                                </div>
+                            </label>
+                            
+                            <input type="radio" id="split-custom" name="splitMethod" value="custom">
+                            <label for="split-custom" class="split-method-option">
+                                <span class="split-icon">🎯</span>
+                                <div class="split-text">
+                                    <strong>Custom Split</strong>
+                                    <small>Set different amounts or exclude people</small>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Split Configuration UI -->
+                        <div id="split-participants-container" class="split-participants-container">
+                            <!-- Participants split UI will be dynamically loaded here -->
+                        </div>
+
+                        <!-- Split Summary -->
+                        <div id="split-summary" class="split-summary">
+                            <div class="split-total">
+                                <span>Total: <strong id="split-total-amount">$0.00</strong></span>
+                                <span id="split-remaining" class="split-remaining"></span>
+                            </div>
+                        </div>
+
+                        <div id="split-configuration-error" class="form-error" style="display: none;"></div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
