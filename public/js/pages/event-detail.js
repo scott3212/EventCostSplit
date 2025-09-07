@@ -298,11 +298,9 @@ class EventDetailPage {
             // Load event data
             await this.loadEventData();
             
-            // Load participants and cost items in parallel
-            await Promise.all([
-                this.loadParticipants(),
-                this.loadCostItems()
-            ]);
+            // Load participants first, then cost items (participants needed for expense rendering)
+            await this.loadParticipants();
+            await this.loadCostItems();
             
             this.updateStats();
             
@@ -474,7 +472,8 @@ class EventDetailPage {
 
     createExpenseCard(costItem) {
         const date = new Date(costItem.date);
-        const paidByUser = this.participants.find(p => p.id === costItem.paidBy);
+        // Ensure participants are loaded before finding the user
+        const paidByUser = this.participants?.find(p => p.id === costItem.paidBy);
         
         // Count participants with non-zero split (handle both API response formats)
         const splitData = costItem.splitPercentages || costItem.splitPercentage || {};
@@ -524,7 +523,7 @@ class EventDetailPage {
         
         for (const [participantId, percentage] of Object.entries(splitPercentages)) {
             if (percentage > 0) {
-                const participant = this.participants.find(p => p.id === participantId);
+                const participant = this.participants?.find(p => p.id === participantId);
                 const amount = (costItem.amount * percentage) / 100;
                 splitHtml.push(`
                     <div class="split-participant-detail">

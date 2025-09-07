@@ -22,7 +22,7 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   
   // CORS
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || true, // Allow all origins in development
   
   // Validation limits
   LIMITS: {

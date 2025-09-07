@@ -13,7 +13,15 @@
       "Bash(git rm:*)",
       "Bash(git restore:*)",
       "Bash(node:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(npx cypress:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npm run cypress:run:*)",
+      "Bash(npm start)",
+      "Bash(rs)",
+      "Bash(/bashes)"
     ],
     "deny": [],
     "ask": []

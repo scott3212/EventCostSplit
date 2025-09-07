@@ -17,6 +17,7 @@ class EventsPage {
             empty: document.getElementById('events-empty'),
             totalCount: document.getElementById('total-events-count'),
             addButton: document.getElementById('add-event-btn'),
+            emptyStateAddButton: document.getElementById('empty-state-add-event-btn'),
             container: document.querySelector('.events-container'),
             detailedViewToggle: document.getElementById('events-detailed-view'),
             compactViewToggle: document.getElementById('events-compact-view'),
@@ -53,6 +54,12 @@ class EventsPage {
     bindEvents() {
         if (this.elements.addButton) {
             this.elements.addButton.addEventListener('click', () => {
+                this.showAddEventDialog();
+            });
+        }
+        
+        if (this.elements.emptyStateAddButton) {
+            this.elements.emptyStateAddButton.addEventListener('click', () => {
                 this.showAddEventDialog();
             });
         }

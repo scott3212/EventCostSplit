@@ -15,6 +15,7 @@ class UsersPage {
             empty: document.getElementById('users-empty'),
             totalCount: document.getElementById('total-users-count'),
             addButton: document.getElementById('add-user-btn'),
+            emptyStateAddButton: document.getElementById('empty-state-add-user-btn'),
             container: document.querySelector('.users-container'),
             detailedViewToggle: document.getElementById('users-detailed-view'),
             compactViewToggle: document.getElementById('users-compact-view'),
@@ -74,6 +75,12 @@ class UsersPage {
     bindEvents() {
         if (this.elements.addButton) {
             this.elements.addButton.addEventListener('click', () => {
+                this.showAddUserDialog();
+            });
+        }
+        
+        if (this.elements.emptyStateAddButton) {
+            this.elements.emptyStateAddButton.addEventListener('click', () => {
                 this.showAddUserDialog();
             });
         }
