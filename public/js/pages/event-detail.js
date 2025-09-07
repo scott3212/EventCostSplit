@@ -384,9 +384,25 @@ class EventDetailPage {
         }
         
         try {
-            const participants = await api.getEventParticipants(this.currentEventId);
-            this.participants = participants;
-            this.renderParticipants(participants);
+            // Load both participant data and balance data in parallel
+            const [participants, balanceData] = await Promise.all([
+                api.getEventParticipants(this.currentEventId),
+                api.getEventBalance(this.currentEventId)
+            ]);
+            
+            // Merge balance data with participant data
+            const participantsWithBalance = participants.map(participant => {
+                const balance = balanceData.userBalances[participant.id];
+                return {
+                    ...participant,
+                    balance: balance ? balance.net : 0,
+                    owes: balance ? balance.owes : 0,
+                    paid: balance ? balance.paid : 0
+                };
+            });
+            
+            this.participants = participantsWithBalance;
+            this.renderParticipants(participantsWithBalance);
         } catch (error) {
             console.error('Failed to load participants:', error);
             // Don't throw - participants failure shouldn't break the whole page
@@ -418,7 +434,7 @@ class EventDetailPage {
         if (participant.email) contact.push(participant.email);
         if (participant.phone) contact.push(participant.phone);
         
-        const balanceStatus = this.getUserBalanceStatus(participant.totalBalance || 0);
+        const balanceStatus = this.getUserBalanceStatus(participant.balance || 0);
         
         return `
             <div class="participant-card">
@@ -426,7 +442,7 @@ class EventDetailPage {
                 ${contact.length > 0 ? `<div class="participant-contact">${contact.join(' • ')}</div>` : ''}
                 <div class="participant-balance ${balanceStatus.class}">
                     <span>${balanceStatus.text}</span>
-                    <span>${formatCurrency(Math.abs(participant.totalBalance || 0))}</span>
+                    <span>${formatCurrency(Math.abs(participant.balance || 0))}</span>
                 </div>
             </div>
         `;

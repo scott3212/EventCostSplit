@@ -154,6 +154,21 @@ class ApiClient {
         }
     }
 
+    async getEventBalance(id) {
+        const response = await this.get(`/events/${id}/balance`);
+        return response.data || response;
+    }
+
+    async getUserBalance(id) {
+        const response = await this.get(`/users/${id}/balance`);
+        return response.data || response;
+    }
+
+    async getUserBalanceBreakdown(id) {
+        const response = await this.get(`/users/${id}/balance/breakdown`);
+        return response.data || response;
+    }
+
     // Cost Item endpoints
     async getCostItems() {
         return this.get('/cost-items');
