@@ -62,10 +62,32 @@ class UserService {
   }
 
   /**
-   * Get all users
+   * Get all users with balance calculations
    */
   async getAllUsers() {
-    return await this.userRepo.findAll();
+    const users = await this.userRepo.findAll();
+    
+    // Calculate balance for each user
+    const usersWithBalances = await Promise.all(
+      users.map(async (user) => {
+        try {
+          const balance = await this.calculationService.calculateUserBalance(user.id);
+          return {
+            ...user,
+            totalBalance: balance.netBalance
+          };
+        } catch (error) {
+          // If balance calculation fails, return user with 0 balance
+          console.warn(`Failed to calculate balance for user ${user.id}:`, error.message);
+          return {
+            ...user,
+            totalBalance: 0
+          };
+        }
+      })
+    );
+    
+    return usersWithBalances;
   }
 
   /**
