@@ -758,9 +758,14 @@ class EventDetailPage {
     }
 
     goBackToEvents() {
-        // Use navigation system to properly navigate back to events
-        if (window.navigation) {
-            window.navigation.navigateToPage('events');
+        // Use router for navigation if available
+        if (window.router) {
+            window.router.navigate('/events');
+        } else {
+            // Fallback to direct navigation
+            if (window.navigation) {
+                window.navigation.navigateToPage('events');
+            }
         }
     }
 

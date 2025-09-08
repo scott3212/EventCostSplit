@@ -21,7 +21,14 @@ class Navigation {
                 e.preventDefault();
                 const page = item.dataset.page;
                 if (page) {
-                    this.navigateToPage(page);
+                    // Use router for navigation if available
+                    if (window.router) {
+                        const url = window.router.url(page);
+                        window.router.navigate(url);
+                    } else {
+                        // Fallback to direct navigation
+                        this.navigateToPage(page);
+                    }
                 }
             });
         });

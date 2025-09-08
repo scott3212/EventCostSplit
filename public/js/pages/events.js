@@ -635,11 +635,18 @@ class EventsPage {
     }
 
     viewEventDetails(eventId) {
-        if (window.eventDetailPage) {
-            window.eventDetailPage.showEvent(eventId);
+        // Use router for navigation if available
+        if (window.router) {
+            const url = window.router.url('event-detail', { id: eventId });
+            window.router.navigate(url);
         } else {
-            console.error('Event detail page not initialized');
-            showError('Event details page not available');
+            // Fallback to direct navigation
+            if (window.eventDetailPage) {
+                window.eventDetailPage.showEvent(eventId);
+            } else {
+                console.error('Event detail page not initialized');
+                showError('Event details page not available');
+            }
         }
     }
 
