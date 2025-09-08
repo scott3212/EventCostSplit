@@ -123,7 +123,7 @@ class Router {
 
     navigateToPage(pageId, params = {}) {
         // Integrate with existing navigation system
-        if (window.navigation) {
+        if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
             if (pageId === 'event-detail' && params.id) {
                 // Special handling for event detail page
                 this.showEventDetail(params.id);
@@ -131,15 +131,58 @@ class Router {
                 // Standard page navigation
                 window.navigation.navigateToPage(pageId);
             }
+        } else {
+            // Fallback: wait for navigation to be ready or handle directly
+            console.warn('Navigation system not ready, retrying...');
+            setTimeout(() => {
+                if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
+                    this.navigateToPage(pageId, params);
+                } else {
+                    // Direct DOM manipulation as last resort
+                    this.directPageNavigation(pageId);
+                }
+            }, 100);
         }
+    }
+
+    directPageNavigation(pageId) {
+        // Direct DOM manipulation fallback when navigation system isn't ready
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item[data-page]');
+        
+        // Hide all pages
+        pages.forEach(page => {
+            page.classList.remove('active');
+            page.classList.remove('fade-in');
+            page.style.display = 'none';
+        });
+        
+        // Show target page
+        const targetPage = document.getElementById(`${pageId}-page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+            targetPage.classList.add('fade-in');
+            targetPage.style.display = '';
+        }
+        
+        // Update navigation
+        navItems.forEach(item => {
+            if (item.dataset.page === pageId) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
     }
 
     showEventDetail(eventId) {
         // Show event detail page with specific event
         if (window.eventDetailPage) {
             // First navigate to events page to ensure proper context
-            if (window.navigation) {
+            if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
                 window.navigation.navigateToPage('events');
+            } else {
+                this.directPageNavigation('events');
             }
             
             // Then show the specific event detail
@@ -192,8 +235,12 @@ let router = null;
 
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
-        router = new Router();
-        window.router = router;
+        // Wait a bit to ensure navigation system is initialized
+        setTimeout(() => {
+            router = new Router();
+            window.router = router;
+            console.log('Router initialized:', router);
+        }, 50); // Small delay to ensure navigation.js has initialized
     });
 }
 
