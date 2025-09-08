@@ -221,6 +221,10 @@ class EventsPage {
         deleteModal.addEventListener('click', this.deleteModalHandlers.backdrop);
     }
 
+    async loadPage() {
+        await this.loadEvents();
+    }
+
     async loadEvents() {
         try {
             this.showLoading();

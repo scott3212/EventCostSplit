@@ -260,6 +260,10 @@ class UsersPage {
         }
     }
 
+    async loadPage() {
+        await this.loadUsers();
+    }
+
     async loadUsers() {
         try {
             this.showLoading();

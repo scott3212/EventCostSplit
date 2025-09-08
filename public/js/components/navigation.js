@@ -136,6 +136,31 @@ class Navigation {
         if (pageId === 'dashboard' && typeof dashboard !== 'undefined') {
             dashboard.refresh();
         }
+        
+        // Initialize specific pages when navigated to
+        if (pageId === 'payments') {
+            console.log('Navigation: Loading payments page');
+            if (!window.paymentsPage) {
+                console.log('Navigation: Creating new PaymentsPage instance');
+                window.paymentsPage = new PaymentsPage(api);
+            }
+            console.log('Navigation: Calling paymentsPage.loadPage()');
+            window.paymentsPage.loadPage();
+        }
+        
+        if (pageId === 'users') {
+            if (!window.usersPage) {
+                window.usersPage = new UsersPage(api);
+            }
+            window.usersPage.loadPage();
+        }
+        
+        if (pageId === 'events') {
+            if (!window.eventsPage) {
+                window.eventsPage = new EventsPage(api);
+            }
+            window.eventsPage.loadPage();
+        }
     }
 
     updateActiveNavItem(activePageId) {

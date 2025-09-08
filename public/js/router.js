@@ -75,8 +75,11 @@ class Router {
     }
 
     handleRoute(path, pushState = true) {
+        console.log('Router: Handling route:', path);
+        
         // Find matching route
         const route = this.findRoute(path);
+        console.log('Router: Found route:', route ? route.pageId : 'none');
         
         if (!route) {
             console.warn(`No route found for path: ${path}`);
@@ -88,13 +91,16 @@ class Router {
         // Extract parameters
         this.params = this.extractParams(path, route);
         this.currentRoute = route;
+        console.log('Router: Extracted params:', this.params);
 
         // Handle the route
         if (route.handler) {
             // Custom handler
+            console.log('Router: Using custom handler for:', route.pageId);
             route.handler(this.params);
         } else {
             // Default page navigation
+            console.log('Router: Using default navigation for:', route.pageId);
             this.navigateToPage(route.pageId, this.params);
         }
     }
@@ -122,13 +128,18 @@ class Router {
     }
 
     navigateToPage(pageId, params = {}) {
+        console.log('Router: navigateToPage called with:', pageId, params);
+        
         // Integrate with existing navigation system
         if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
+            console.log('Router: Navigation system available, calling navigation.navigateToPage');
             if (pageId === 'event-detail' && params.id) {
                 // Special handling for event detail page
+                console.log('Router: Special handling for event-detail page with ID:', params.id);
                 this.showEventDetail(params.id);
             } else {
                 // Standard page navigation
+                console.log('Router: Standard page navigation for:', pageId);
                 window.navigation.navigateToPage(pageId);
             }
         } else {

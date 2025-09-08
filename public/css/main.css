@@ -376,8 +376,9 @@ body {
         display: flex;
     }
     
-    .nav-text {
-        display: none;
+    /* Show nav text in mobile menu when expanded */
+    .nav-menu .nav-text {
+        display: block;
     }
     
     .page-header h1 {

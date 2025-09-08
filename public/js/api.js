@@ -213,6 +213,17 @@ class ApiClient {
         return this.delete(`/payments/${id}`);
     }
 
+    // Settlement endpoints
+    async processSettlement(settlementData) {
+        const response = await this.post('/payments/settlement', settlementData);
+        return response.data || response;
+    }
+
+    async getSettlementSuggestions() {
+        const response = await this.get('/payments/settlement/suggestions');
+        return response.data || response;
+    }
+
     // Dashboard analytics
     async getDashboardStats() {
         try {
