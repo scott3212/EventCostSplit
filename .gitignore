@@ -83,3 +83,8 @@ data/*.json
 # Temporary files
 tmp/
 temp/
+
+# Cypress test artifacts
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
