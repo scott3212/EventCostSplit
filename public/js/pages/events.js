@@ -762,8 +762,9 @@ class EventsPage {
             confirmButton.disabled = false;
             confirmButton.innerHTML = 'Delete Event';
             
-            if (error.message.includes('has cost items') || error.message.includes('has expenses')) {
-                showError('Cannot delete event with existing expenses. Remove all expenses first.');
+            if (error.message.includes('existing expenses') || error.message.includes('has cost items') || error.message.includes('has expenses')) {
+                // Use the specific error message from the backend
+                showError(error.message);
             } else {
                 showError('Failed to delete event. Please try again.');
             }

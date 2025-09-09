@@ -487,7 +487,9 @@ class EventDetailPage {
     }
 
     createExpenseCard(costItem) {
-        const date = new Date(costItem.date);
+        // Fix timezone issue by creating date without timezone interpretation
+        const dateParts = costItem.date.split('-').map(num => parseInt(num, 10));
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); // Year, Month (0-indexed), Day
         // Ensure participants are loaded before finding the user
         const paidByUser = this.participants?.find(p => p.id === costItem.paidBy);
         
@@ -1733,8 +1735,9 @@ class EventDetailPage {
                 this.elements.confirmDeleteEventOk.innerHTML = 'Delete Event';
             }
 
-            if (error.message.includes('has expenses') || error.message.includes('cannot be deleted')) {
-                showError('Cannot delete event: This event has expenses or other dependencies. Please remove all expenses first.');
+            if (error.message.includes('existing expenses') || error.message.includes('has expenses') || error.message.includes('cannot be deleted')) {
+                // Use the specific error message from the backend
+                showError(error.message);
             } else {
                 showError('Failed to delete event. Please try again.');
             }
