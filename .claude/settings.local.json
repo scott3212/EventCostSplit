@@ -33,7 +33,12 @@
       "Bash(timeout 90 npm run cypress:run -- --spec \"cypress/e2e/event-management/event-crud.cy.js\")",
       "Bash(timeout 60 npm run cypress:run:*)",
       "Bash(timeout 120 npm run cypress:run -- --spec \"cypress/e2e/critical-journeys/complete-badminton-session.cy.js\")",
-      "Bash(PORT=3001 node src/server.js)"
+      "Bash(PORT=3001 node src/server.js)",
+      "Bash(echo:*)",
+      "Bash(NODE_ENV=test npm test -- --testPathPattern=\"app.test.js\" --silent)",
+      "Bash(set NODE_ENV=test)",
+      "Bash(npx husky:*)",
+      "Bash(npm run test:unit:*)"
     ],
     "deny": [],
     "ask": []

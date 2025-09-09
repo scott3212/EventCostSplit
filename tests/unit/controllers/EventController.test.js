@@ -106,7 +106,8 @@ describe('EventController', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Failed to create event'
+        error: 'Failed to create event',
+        details: 'Server error'
       });
     });
   });

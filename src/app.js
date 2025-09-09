@@ -28,9 +28,9 @@ function createApp() {
     crossOriginOpenerPolicy: false,
     crossOriginResourcePolicy: false,
     hsts: false,
-    noSniff: false,
+    noSniff: true, // Keep basic content type protection
     xssFilter: false,
-    frameguard: false,
+    frameguard: true, // Keep basic clickjacking protection
     hidePoweredBy: false,
     referrerPolicy: false,
     expectCt: false,

@@ -364,6 +364,13 @@ describe('EventDetailPage - Expense Management', () => {
                 eventId: 'event1'
             };
             
+            // Set up currentSplitPercentages that validateSplit() and getSplitPercentages() need
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             // Mock the refresh method to avoid complex navigation flow
             jest.spyOn(eventDetailPage, 'refresh').mockResolvedValue();
             jest.spyOn(eventDetailPage, 'hideAddExpenseDialog').mockImplementation(() => {});
@@ -391,6 +398,13 @@ describe('EventDetailPage - Expense Management', () => {
         });
         
         test('should handle duplicate description error', async () => {
+            // Set up currentSplitPercentages that validateSplit() needs
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             const error = new Error('description already exists');
             mockApiClient.createCostItem.mockRejectedValue(error);
             
@@ -403,6 +417,13 @@ describe('EventDetailPage - Expense Management', () => {
         });
         
         test('should handle invalid amount error', async () => {
+            // Set up currentSplitPercentages that validateSplit() needs
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             const error = new Error('amount is invalid');
             mockApiClient.createCostItem.mockRejectedValue(error);
             
@@ -415,6 +436,13 @@ describe('EventDetailPage - Expense Management', () => {
         });
         
         test('should handle invalid paidBy error', async () => {
+            // Set up currentSplitPercentages that validateSplit() needs
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             const error = new Error('paidBy is invalid');
             mockApiClient.createCostItem.mockRejectedValue(error);
             
@@ -427,6 +455,13 @@ describe('EventDetailPage - Expense Management', () => {
         });
         
         test('should handle general errors', async () => {
+            // Set up currentSplitPercentages that validateSplit() needs
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             const error = new Error('Network error');
             mockApiClient.createCostItem.mockRejectedValue(error);
             
@@ -439,6 +474,13 @@ describe('EventDetailPage - Expense Management', () => {
         });
         
         test('should disable save button during creation', async () => {
+            // Set up currentSplitPercentages that validateSplit() needs
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+            
             let resolvePromise;
             const promise = new Promise(resolve => { resolvePromise = resolve; });
             mockApiClient.createCostItem.mockReturnValue(promise);
