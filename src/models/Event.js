@@ -11,6 +11,7 @@ class Event {
     this.id = data.id || null; // ID can be null initially, will be set by repository
     this.name = data.name;
     this.date = data.date;
+    this.location = data.location || '';
     this.description = data.description || '';
     this.participants = data.participants || [];
     this.createdAt = data.createdAt || new Date().toISOString();
@@ -29,6 +30,12 @@ class Event {
 
       validators.required(data.date, 'Date');
       validators.date(data.date, 'Date');
+
+      // Optional location
+      if (data.location) {
+        validators.minLength(data.location, 2, 'Location');
+        validators.maxLength(data.location, 200, 'Location');
+      }
 
       // Optional description
       if (data.description) {
@@ -67,6 +74,9 @@ class Event {
 
       // Sanitize inputs
       data.name = validators.sanitizeString(data.name);
+      if (data.location) {
+        data.location = validators.sanitizeString(data.location);
+      }
       if (data.description) {
         data.description = validators.sanitizeString(data.description);
       }
@@ -87,6 +97,7 @@ class Event {
       id: this.id,
       name: this.name,
       date: this.date,
+      location: this.location,
       description: this.description,
       participants: this.participants,
       participantCount: this.participants.length,
@@ -201,6 +212,7 @@ class Event {
     return new Event({
       name: formData.name,
       date: formData.date,
+      location: formData.location || '',
       description: formData.description || '',
       participants: formData.participants || [],
     });
@@ -210,7 +222,7 @@ class Event {
    * Static method to validate update data
    */
   static validateUpdate(updateData) {
-    const allowedFields = ['name', 'date', 'description', 'participants'];
+    const allowedFields = ['name', 'date', 'location', 'description', 'participants'];
     const updates = {};
 
     // Only allow updating specific fields
@@ -228,6 +240,7 @@ class Event {
     const tempEventData = {
       name: updates.name || 'temp event',
       date: updates.date || new Date().toISOString(),
+      location: updates.location,
       description: updates.description,
       participants: updates.participants,
     };

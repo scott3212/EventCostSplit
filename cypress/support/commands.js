@@ -35,17 +35,27 @@ Cypress.Commands.add('createUser', (userData = {}) => {
 
 // Create a test event
 Cypress.Commands.add('createEvent', (eventData = {}) => {
-  const defaultEvent = {
-    name: `Test Event ${Date.now()}`,
-    date: '2025-12-31',
-    location: 'Test Court',
-    participants: []
-  }
-  const event = { ...defaultEvent, ...eventData }
-  
-  return cy.request('POST', '/api/events', event).then((response) => {
-    expect(response.status).to.eq(201)
-    return response.body.data
+  return cy.request('GET', '/api/users').then((usersResponse) => {
+    const users = usersResponse.body.data || usersResponse.body || [];
+    const participantIds = users.length > 0 ? [users[0].id] : []; // Use first user as participant
+    
+    const defaultEvent = {
+      name: `Test Event ${Date.now()}`,
+      date: '2025-12-31',
+      location: 'Test Court',
+      participants: participantIds
+    }
+    const event = { ...defaultEvent, ...eventData }
+    
+    // Always ensure events have at least one participant if users exist
+    if ((!event.participants || event.participants.length === 0) && users.length > 0) {
+      event.participants = [users[0].id];
+    }
+    
+    return cy.request('POST', '/api/events', event).then((response) => {
+      expect(response.status).to.eq(201)
+      return response.body.data
+    })
   })
 })
 

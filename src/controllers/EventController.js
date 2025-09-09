@@ -17,6 +17,7 @@ class EventController {
         message: 'Event created successfully'
       });
     } catch (error) {
+      console.error('EventController.createEvent error:', error);
       if (error instanceof ValidationError) {
         res.status(400).json({
           success: false,
@@ -25,7 +26,8 @@ class EventController {
       } else {
         res.status(500).json({
           success: false,
-          error: 'Failed to create event'
+          error: 'Failed to create event',
+          details: error.message
         });
       }
     }
