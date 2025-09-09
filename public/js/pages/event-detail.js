@@ -487,9 +487,7 @@ class EventDetailPage {
     }
 
     createExpenseCard(costItem) {
-        // Fix timezone issue by creating date without timezone interpretation
-        const dateParts = costItem.date.split('-').map(num => parseInt(num, 10));
-        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); // Year, Month (0-indexed), Day
+        const date = new Date(costItem.date);
         // Ensure participants are loaded before finding the user
         const paidByUser = this.participants?.find(p => p.id === costItem.paidBy);
         
@@ -559,14 +557,10 @@ class EventDetailPage {
     bindExpenseActionListeners() {
         // Edit expense buttons
         const editButtons = this.elements.expensesList.querySelectorAll('.edit-expense-btn');
-        console.log('🔧 DEBUG: Found', editButtons.length, 'edit buttons');
-        editButtons.forEach((btn, index) => {
-            console.log('🔧 DEBUG: Binding click handler to edit button', index, 'with data-expense-id:', btn.getAttribute('data-expense-id'));
+        editButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                console.log('🔧 DEBUG: Edit button clicked!');
                 e.stopPropagation();
                 const expenseId = btn.getAttribute('data-expense-id');
-                console.log('🔧 DEBUG: Extracted expense ID:', expenseId);
                 this.handleEditExpense(expenseId);
             });
         });
@@ -602,38 +596,25 @@ class EventDetailPage {
     }
 
     handleEditExpense(expenseId) {
-        console.log('🔧 DEBUG: handleEditExpense called with ID:', expenseId);
-        
         // Find the expense
         const expense = this.costItems.find(item => item.id === expenseId);
-        console.log('🔧 DEBUG: Found expense:', expense);
-        
         if (!expense) {
-            console.error('❌ DEBUG: Expense not found for ID:', expenseId);
             showError('Expense not found');
             return;
         }
         
-        console.log('🔧 DEBUG: About to show modal and populate form for edit');
-        // Show the modal first (this resets the form)
-        this.showAddExpenseDialog();
-        // Then populate the edit form (this preserves our edit state)
+        // Populate the edit form (we'll use the same modal as add expense)
         this.populateExpenseFormForEdit(expense);
+        this.showAddExpenseDialog();
     }
 
     populateExpenseFormForEdit(expense) {
-        console.log('🔧 DEBUG: populateExpenseFormForEdit called');
         this.editingExpenseId = expense.id;
-        console.log('🔧 DEBUG: Set editingExpenseId to:', this.editingExpenseId);
         
         // Update modal title and button text
         const modalTitle = this.elements.expenseModal.querySelector('.modal-title');
-        console.log('🔧 DEBUG: modalTitle element found:', modalTitle);
         if (modalTitle) {
             modalTitle.textContent = 'Edit Expense';
-            console.log('🔧 DEBUG: Updated modal title to: Edit Expense');
-        } else {
-            console.error('❌ DEBUG: Modal title element not found!');
         }
         
         if (this.elements.expenseSave) {
@@ -1735,9 +1716,8 @@ class EventDetailPage {
                 this.elements.confirmDeleteEventOk.innerHTML = 'Delete Event';
             }
 
-            if (error.message.includes('existing expenses') || error.message.includes('has expenses') || error.message.includes('cannot be deleted')) {
-                // Use the specific error message from the backend
-                showError(error.message);
+            if (error.message.includes('has expenses') || error.message.includes('cannot be deleted')) {
+                showError('Cannot delete event: This event has expenses or other dependencies. Please remove all expenses first.');
             } else {
                 showError('Failed to delete event. Please try again.');
             }
