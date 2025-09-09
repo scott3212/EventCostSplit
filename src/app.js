@@ -85,16 +85,25 @@ function createApp() {
     });
   }
 
-  // Serve static files from public directory
+  // Generate cache-busting version
+  const cacheVersion = IS_DEVELOPMENT ? Date.now() : require('crypto').createHash('md5').update(require('fs').readFileSync(path.join(__dirname, '../package.json'))).digest('hex').substring(0, 8);
+
+  // Serve static files from public directory (excluding index.html)
   app.use(express.static(path.join(__dirname, '../public'), {
     maxAge: IS_DEVELOPMENT ? 0 : '1d', // No caching in development
     etag: true,
     lastModified: true,
-    setHeaders: (res, path) => {
+    index: false, // Don't serve index.html from static middleware
+    setHeaders: (res, filePath) => {
       // Explicitly set headers to prevent HTTPS enforcement
       res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
       res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      
+      // Set cache headers for assets
+      if (filePath.match(/\.(js|css)$/)) {
+        res.setHeader('Cache-Control', IS_DEVELOPMENT ? 'no-cache' : 'public, max-age=31536000'); // 1 year for versioned assets
+      }
     }
   }));
 
@@ -111,19 +120,31 @@ function createApp() {
   const createApiRoutes = require('./routes');
   app.use('/api', createApiRoutes());
 
-  // Serve index.html for SPA routes (catch-all)
+  // Serve index.html for SPA routes (catch-all) with cache-busting
   app.get('*', (req, res, next) => {
     // Only serve index.html for non-API routes
     if (req.path.startsWith('/api/')) {
       return next(); // Let API routes handle this
     }
     
-    // Serve index.html for frontend routes
-    res.sendFile(path.join(__dirname, '../public/index.html'), (err) => {
-      if (err) {
-        next(err);
-      }
-    });
+    // Read and process index.html with cache-busting parameters
+    try {
+      let html = require('fs').readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+      
+      // Inject cache-busting parameters into CSS and JS assets
+      html = html.replace(/href="\/css\/([\w\/-]+\.css)"/g, `href="/css/$1?v=${cacheVersion}"`);
+      html = html.replace(/src="\/js\/([\w\/-]+\.js)"/g, `src="/js/$1?v=${cacheVersion}"`);
+      
+      // Set appropriate headers for HTML
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      res.send(html);
+    } catch (err) {
+      next(err);
+    }
   });
 
   // Error handling middleware (must be last)

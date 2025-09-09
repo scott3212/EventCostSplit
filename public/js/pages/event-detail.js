@@ -557,10 +557,14 @@ class EventDetailPage {
     bindExpenseActionListeners() {
         // Edit expense buttons
         const editButtons = this.elements.expensesList.querySelectorAll('.edit-expense-btn');
-        editButtons.forEach(btn => {
+        console.log('🔧 DEBUG: Found', editButtons.length, 'edit buttons');
+        editButtons.forEach((btn, index) => {
+            console.log('🔧 DEBUG: Binding click handler to edit button', index, 'with data-expense-id:', btn.getAttribute('data-expense-id'));
             btn.addEventListener('click', (e) => {
+                console.log('🔧 DEBUG: Edit button clicked!');
                 e.stopPropagation();
                 const expenseId = btn.getAttribute('data-expense-id');
+                console.log('🔧 DEBUG: Extracted expense ID:', expenseId);
                 this.handleEditExpense(expenseId);
             });
         });
@@ -596,25 +600,38 @@ class EventDetailPage {
     }
 
     handleEditExpense(expenseId) {
+        console.log('🔧 DEBUG: handleEditExpense called with ID:', expenseId);
+        
         // Find the expense
         const expense = this.costItems.find(item => item.id === expenseId);
+        console.log('🔧 DEBUG: Found expense:', expense);
+        
         if (!expense) {
+            console.error('❌ DEBUG: Expense not found for ID:', expenseId);
             showError('Expense not found');
             return;
         }
         
-        // Populate the edit form (we'll use the same modal as add expense)
-        this.populateExpenseFormForEdit(expense);
+        console.log('🔧 DEBUG: About to show modal and populate form for edit');
+        // Show the modal first (this resets the form)
         this.showAddExpenseDialog();
+        // Then populate the edit form (this preserves our edit state)
+        this.populateExpenseFormForEdit(expense);
     }
 
     populateExpenseFormForEdit(expense) {
+        console.log('🔧 DEBUG: populateExpenseFormForEdit called');
         this.editingExpenseId = expense.id;
+        console.log('🔧 DEBUG: Set editingExpenseId to:', this.editingExpenseId);
         
         // Update modal title and button text
         const modalTitle = this.elements.expenseModal.querySelector('.modal-title');
+        console.log('🔧 DEBUG: modalTitle element found:', modalTitle);
         if (modalTitle) {
             modalTitle.textContent = 'Edit Expense';
+            console.log('🔧 DEBUG: Updated modal title to: Edit Expense');
+        } else {
+            console.error('❌ DEBUG: Modal title element not found!');
         }
         
         if (this.elements.expenseSave) {

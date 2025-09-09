@@ -1,0 +1,7 @@
+1. Create a button to generate a summary for a certain event. So if anyone wondered the details of a certain event, I can use generate the report of the single eventt to a PDF. Including all evnet details expanded. 
+2. Create a button to generate a summary for a certain user. So if anyone wondered the details of his own status, I can use it to generate the report of the single user to a PDF. Including all details related to that user. Including all the events he participated, all the expenses related to him, and his balance.
+3. Create a button to generate a summmary of each user's balance so I can share it to the group every time I needed to. 
+4. UI update: When on mobile. The screen is getting too long. I see some possible optimization we can do:
+    4.1 Dashboard page: each dashboard-card contains card-icon on top of card-content. Could we have thme side-by-side instead on mobile view? Because to view this dashboard page on mobile, it displays one card per row, then it left too much space on the left and right of a card. 
+    4.2 Users page: when showing the compact view, each uesr-card has user-card-header on top of user-balance on mobile. Again becuase we only display one card per row, it left lots of space on the left and right of the card, and user has to scroll a lot up and down. Let's put the user-balance besides the user-card-header, unless there is no enough space is that possible?
+5. We should should support delete a payment. Mainly due to we might be entering a wrong value etc. 
