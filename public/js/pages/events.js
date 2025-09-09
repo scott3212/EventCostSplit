@@ -43,7 +43,22 @@ class EventsPage {
             participantsList: document.getElementById('participants-list'),
             participantsError: document.getElementById('participants-error'),
             selectedParticipants: document.getElementById('selected-participants'),
-            selectedParticipantsList: document.getElementById('selected-participants-list')
+            selectedParticipantsList: document.getElementById('selected-participants-list'),
+            // Edit Event Modal elements
+            editEventModal: document.getElementById('edit-event-modal'),
+            editEventForm: document.getElementById('edit-event-form'),
+            editEventClose: document.getElementById('edit-event-close'),
+            editEventCancel: document.getElementById('edit-event-cancel'),
+            editEventSave: document.getElementById('edit-event-save'),
+            // Edit form inputs
+            editEventName: document.getElementById('edit-event-name'),
+            editEventDate: document.getElementById('edit-event-date'),
+            editEventLocation: document.getElementById('edit-event-location'),
+            editEventDescription: document.getElementById('edit-event-description'),
+            // Edit error elements
+            editEventNameError: document.getElementById('edit-event-name-error'),
+            editEventDateError: document.getElementById('edit-event-date-error'),
+            editEventLocationError: document.getElementById('edit-event-location-error')
         };
         
         this.bindEvents();
@@ -140,6 +155,53 @@ class EventsPage {
             this.elements.locationInput.addEventListener('input', () => {
                 this.clearError('event-location');
             });
+        }
+
+        // Edit Event Modal events
+        if (this.elements.editEventClose) {
+            this.elements.editEventClose.addEventListener('click', () => {
+                this.hideEditEventDialog();
+            });
+        }
+
+        if (this.elements.editEventCancel) {
+            this.elements.editEventCancel.addEventListener('click', () => {
+                this.hideEditEventDialog();
+            });
+        }
+
+        if (this.elements.editEventSave) {
+            this.elements.editEventSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleEditEvent();
+            });
+        }
+
+        if (this.elements.editEventForm) {
+            this.elements.editEventForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEditEvent();
+            });
+        }
+
+        // Edit modal backdrop click
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.addEventListener('click', (e) => {
+                if (e.target === this.elements.editEventModal) {
+                    this.hideEditEventDialog();
+                }
+            });
+        }
+
+        // Edit form validation events
+        if (this.elements.editEventName) {
+            this.elements.editEventName.addEventListener('input', () => this.clearEditEventError('name'));
+        }
+        if (this.elements.editEventDate) {
+            this.elements.editEventDate.addEventListener('change', () => this.clearEditEventError('date'));
+        }
+        if (this.elements.editEventLocation) {
+            this.elements.editEventLocation.addEventListener('input', () => this.clearEditEventError('location'));
         }
 
         // Delete confirmation modal events - Store references for cleanup
@@ -654,9 +716,199 @@ class EventsPage {
         }
     }
 
-    editEvent(eventId) {
+    async editEvent(eventId) {
         console.log('Edit event:', eventId);
-        showError('Edit Event form coming in Phase 4.4!');
+        
+        try {
+            // Find the event to edit
+            const event = this.findEventById(eventId);
+            if (!event) {
+                showError('Event not found');
+                return;
+            }
+            
+            // Load full event details from API
+            const response = await api.getEvent(eventId);
+            if (!response.success) {
+                showError(response.error || 'Failed to load event details');
+                return;
+            }
+            
+            this.currentEditEvent = response.data;
+            this.showEditEventDialog();
+        } catch (error) {
+            console.error('Failed to load event for editing:', error);
+            showError('Failed to load event details. Please try again.');
+        }
+    }
+
+    showEditEventDialog() {
+        if (!this.currentEditEvent) {
+            showError('No event selected for editing');
+            return;
+        }
+
+        this.populateEditEventForm();
+        this.clearAllEditEventErrors();
+
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.style.display = 'flex';
+            this.elements.editEventModal.classList.add('fade-in');
+        }
+    }
+
+    hideEditEventDialog() {
+        if (this.elements.editEventModal) {
+            this.elements.editEventModal.style.display = 'none';
+            this.elements.editEventModal.classList.remove('fade-in');
+        }
+        
+        this.resetEditEventForm();
+        this.currentEditEvent = null;
+    }
+
+    populateEditEventForm() {
+        if (!this.currentEditEvent) return;
+
+        if (this.elements.editEventName) {
+            this.elements.editEventName.value = this.currentEditEvent.name || '';
+        }
+
+        if (this.elements.editEventDate) {
+            // Convert date to YYYY-MM-DD format for date input
+            let dateValue = '';
+            if (this.currentEditEvent.date) {
+                const date = new Date(this.currentEditEvent.date);
+                dateValue = date.toISOString().split('T')[0];
+            }
+            this.elements.editEventDate.value = dateValue;
+        }
+
+        if (this.elements.editEventLocation) {
+            this.elements.editEventLocation.value = this.currentEditEvent.location || '';
+        }
+
+        if (this.elements.editEventDescription) {
+            this.elements.editEventDescription.value = this.currentEditEvent.description || '';
+        }
+    }
+
+    async handleEditEvent() {
+        if (!this.validateEditEventForm()) {
+            return;
+        }
+
+        this.setEditEventSaveButtonState(true);
+
+        try {
+            const formData = new FormData(this.elements.editEventForm);
+            const eventData = {
+                name: formData.get('name'),
+                date: formData.get('date'),
+                location: formData.get('location'),
+                description: formData.get('description') || ''
+            };
+
+            const response = await api.updateEvent(this.currentEditEvent.id, eventData);
+            
+            if (response.success) {
+                showSuccess(`Event "${response.data.name}" updated successfully!`);
+                this.hideEditEventDialog();
+                await this.refresh();
+            } else {
+                throw new Error(response.error || 'Failed to update event');
+            }
+            
+        } catch (error) {
+            console.error('Failed to update event:', error);
+            
+            if (error.message.includes('name already exists') || error.message.includes('name is not unique')) {
+                this.showEditEventError('name', 'An event with this name already exists');
+            } else if (error.message.includes('name')) {
+                this.showEditEventError('name', 'Invalid event name');
+            } else if (error.message.includes('date')) {
+                this.showEditEventError('date', 'Invalid event date');
+            } else if (error.message.includes('location')) {
+                this.showEditEventError('location', 'Invalid event location');
+            } else {
+                showError(error.message || 'Failed to update event. Please try again.');
+            }
+        } finally {
+            this.setEditEventSaveButtonState(false);
+        }
+    }
+
+    validateEditEventForm() {
+        let isValid = true;
+
+        // Clear all errors first
+        this.clearAllEditEventErrors();
+
+        // Validate name
+        if (!this.elements.editEventName.value.trim()) {
+            this.showEditEventError('name', 'Event name is required');
+            isValid = false;
+        } else if (this.elements.editEventName.value.trim().length < 2) {
+            this.showEditEventError('name', 'Event name must be at least 2 characters');
+            isValid = false;
+        }
+
+        // Validate date
+        if (!this.elements.editEventDate.value) {
+            this.showEditEventError('date', 'Event date is required');
+            isValid = false;
+        }
+
+        // Validate location
+        if (!this.elements.editEventLocation.value.trim()) {
+            this.showEditEventError('location', 'Location is required');
+            isValid = false;
+        } else if (this.elements.editEventLocation.value.trim().length < 2) {
+            this.showEditEventError('location', 'Location must be at least 2 characters');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    showEditEventError(field, message) {
+        const errorElement = this.elements[`editEvent${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    }
+
+    clearEditEventError(field) {
+        const errorElement = this.elements[`editEvent${field.charAt(0).toUpperCase() + field.slice(1)}Error`];
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+    }
+
+    clearAllEditEventErrors() {
+        this.clearEditEventError('name');
+        this.clearEditEventError('date');
+        this.clearEditEventError('location');
+    }
+
+    resetEditEventForm() {
+        if (this.elements.editEventForm) {
+            this.elements.editEventForm.reset();
+        }
+        this.clearAllEditEventErrors();
+    }
+
+    setEditEventSaveButtonState(isLoading) {
+        if (this.elements.editEventSave) {
+            this.elements.editEventSave.disabled = isLoading;
+            if (isLoading) {
+                this.elements.editEventSave.innerHTML = '<span class="loading-spinner-sm"></span> Updating...';
+            } else {
+                this.elements.editEventSave.innerHTML = '<span class="btn-icon">✏️</span> Update Event';
+            }
+        }
     }
 
     async deleteEvent(eventId) {
