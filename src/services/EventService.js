@@ -105,6 +105,11 @@ class EventService {
       }
     }
 
+    // Auto-update participantCount if participants are being updated
+    if (updateData.participants) {
+      updateData.participantCount = updateData.participants.length;
+    }
+    
     // Update event
     return await this.eventRepo.update(eventId, updateData);
   }

@@ -117,7 +117,10 @@ class EventRepository extends BaseRepository {
     }
     
     const updatedParticipants = [...event.participants, userId];
-    return await this.update(eventId, { participants: updatedParticipants });
+    return await this.update(eventId, { 
+      participants: updatedParticipants,
+      participantCount: updatedParticipants.length 
+    });
   }
 
   /**
@@ -128,7 +131,10 @@ class EventRepository extends BaseRepository {
     if (!event) return null;
     
     const updatedParticipants = event.participants.filter(id => id !== userId);
-    return await this.update(eventId, { participants: updatedParticipants });
+    return await this.update(eventId, { 
+      participants: updatedParticipants,
+      participantCount: updatedParticipants.length 
+    });
   }
 
   /**
