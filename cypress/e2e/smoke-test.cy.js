@@ -2,9 +2,12 @@ describe('Application Smoke Test', () => {
   it('should load the application successfully', () => {
     cy.visit('/')
     
+    // Wait for app to load (loading screen may appear)
+    cy.get('#app', { timeout: 10000 }).should('be.visible')
+    
     // Check that main page loads
     cy.get('body').should('be.visible')
-    cy.get('.navbar').should('be.visible')
+    cy.get('.nav-menu').should('be.visible')
     
     // Check that navigation works
     cy.get('.nav-item').contains('Dashboard').should('be.visible')
@@ -16,17 +19,20 @@ describe('Application Smoke Test', () => {
   it('should navigate between pages', () => {
     cy.visit('/')
     
+    // Wait for app to load
+    cy.get('#app', { timeout: 10000 }).should('be.visible')
+    
     // Navigate to Users page
-    cy.contains('Users').click()
-    cy.get('#users-page').should('have.class', 'active')
+    cy.get('[data-page="users"]').click()
+    cy.get('#users-page').should('be.visible')
     
     // Navigate to Events page  
-    cy.contains('Events').click()
-    cy.get('#events-page').should('have.class', 'active')
+    cy.get('[data-page="events"]').click()
+    cy.get('#events-page').should('be.visible')
     
     // Navigate back to Dashboard
-    cy.contains('Dashboard').click() 
-    cy.get('#dashboard-page').should('have.class', 'active')
+    cy.get('[data-page="dashboard"]').click() 
+    cy.get('#dashboard-page').should('be.visible')
   })
   
   it('should make API calls successfully', () => {
