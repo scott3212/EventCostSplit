@@ -1,2 +1,0 @@
-1. When delete a event with a expense in it. The error message just say: "Failed to delete event. Please try again." I think we need a better message. I do see the console has the proper error message printed: "Cannot delete event with existing expenses or payments. Please remove them first." Maybe we can just use that.
-2. I created a expense on Sep 16, 2025. But after it's created, it shows Sep 15, 2025. We saw similar issues before for Event date, I believe we can just apply the same fix for expense date.

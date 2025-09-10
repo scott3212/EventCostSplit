@@ -48,6 +48,14 @@
 - **CSP Compliance**: Eliminated all inline event handlers for proper security
 - **Network Access**: Multi-device development support configured
 
+### 🚀 Recent Bug Fixes (September 2024)
+**Participant Count Synchronization ✅ FIXED**
+- **Issue**: Participant count wasn't updating when adding/removing users via event detail page
+- **Root Cause**: EventService.updateEvent() wasn't auto-updating `participantCount` when `participants` array changed
+- **Solution**: Added automatic `participantCount = participants.length` calculation in EventService.updateEvent()
+- **Testing**: Comprehensive Cypress test (`participant-count-simple.cy.js`) ensures regression protection
+- **Status**: Fixed and verified with real-world usage
+
 ### 🚀 Current Feature Development
 **URL Routing System (In Planning)**
 - **Objective**: Implement proper SPA routing for bookmarkable URLs and better UX
@@ -132,6 +140,7 @@ cypress/
 - **Race Condition Pattern**: Always use sequential loading when data dependencies exist
 - **CSP Compliance**: All event handlers use proper delegation, no inline handlers
 - **Development Network**: Server binds to 0.0.0.0:3000 for multi-device testing
+- **Participant Count Sync**: EventService automatically updates `participantCount` field when `participants` array changes via updateEvent()
 
 ## URL Routing Implementation Plan
 
