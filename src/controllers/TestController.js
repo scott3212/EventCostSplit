@@ -7,7 +7,7 @@ class TestController {
     }
 
     /**
-     * Clear all application data for testing
+     * Clear all application data for testing with robust file handling
      * WARNING: This endpoint should only be available in test/development environments
      */
     async clearAllData(req, res) {
@@ -20,110 +20,133 @@ class TestController {
                 });
             }
 
-            // Clear all data in reverse dependency order
-            // 1. Clear cost items first (depend on events and users)
-            const costItems = await this.costItemService.getAllCostItems();
-            for (const costItem of costItems) {
-                await this.costItemService.deleteCostItem(costItem.id);
+            console.log('Starting robust data clearing process...');
+
+            // Step 0: Check and fix data integrity before clearing
+            const DataIntegrityChecker = require('../utils/dataIntegrityChecker');
+            const integrityChecker = new DataIntegrityChecker();
+            
+            console.log('Checking data integrity before clearing...');
+            const integrityStatus = await integrityChecker.getStatus();
+            console.log('Data integrity status:', integrityStatus.overallHealth);
+            
+            if (integrityStatus.overallHealth !== 'healthy') {
+                console.log('Data integrity issues found, fixing...');
+                const fixResult = await integrityChecker.validateAndFix();
+                console.log(`Data integrity fix result: ${fixResult.status}, fixed ${fixResult.fixed} files`);
             }
 
-            // 2. Clear payments (depend on users and may reference events)
-            const payments = await this.paymentService.getAllPayments();
-            for (const payment of payments) {
-                await this.paymentService.deletePayment(payment.id);
+            // Step 1: Clear all repository caches first to prevent stale data
+            console.log('Clearing all repository caches...');
+            this.userService.userRepo.clearCache();
+            this.eventService.eventRepo.clearCache();
+            this.costItemService.costItemRepo.clearCache();
+            this.paymentService.paymentRepo.clearCache();
+
+            // Step 2: Get current counts for reporting
+            const initialUsers = await this.userService.getAllUsers();
+            const initialEvents = await this.eventService.getAllEvents();
+            const initialCostItems = await this.costItemService.getAllCostItems();
+            const initialPayments = await this.paymentService.getAllPayments();
+
+            console.log(`Initial counts - Users: ${initialUsers.length}, Events: ${initialEvents.length}, CostItems: ${initialCostItems.length}, Payments: ${initialPayments.length}`);
+
+            // Step 3: Use atomic file operations to directly clear all data files
+            // This bypasses any business logic that might prevent deletion and ensures immediate effect
+            console.log('Performing atomic file clearing...');
+            
+            try {
+                // Clear all files atomically with proper JSON formatting
+                await Promise.all([
+                    this.costItemService.costItemRepo.saveData([]),
+                    this.paymentService.paymentRepo.saveData([]),
+                    this.eventService.eventRepo.saveData([]),
+                    this.userService.userRepo.saveData([])
+                ]);
+                console.log('Atomic file clearing completed successfully');
+            } catch (atomicError) {
+                console.error('Atomic file clearing failed:', atomicError.message);
+                throw new Error(`Atomic file clearing failed: ${atomicError.message}`);
             }
 
-            // 3. Clear events (depend on users)
-            const events = await this.eventService.getAllEvents();
-            for (const event of events) {
-                await this.eventService.deleteEvent(event.id);
-            }
+            // Step 4: Clear caches again after file operations
+            console.log('Clearing caches after file operations...');
+            this.userService.userRepo.clearCache();
+            this.eventService.eventRepo.clearCache();
+            this.costItemService.costItemRepo.clearCache();
+            this.paymentService.paymentRepo.clearCache();
 
-            // 4. Clear users last (force delete for testing - bypass balance validation)
-            const users = await this.userService.getAllUsers();
-            console.log(`Starting user deletion: Found ${users.length} users to delete`);
-            
-            for (const user of users) {
-                console.log(`Attempting to delete user: ${user.id} (${user.name})`);
-                try {
-                    await this.userService.deleteUser(user.id);
-                    console.log(`Successfully deleted user via service: ${user.id}`);
-                } catch (error) {
-                    console.log(`Service deletion failed for user ${user.id}: ${error.message}`);
-                    
-                    // For test environment, force delete even with balance issues
-                    // Use repository directly to bypass service validation
-                    try {
-                        const deleteResult = await this.userService.userRepo.delete(user.id);
-                        console.log(`Force delete result for user ${user.id}:`, deleteResult ? 'SUCCESS' : 'FAILED');
-                        
-                        // Double check - verify the user is actually gone
-                        const checkUser = await this.userService.userRepo.findById(user.id);
-                        if (checkUser) {
-                            console.error(`WARNING: User ${user.id} still exists after force delete attempt`);
-                        } else {
-                            console.log(`Confirmed: User ${user.id} successfully force deleted`);
-                        }
-                    } catch (repoError) {
-                        console.error(`Force delete FAILED for user ${user.id}:`, repoError.message);
-                    }
-                }
-            }
-            
-            console.log(`User deletion complete`);
-            
-            // Final fallback - if users still exist, directly manipulate the data file
-            const remainingUsersCheck = await this.userService.getAllUsers();
-            if (remainingUsersCheck.length > 0) {
-                console.log(`WARNING: ${remainingUsersCheck.length} users still remain after deletion attempts`);
-                console.log('Attempting nuclear option - direct file manipulation...');
+            // Step 5: Add small delay to ensure file system consistency
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Step 6: Verify complete clearing with fresh data load
+            console.log('Verifying data clearing...');
+            const finalUsers = await this.userService.getAllUsers();
+            const finalEvents = await this.eventService.getAllEvents();
+            const finalCostItems = await this.costItemService.getAllCostItems();
+            const finalPayments = await this.paymentService.getAllPayments();
+
+            const totalRemaining = finalUsers.length + finalEvents.length + finalCostItems.length + finalPayments.length;
+            const fullyCleared = totalRemaining === 0;
+
+            console.log(`Final verification - Users: ${finalUsers.length}, Events: ${finalEvents.length}, CostItems: ${finalCostItems.length}, Payments: ${finalPayments.length}`);
+            console.log(`Data clearing ${fullyCleared ? 'SUCCESSFUL' : 'INCOMPLETE'}`);
+
+            // Step 7: If clearing incomplete, attempt emergency file system reset
+            if (!fullyCleared) {
+                console.log('Data clearing incomplete, attempting emergency reset...');
                 
                 try {
-                    // Clear the user repository cache and force a fresh load
+                    // Force write empty arrays with explicit file paths
+                    const FileManager = require('../utils/fileManager');
+                    const fileManager = new FileManager();
+                    
+                    await Promise.all([
+                        fileManager.writeFile('users.json', []),
+                        fileManager.writeFile('events.json', []),
+                        fileManager.writeFile('cost_items.json', []),
+                        fileManager.writeFile('payments.json', [])
+                    ]);
+                    
+                    // Clear all caches one final time
                     this.userService.userRepo.clearCache();
+                    this.eventService.eventRepo.clearCache();
+                    this.costItemService.costItemRepo.clearCache();
+                    this.paymentService.paymentRepo.clearCache();
                     
-                    // Write empty array directly to file  
-                    await this.userService.userRepo.saveData([]);
-                    console.log('Direct file write successful - users.json cleared');
-                    
-                    // Verify it worked
-                    const finalCheck = await this.userService.getAllUsers();
-                    console.log(`Final verification: ${finalCheck.length} users remain`);
-                } catch (fileError) {
-                    console.error('Direct file manipulation failed:', fileError.message);
+                    console.log('Emergency reset completed');
+                } catch (emergencyError) {
+                    console.error('Emergency reset failed:', emergencyError.message);
                 }
             }
-
-            // Verify all data was actually cleared
-            const remainingUsers = await this.userService.getAllUsers();
-            const remainingEvents = await this.eventService.getAllEvents();
-            const remainingCostItems = await this.costItemService.getAllCostItems();
-            const remainingPayments = await this.paymentService.getAllPayments();
 
             res.json({
                 success: true,
-                message: 'All application data cleared successfully',
+                message: fullyCleared ? 'All application data cleared successfully' : 'Data clearing completed with some remaining items',
+                method: 'atomic_file_operations',
                 cleared: {
-                    users: users.length,
-                    events: events.length,
-                    costItems: costItems.length,
-                    payments: payments.length
+                    users: initialUsers.length,
+                    events: initialEvents.length,
+                    costItems: initialCostItems.length,
+                    payments: initialPayments.length
                 },
                 remaining: {
-                    users: remainingUsers.length,
-                    events: remainingEvents.length,
-                    costItems: remainingCostItems.length,
-                    payments: remainingPayments.length
+                    users: finalUsers.length,
+                    events: finalEvents.length,
+                    costItems: finalCostItems.length,
+                    payments: finalPayments.length
                 },
-                fullyCleared: remainingUsers.length === 0 && remainingEvents.length === 0 && 
-                             remainingCostItems.length === 0 && remainingPayments.length === 0
+                fullyCleared: fullyCleared,
+                processingTimeMs: Date.now() - (req.startTime || Date.now())
             });
 
         } catch (error) {
+            console.error('Data clearing failed with error:', error.message);
             res.status(500).json({
                 success: false,
                 message: 'Failed to clear application data',
-                error: error.message
+                error: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
             });
         }
     }
@@ -168,6 +191,40 @@ class TestController {
             environment: process.env.NODE_ENV || 'development',
             timestamp: new Date().toISOString()
         });
+    }
+
+    /**
+     * Check and fix data integrity issues
+     */
+    async checkDataIntegrity(req, res) {
+        try {
+            const DataIntegrityChecker = require('../utils/dataIntegrityChecker');
+            const integrityChecker = new DataIntegrityChecker();
+            
+            const status = await integrityChecker.getStatus();
+            const autoFix = req.query.fix === 'true';
+            
+            let fixResult = null;
+            if (autoFix && status.overallHealth !== 'healthy') {
+                fixResult = await integrityChecker.validateAndFix();
+            }
+            
+            res.json({
+                success: true,
+                message: 'Data integrity check completed',
+                status: status,
+                autoFix: autoFix,
+                fixResult: fixResult,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Data integrity check failed',
+                error: error.message
+            });
+        }
     }
 }
 

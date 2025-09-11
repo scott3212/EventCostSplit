@@ -79,6 +79,7 @@ describe('Event Management - CRUD Operations', () => {
             cy.get('#event-description').type('Weekly badminton session');
             
             // Wait for participants to load and select some
+            cy.get('#participants-loading').should('not.be.visible');
             cy.get('.participant-checkbox').should('be.visible');
             cy.get('.participant-checkbox').first().check();
             cy.get('.participant-checkbox').eq(1).check();
@@ -122,6 +123,7 @@ describe('Event Management - CRUD Operations', () => {
             cy.get('#event-location').type('Test Location');
             
             // Wait for participants to load
+            cy.get('#participants-loading').should('not.be.visible');
             cy.get('.participant-checkbox').should('be.visible');
             
             // Try to submit without selecting participants
@@ -389,6 +391,126 @@ describe('Event Management - CRUD Operations', () => {
             cy.get('#events-loading').should('exist');
             cy.get('#events-loading').should('not.be.visible');
             cy.get('#events-list').should('be.visible');
+        });
+    });
+
+    describe('Expense Management', () => {
+        beforeEach(() => {
+            // Create an event with participants for expense testing
+            cy.createEvent({
+                name: 'Expense Test Event',
+                date: '2025-12-25',
+                location: 'Test Location',
+                description: 'Event for testing expense management',
+                participants: []
+            }).then((eventId) => {
+                // Navigate to the event detail page
+                cy.visit(`/events/${eventId}`);
+                cy.wait(1000);
+            });
+        });
+
+        it('should add an expense successfully', () => {
+            // Click add expense button
+            cy.get('#add-expense-btn').click();
+            cy.get('#add-expense-modal').should('be.visible');
+            
+            // Verify modal title is "Add Expense"
+            cy.get('#add-expense-modal .modal-title').should('contain', 'Add Expense');
+            cy.get('#add-expense-save').should('contain', 'Add Expense');
+            
+            // Fill out expense form
+            cy.get('#expense-description').type('Court Rental');
+            cy.get('#expense-amount').type('60.00');
+            cy.get('#expense-date').type('2025-12-25');
+            
+            // Wait for participants to load and select payer
+            cy.get('#participants-loading').should('not.be.visible');
+            cy.get('#expense-paid-by').select(0); // Select first user
+            
+            // Save expense
+            cy.get('#add-expense-save').click();
+            
+            // Verify success and modal closes
+            cy.get('#success-modal').should('be.visible');
+            cy.get('#success-message').should('contain', 'Court Rental');
+            cy.get('#success-message').should('contain', 'added successfully');
+            cy.get('#success-ok').click();
+            
+            // Verify expense appears in list
+            cy.get('.expense-card').should('contain', 'Court Rental');
+            cy.get('.expense-card').should('contain', '$60.00');
+        });
+
+        it('should edit an expense successfully with correct modal title and button text', () => {
+            // First add an expense to edit
+            cy.get('#add-expense-btn').click();
+            cy.get('#expense-description').type('Original Expense');
+            cy.get('#expense-amount').type('45.00');
+            cy.get('#expense-date').type('2025-12-25');
+            cy.get('#participants-loading').should('not.be.visible');
+            cy.get('#expense-paid-by').select(0);
+            cy.get('#add-expense-save').click();
+            cy.get('#success-ok').click();
+            
+            // Now test editing the expense
+            cy.get('.expense-card').should('contain', 'Original Expense');
+            cy.get('.edit-expense-btn').first().click();
+            
+            // Verify modal opens with correct edit mode settings
+            cy.get('#add-expense-modal').should('be.visible');
+            cy.get('#add-expense-modal .modal-title').should('contain', 'Edit Expense');
+            cy.get('#add-expense-save').should('contain', 'Update Expense');
+            
+            // Verify form is pre-populated with existing data
+            cy.get('#expense-description').should('have.value', 'Original Expense');
+            cy.get('#expense-amount').should('have.value', '45');
+            cy.get('#expense-date').should('have.value', '2025-12-25');
+            
+            // Edit the expense
+            cy.get('#expense-description').clear().type('Updated Expense');
+            cy.get('#expense-amount').clear().type('55.00');
+            
+            // Save changes
+            cy.get('#add-expense-save').click();
+            
+            // Verify success message shows updated expense name
+            cy.get('#success-modal').should('be.visible');
+            cy.get('#success-message').should('contain', 'Updated Expense');
+            cy.get('#success-message').should('contain', 'updated successfully');
+            cy.get('#success-ok').click();
+            
+            // Verify changes are reflected in the expense list
+            cy.get('.expense-card').should('contain', 'Updated Expense');
+            cy.get('.expense-card').should('contain', '$55.00');
+            cy.get('.expense-card').should('not.contain', 'Original Expense');
+        });
+
+        it('should cancel expense editing without saving changes', () => {
+            // Add an expense first
+            cy.get('#add-expense-btn').click();
+            cy.get('#expense-description').type('Test Expense');
+            cy.get('#expense-amount').type('30.00');
+            cy.get('#expense-date').type('2025-12-25');
+            cy.get('#participants-loading').should('not.be.visible');
+            cy.get('#expense-paid-by').select(0);
+            cy.get('#add-expense-save').click();
+            cy.get('#success-ok').click();
+            
+            // Edit but cancel
+            cy.get('.edit-expense-btn').first().click();
+            cy.get('#add-expense-modal .modal-title').should('contain', 'Edit Expense');
+            
+            // Make changes
+            cy.get('#expense-description').clear().type('Should Not Save');
+            
+            // Cancel instead of saving
+            cy.get('#add-expense-cancel').click();
+            cy.get('#add-expense-modal').should('not.be.visible');
+            
+            // Verify original data is preserved
+            cy.get('.expense-card').should('contain', 'Test Expense');
+            cy.get('.expense-card').should('not.contain', 'Should Not Save');
         });
     });
 

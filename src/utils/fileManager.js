@@ -56,15 +56,21 @@ class FileManager {
   }
 
   /**
-   * Write JSON data to file
+   * Write JSON data to file with validation and atomic operations
    * Creates backup of existing file before writing
    */
   async writeFile(filename, data) {
     await this.ensureDataDir();
     const filePath = this.getFilePath(filename);
     const backupPath = `${filePath}.backup`;
+    const tempPath = `${filePath}.tmp`;
     
     try {
+      // Validate data before writing
+      if (!Array.isArray(data)) {
+        throw new Error(`Data for ${filename} must be an array, got ${typeof data}`);
+      }
+
       // Create backup if file exists
       try {
         await fs.access(filePath);
@@ -76,9 +82,28 @@ class FileManager {
         }
       }
 
-      // Write new data
+      // Write to temporary file first (atomic operation)
       const jsonData = JSON.stringify(data, null, 2);
-      await fs.writeFile(filePath, jsonData, 'utf8');
+      
+      // Validate JSON can be parsed back
+      try {
+        JSON.parse(jsonData);
+      } catch (parseError) {
+        throw new Error(`Generated JSON for ${filename} is invalid: ${parseError.message}`);
+      }
+      
+      await fs.writeFile(tempPath, jsonData, 'utf8');
+      
+      // Verify the temporary file was written correctly
+      const verifyData = await fs.readFile(tempPath, 'utf8');
+      const parsedVerify = JSON.parse(verifyData);
+      
+      if (!Array.isArray(parsedVerify)) {
+        throw new Error(`Written data validation failed for ${filename}: not an array`);
+      }
+      
+      // Atomic move from temp to final location
+      await fs.rename(tempPath, filePath);
       
       // Remove backup after successful write
       try {
@@ -88,6 +113,13 @@ class FileManager {
         // This is not critical, log and continue
       }
     } catch (error) {
+      // Clean up temp file if it exists
+      try {
+        await fs.unlink(tempPath);
+      } catch (cleanupError) {
+        // Temp file cleanup failed, not critical
+      }
+      
       // Restore backup if write failed
       try {
         await fs.access(backupPath);

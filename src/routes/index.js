@@ -71,6 +71,7 @@ function createApiRoutes() {
     router.delete('/test/clear-data', testController.clearAllData.bind(testController));
     router.get('/test/stats', testController.getTestStats.bind(testController));
     router.get('/test/health', testController.healthCheck.bind(testController));
+    router.get('/test/integrity', testController.checkDataIntegrity.bind(testController));
   }
 
   // API information endpoint

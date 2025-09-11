@@ -118,7 +118,8 @@ class ApiClient {
     }
 
     async updateEvent(id, eventData) {
-        return this.put(`/events/${id}`, eventData);
+        const response = await this.put(`/events/${id}`, eventData);
+        return response.data || response;
     }
 
     async deleteEvent(id) {
@@ -184,7 +185,8 @@ class ApiClient {
     }
 
     async updateCostItem(id, costItemData) {
-        return this.put(`/cost-items/${id}`, costItemData);
+        const response = await this.put(`/cost-items/${id}`, costItemData);
+        return response.data || response;
     }
 
     async deleteCostItem(id) {

@@ -60,7 +60,7 @@ describe('Complete Badminton Session - End-to-End Journey', () => {
         cy.get('#event-description').type('Weekly badminton session with court rental and equipment');
         
         // Wait for participants to load and select all 3
-        cy.get('#participants-loading').should('not.exist');
+        cy.get('#participants-loading').should('not.be.visible');
         cy.get('.participant-checkbox').should('have.length', 3);
         cy.get('.participant-checkbox').eq(0).check(); // Alice
         cy.get('.participant-checkbox').eq(1).check(); // Bob  
@@ -205,7 +205,7 @@ describe('Complete Badminton Session - End-to-End Journey', () => {
         cy.get('#event-location').type('Tournament Hall');
         
         // Select all 4 participants
-        cy.get('#participants-loading').should('not.exist');
+        cy.get('#participants-loading').should('not.be.visible');
         cy.get('.participant-checkbox').check();
         cy.get('#add-event-save').click();
         cy.get('#success-ok').click();

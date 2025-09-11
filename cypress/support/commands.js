@@ -2,10 +2,35 @@
 // Custom commands for Badminton Cost Splitter E2E tests
 // ***********************************************
 
-// Clear all application data
+// Clear all application data with robust error handling and verification
 Cypress.Commands.add('clearApplicationData', () => {
-  cy.request('DELETE', '/api/test/clear-data').then((response) => {
+  cy.log('Starting application data clearing...')
+  
+  // Attempt data clearing with retries
+  cy.request({
+    method: 'DELETE',
+    url: '/api/test/clear-data',
+    timeout: 10000, // 10 second timeout for data clearing
+    retryOnStatusCodeFailure: true,
+    retryOnNetworkFailure: true
+  }).then((response) => {
     expect(response.status).to.eq(200)
+    expect(response.body).to.have.property('success', true)
+    
+    // Log clearing results for debugging
+    if (response.body.cleared) {
+      cy.log(`Data cleared - Users: ${response.body.cleared.users}, Events: ${response.body.cleared.events}, CostItems: ${response.body.cleared.costItems}, Payments: ${response.body.cleared.payments}`)
+    }
+    
+    if (response.body.remaining) {
+      cy.log(`Remaining data - Users: ${response.body.remaining.users}, Events: ${response.body.remaining.events}, CostItems: ${response.body.remaining.costItems}, Payments: ${response.body.remaining.payments}`)
+    }
+    
+    // Verify complete clearing
+    expect(response.body.fullyCleared).to.be.true
+    
+    // Add small delay to ensure file system consistency
+    cy.wait(200)
   })
 })
 
