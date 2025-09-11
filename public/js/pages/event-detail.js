@@ -217,7 +217,12 @@ class EventDetailPage {
         if (this.elements.editEventSave) {
             this.elements.editEventSave.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.handleEditEvent();
+                // Only handle if we're on the event-detail page
+                const eventDetailPage = document.getElementById('event-detail-page');
+                const isEventDetailPageActive = eventDetailPage && !eventDetailPage.classList.contains('hidden');
+                if (isEventDetailPageActive) {
+                    this.handleEditEvent();
+                }
             });
         }
 
@@ -228,7 +233,12 @@ class EventDetailPage {
                     submitterElement: e.submitter?.tagName + '#' + e.submitter?.id
                 });
                 e.preventDefault();
-                this.handleEditEvent();
+                // Only handle if we're on the event-detail page
+                const eventDetailPage = document.getElementById('event-detail-page');
+                const isEventDetailPageActive = eventDetailPage && !eventDetailPage.classList.contains('hidden');
+                if (isEventDetailPageActive) {
+                    this.handleEditEvent();
+                }
             });
         }
 
