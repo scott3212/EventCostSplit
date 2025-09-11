@@ -41,12 +41,13 @@
 - ✅ Create Users → ✅ Create Events → ✅ Add Expenses → ⚠️ Custom Split Configuration
 
 ### 🎉 Recent Achievements (September 2024)
-- **Participant Balance Calculation**: Fixed "all participants showing $0" bug with proper balance display
-- **Expense Management Complete**: Full expense CRUD with participant name resolution
-- **Race Condition Fixed**: Participant names now display correctly in expense cards  
-- **UX Improvements**: Auto-refresh after expense deletion, no manual page refresh needed
-- **CSP Compliance**: Eliminated all inline event handlers for proper security
-- **Network Access**: Multi-device development support configured
+- **Edit Event Modal Bug Fixes**: Fixed all major edit event modal issues identified in user testing
+- **Code Duplication Eliminated**: Refactored EventsPage to use proven logic from EventDetailPage
+- **Custom Split Controls Fixed**: Split percentages now display correctly when editing expenses
+- **Race Condition Resolved**: Expense "paid by" dropdown now loads consistently on first edit
+- **Participant Loading Issue Fixed**: Events list edit modal now loads participants properly
+- **Cypress Test Logging**: Added file-based test result logging for easier debugging
+- **Architecture Improvement**: Removed 125+ lines of duplicate/broken code
 
 ### 🚀 Recent Bug Fixes (September 2024)
 **Participant Count Synchronization ✅ FIXED**
@@ -243,3 +244,4 @@ All major features are implemented and working:
 ---
 
 *Last Updated: September 8, 2025 - Payments Page Complete, Moving to Comprehensive E2E Testing*
+- Whenever you need to kill process that's using port 3000, use: powershell -Command "& '.\kill-port-3000.bat'"
