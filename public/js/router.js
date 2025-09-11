@@ -20,7 +20,6 @@ class Router {
         this.addRoute('/', 'dashboard');
         this.addRoute('/users', 'users');
         this.addRoute('/events', 'events');
-        this.addRoute('/expenses', 'expenses');
         this.addRoute('/payments', 'payments');
         
         // Dynamic routes with parameters
@@ -214,8 +213,6 @@ class Router {
                 return '/events';
             case 'event-detail':
                 return `/events/${params.id}`;
-            case 'expenses':
-                return '/expenses';
             case 'payments':
                 return '/payments';
             default:
