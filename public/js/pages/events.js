@@ -48,6 +48,11 @@ class EventsPage {
             editEventModal: document.getElementById('edit-event-modal'),
             editEventForm: document.getElementById('edit-event-form'),
             editEventClose: document.getElementById('edit-event-close'),
+            // Edit event participants
+            editCurrentParticipants: document.getElementById('edit-current-participants'),
+            editAvailableParticipants: document.getElementById('edit-available-participants'),
+            editParticipantsError: document.getElementById('edit-participants-error'),
+            editParticipantsLoading: document.getElementById('edit-participants-loading'),
             editEventCancel: document.getElementById('edit-event-cancel'),
             editEventSave: document.getElementById('edit-event-save'),
             // Edit form inputs
@@ -172,15 +177,40 @@ class EventsPage {
 
         if (this.elements.editEventSave) {
             this.elements.editEventSave.addEventListener('click', (e) => {
+                console.log('[EVENTS.JS] Save button clicked', {
+                    eventsPageHidden: document.getElementById('events-page')?.hidden,
+                    currentEditEvent: this.currentEditEvent?.id,
+                    eventExists: !!this.currentEditEvent
+                });
                 e.preventDefault();
-                this.handleEditEvent();
+                // Only handle if we're on the events page and have a current edit event
+                const eventsPage = document.getElementById('events-page');
+                if (eventsPage && !eventsPage.hidden && this.currentEditEvent) {
+                    console.log('[EVENTS.JS] Executing handleEditEvent from save button');
+                    this.handleEditEvent();
+                } else {
+                    console.log('[EVENTS.JS] Save button ignored - not on events page or no current event');
+                }
             });
         }
 
         if (this.elements.editEventForm) {
             this.elements.editEventForm.addEventListener('submit', (e) => {
+                console.log('[EVENTS.JS] Form submit triggered', {
+                    eventsPageHidden: document.getElementById('events-page')?.hidden,
+                    currentEditEvent: this.currentEditEvent?.id,
+                    eventExists: !!this.currentEditEvent,
+                    submitterElement: e.submitter?.tagName + '#' + e.submitter?.id
+                });
                 e.preventDefault();
-                this.handleEditEvent();
+                // Only handle if we're on the events page and have a current edit event
+                const eventsPage = document.getElementById('events-page');
+                if (eventsPage && !eventsPage.hidden && this.currentEditEvent) {
+                    console.log('[EVENTS.JS] Executing handleEditEvent from form submit');
+                    this.handleEditEvent();
+                } else {
+                    console.log('[EVENTS.JS] Form submit ignored - not on events page or no current event');
+                }
             });
         }
 
@@ -571,6 +601,7 @@ class EventsPage {
     }
 
     async loadParticipants() {
+        console.log('[EVENTS.JS] loadParticipants() called');
         try {
             if (this.elements.participantsLoading) {
                 this.elements.participantsLoading.style.display = 'block';
@@ -579,13 +610,15 @@ class EventsPage {
                 this.elements.participantsList.style.display = 'none';
             }
             
+            console.log('[EVENTS.JS] Fetching users from API...');
             const response = await api.getUsers();
             const users = response.data || response || [];
             this.users = users;
+            console.log('[EVENTS.JS] Users loaded:', users.length, 'users');
             
             this.renderParticipants(users);
         } catch (error) {
-            console.error('Failed to load participants:', error);
+            console.error('[EVENTS.JS] Failed to load participants:', error);
             if (this.elements.participantsError) {
                 this.elements.participantsError.textContent = 'Failed to load users. Please try again.';
                 this.elements.participantsError.style.display = 'block';
@@ -598,7 +631,11 @@ class EventsPage {
     }
 
     renderParticipants(users) {
+        console.log('[EVENTS.JS] renderParticipants() called with', users.length, 'users');
+        console.log('[EVENTS.JS] participantsList element:', this.elements.participantsList ? 'exists' : 'missing');
+        
         if (!this.elements.participantsList || users.length === 0) {
+            console.log('[EVENTS.JS] No participants list or no users - showing error');
             if (this.elements.participantsError) {
                 this.elements.participantsError.textContent = 'No users found. Please create users first.';
                 this.elements.participantsError.style.display = 'block';
@@ -606,12 +643,15 @@ class EventsPage {
             return;
         }
         
+        console.log('[EVENTS.JS] Creating participant HTML for', users.length, 'users');
         const participantsHtml = users.map(user => this.createParticipantItem(user)).join('');
         this.elements.participantsList.innerHTML = participantsHtml;
         this.elements.participantsList.style.display = 'block';
         
+        console.log('[EVENTS.JS] Participant HTML rendered, binding events');
         this.bindParticipantEvents();
     }
+
 
     createParticipantItem(user) {
         const balance = user.totalBalance || 0;
@@ -742,12 +782,22 @@ class EventsPage {
         }
     }
 
-    showEditEventDialog() {
+    async showEditEventDialog() {
+        console.log('[EVENTS.JS] showEditEventDialog() called');
         if (!this.currentEditEvent) {
+            console.log('[EVENTS.JS] No current edit event');
             showError('No event selected for editing');
             return;
         }
 
+        console.log('[EVENTS.JS] Current edit event:', this.currentEditEvent);
+        console.log('[EVENTS.JS] Users before loading participants:', this.users ? this.users.length : 'null');
+        
+        // Load participants for editing
+        await this.loadParticipantManagement();
+        
+        console.log('[EVENTS.JS] Users after loading participants:', this.users ? this.users.length : 'null');
+        
         this.populateEditEventForm();
         this.clearAllEditEventErrors();
 
@@ -768,7 +818,11 @@ class EventsPage {
     }
 
     populateEditEventForm() {
-        if (!this.currentEditEvent) return;
+        console.log('[EVENTS.JS] populateEditEventForm() called');
+        if (!this.currentEditEvent) {
+            console.log('[EVENTS.JS] No current edit event in populateEditEventForm');
+            return;
+        }
 
         if (this.elements.editEventName) {
             this.elements.editEventName.value = this.currentEditEvent.name || '';
@@ -791,9 +845,48 @@ class EventsPage {
         if (this.elements.editEventDescription) {
             this.elements.editEventDescription.value = this.currentEditEvent.description || '';
         }
+
+        // Populate participants - clear current selection and select event participants
+        this.selectedParticipants.clear();
+        if (this.currentEditEvent.participants && Array.isArray(this.currentEditEvent.participants)) {
+            console.log('[EVENTS.JS] Setting selected participants from event:', this.currentEditEvent.participants);
+            this.currentEditEvent.participants.forEach(participantId => {
+                this.selectedParticipants.add(participantId);
+            });
+        } else {
+            console.log('[EVENTS.JS] No participants in current edit event or not an array');
+        }
+        
+        console.log('[EVENTS.JS] Selected participants set:', Array.from(this.selectedParticipants));
+        // Update participant UI to reflect current selections
+        this.updateParticipantSelections();
+        this.updateSelectedParticipantsDisplay();
+    }
+
+    updateParticipantSelections() {
+        // Update visual state of participant items to match selectedParticipants set
+        const participantItems = document.querySelectorAll('.participant-item');
+        participantItems.forEach(item => {
+            const userId = item.dataset.userId;
+            if (this.selectedParticipants.has(userId)) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
     }
 
     async handleEditEvent() {
+        console.log('[EVENTS.JS] handleEditEvent called', {
+            currentEditEvent: this.currentEditEvent?.id,
+            eventExists: !!this.currentEditEvent
+        });
+        // Prevent execution if no event is currently being edited
+        if (!this.currentEditEvent) {
+            console.warn('[EVENTS.JS] handleEditEvent called but no event is currently being edited');
+            return;
+        }
+
         if (!this.validateEditEventForm()) {
             return;
         }
@@ -806,7 +899,8 @@ class EventsPage {
                 name: formData.get('name'),
                 date: formData.get('date'),
                 location: formData.get('location'),
-                description: formData.get('description') || ''
+                description: formData.get('description') || '',
+                participants: Array.from(this.selectedParticipants)
             };
 
             const response = await api.updateEvent(this.currentEditEvent.id, eventData);
@@ -1217,6 +1311,20 @@ class EventsPage {
         }
     }
 
+    async loadPage() {
+        // Preload users data for participant selection
+        try {
+            const response = await api.getUsers();
+            this.users = response.data || response || [];
+        } catch (error) {
+            console.error('Failed to preload users:', error);
+            // Don't block page loading if user fetch fails
+        }
+        
+        // Refresh events data
+        await this.refresh();
+    }
+
     getUserBalanceStatus(balance) {
         if (balance > 0) {
             return {
@@ -1233,6 +1341,198 @@ class EventsPage {
                 class: 'balance-settled',
                 text: 'Settled'
             };
+        }
+    }
+
+    // Participant Management Methods (adapted from EventDetailPage)
+    async loadParticipantManagement() {
+        if (this.elements.editParticipantsLoading) {
+            this.elements.editParticipantsLoading.style.display = 'block';
+        }
+
+        try {
+            // Get all users and current event expenses
+            const [allUsers, eventExpenses] = await Promise.all([
+                api.getUsers(),
+                api.getEventCostItems(this.currentEditEvent.id)
+            ]);
+
+            // Create a set of participant IDs who have expenses
+            const participantsWithExpenses = new Set();
+            if (eventExpenses && eventExpenses.length > 0) {
+                eventExpenses.forEach(expense => {
+                    if (expense.paidBy) {
+                        participantsWithExpenses.add(expense.paidBy);
+                    }
+                    if (expense.splitPercentage) {
+                        Object.keys(expense.splitPercentage).forEach(participantId => {
+                            if (expense.splitPercentage[participantId] > 0) {
+                                participantsWithExpenses.add(participantId);
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Render current participants
+            this.renderCurrentParticipants(allUsers, participantsWithExpenses);
+            
+            // Render available participants (not currently in event)
+            this.renderAvailableParticipants(allUsers);
+
+        } catch (error) {
+            console.error('Failed to load participant management data:', error);
+            this.showEditEventError('participants', 'Failed to load participants. Please try again.');
+        } finally {
+            if (this.elements.editParticipantsLoading) {
+                this.elements.editParticipantsLoading.style.display = 'none';
+            }
+        }
+    }
+
+    renderCurrentParticipants(allUsers, participantsWithExpenses) {
+        if (!this.elements.editCurrentParticipants) return;
+
+        const currentParticipantIds = this.currentEditEvent.participants || [];
+        const currentParticipants = allUsers.filter(user => 
+            currentParticipantIds.includes(user.id)
+        );
+
+        if (currentParticipants.length === 0) {
+            this.elements.editCurrentParticipants.innerHTML = `
+                <div class="section-placeholder">
+                    <p>No participants in this event.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const participantsHtml = currentParticipants.map(participant => {
+            const hasExpenses = participantsWithExpenses.has(participant.id);
+            const contact = [];
+            if (participant.email) contact.push(participant.email);
+            if (participant.phone) contact.push(participant.phone);
+
+            return `
+                <div class="participant-item current-participant ${hasExpenses ? 'has-expenses' : ''}">
+                    <div class="participant-item-info">
+                        <div class="participant-item-name">${participant.name}</div>
+                        ${contact.length > 0 ? `<div class="participant-item-details">${contact.join(' • ')}</div>` : ''}
+                        ${hasExpenses ? `<div class="expense-warning">Has expenses in this event</div>` : ''}
+                    </div>
+                    <div class="participant-item-actions">
+                        <button type="button" class="participant-action-btn btn-remove" data-action="remove" data-participant-id="${participant.id}" data-participant-name="${participant.name}" data-has-expenses="${hasExpenses}">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.elements.editCurrentParticipants.innerHTML = participantsHtml;
+        this.bindParticipantActionButtons();
+    }
+
+    renderAvailableParticipants(allUsers) {
+        if (!this.elements.editAvailableParticipants) return;
+
+        const currentParticipantIds = this.currentEditEvent.participants || [];
+        const availableParticipants = allUsers.filter(user => 
+            !currentParticipantIds.includes(user.id)
+        );
+
+        if (availableParticipants.length === 0) {
+            this.elements.editAvailableParticipants.innerHTML = `
+                <div class="section-placeholder">
+                    <p>All users are already participants in this event.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const participantsHtml = availableParticipants.map(participant => {
+            const contact = [];
+            if (participant.email) contact.push(participant.email);
+            if (participant.phone) contact.push(participant.phone);
+
+            return `
+                <div class="participant-item">
+                    <div class="participant-item-info">
+                        <div class="participant-item-name">${participant.name}</div>
+                        ${contact.length > 0 ? `<div class="participant-item-details">${contact.join(' • ')}</div>` : ''}
+                    </div>
+                    <div class="participant-item-actions">
+                        <button type="button" class="participant-action-btn btn-add" data-action="add" data-participant-id="${participant.id}">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.elements.editAvailableParticipants.innerHTML = participantsHtml;
+        this.bindParticipantActionButtons();
+    }
+
+    bindParticipantActionButtons() {
+        // Bind add participant buttons
+        document.querySelectorAll('[data-action="add"]').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const participantId = e.target.dataset.participantId;
+                await this.addParticipant(participantId);
+            });
+        });
+
+        // Bind remove participant buttons
+        document.querySelectorAll('[data-action="remove"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const participantId = e.target.dataset.participantId;
+                const participantName = e.target.dataset.participantName;
+                const hasExpenses = e.target.dataset.hasExpenses === 'true';
+                this.showRemoveParticipantDialog(participantId, participantName, hasExpenses);
+            });
+        });
+    }
+
+    async addParticipant(participantId) {
+        try {
+            // Add participant to current event data
+            if (!this.currentEditEvent.participants) {
+                this.currentEditEvent.participants = [];
+            }
+            
+            if (!this.currentEditEvent.participants.includes(participantId)) {
+                this.currentEditEvent.participants.push(participantId);
+                
+                // Reload participant management UI
+                await this.loadParticipantManagement();
+            }
+        } catch (error) {
+            console.error('Failed to add participant:', error);
+            showError('Failed to add participant. Please try again.');
+        }
+    }
+
+    showRemoveParticipantDialog(participantId, participantName, hasExpenses) {
+        // For now, just remove directly - we can add confirmation dialog later if needed
+        this.removeParticipant(participantId);
+    }
+
+    async removeParticipant(participantId) {
+        try {
+            // Remove participant from current event data
+            if (this.currentEditEvent.participants) {
+                const index = this.currentEditEvent.participants.indexOf(participantId);
+                if (index > -1) {
+                    this.currentEditEvent.participants.splice(index, 1);
+                    
+                    // Reload participant management UI
+                    await this.loadParticipantManagement();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to remove participant:', error);
+            showError('Failed to remove participant. Please try again.');
         }
     }
 }

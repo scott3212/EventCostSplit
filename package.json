@@ -4,7 +4,8 @@
   "description": "A simple expense-splitting web application for badminton events",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "start:dev": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns='tests/integration/'",
@@ -16,10 +17,11 @@
     "format:check": "prettier --check src/ tests/ public/",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
+    "cypress:run:logged": "cypress run > cypress-results.log 2>&1",
     "cypress:run:mobile": "cypress run --config viewportWidth=375,viewportHeight=667",
     "test:e2e": "start-server-and-test 'npm run dev' http://localhost:3000 'npm run cypress:run'",
     "test:e2e:mobile": "start-server-and-test 'npm run dev' http://localhost:3000 'npm run cypress:run:mobile'",
-    "prepare": "husky install"
+    "prepare": "is-ci || husky install"
   },
   "keywords": [
     "expense-splitting",
@@ -33,6 +35,7 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "helmet": "^7.0.0",
+    "is-ci": "^3.0.1",
     "morgan": "^1.10.0",
     "uuid": "^9.0.1"
   },

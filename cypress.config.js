@@ -2,7 +2,7 @@ const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:3001',
+    baseUrl: 'http://localhost:3000',
     viewportWidth: 1280,
     viewportHeight: 720,
     video: false,
@@ -31,6 +31,28 @@ module.exports = defineConfig({
           });
           
           return null; // Tasks must return a value
+        },
+        
+        writeTestLog(logData) {
+          // Write test logs to a file
+          const logsDir = path.join(__dirname, 'cypress', 'logs');
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const logFile = path.join(logsDir, `test-run-${timestamp}.log`);
+          
+          try {
+            // Ensure logs directory exists
+            if (!fs.existsSync(logsDir)) {
+              fs.mkdirSync(logsDir, { recursive: true });
+            }
+            
+            const logEntry = `[${new Date().toISOString()}] ${logData.level}: ${logData.message}\n`;
+            fs.appendFileSync(logFile, logEntry);
+            
+            return null;
+          } catch (error) {
+            console.warn('Failed to write test log:', error.message);
+            return null;
+          }
         }
       });
     },

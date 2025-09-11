@@ -223,6 +223,10 @@ class EventDetailPage {
 
         if (this.elements.editEventForm) {
             this.elements.editEventForm.addEventListener('submit', (e) => {
+                console.log('[EVENT-DETAIL.JS] Form submit triggered', {
+                    currentEvent: this.currentEvent?.id,
+                    submitterElement: e.submitter?.tagName + '#' + e.submitter?.id
+                });
                 e.preventDefault();
                 this.handleEditEvent();
             });
@@ -278,11 +282,13 @@ class EventDetailPage {
         document.addEventListener('click', (e) => {
             if (e.target.matches('.participant-action-btn[data-action="add"]')) {
                 const participantId = e.target.getAttribute('data-participant-id');
+                console.log('[EVENT-DETAIL.JS] Add participant clicked', { participantId });
                 this.addParticipant(participantId);
             } else if (e.target.matches('.participant-action-btn[data-action="remove"]')) {
                 const participantId = e.target.getAttribute('data-participant-id');
                 const participantName = e.target.getAttribute('data-participant-name');
                 const hasExpenses = e.target.getAttribute('data-has-expenses') === 'true';
+                console.log('[EVENT-DETAIL.JS] Remove participant clicked', { participantId, participantName, hasExpenses });
                 this.showRemoveParticipantDialog(participantId, participantName, hasExpenses);
             }
         });
@@ -487,7 +493,8 @@ class EventDetailPage {
     }
 
     createExpenseCard(costItem) {
-        const date = new Date(costItem.date);
+        // Use formatDateOnly to avoid timezone issues with date-only strings
+        const formattedDate = formatDateOnly(costItem.date);
         // Ensure participants are loaded before finding the user
         const paidByUser = this.participants?.find(p => p.id === costItem.paidBy);
         
@@ -515,7 +522,7 @@ class EventDetailPage {
                     <div class="expense-amount">${formatCurrency(costItem.amount)}</div>
                 </div>
                 <div class="expense-meta">
-                    <span>📅 ${date.toLocaleDateString()}</span>
+                    <span>📅 ${formattedDate}</span>
                     <span>💳 Paid by ${paidByUser ? paidByUser.name : 'Unknown'}</span>
                 </div>
                 <div class="expense-split-info">
@@ -631,9 +638,8 @@ class EventDetailPage {
         if (this.elements.expenseDate) {
             this.elements.expenseDate.value = expense.date;
         }
-        if (this.elements.expensePaidBy) {
-            this.elements.expensePaidBy.value = expense.paidBy;
-        }
+        // Store the paidBy value to be set after the dialog is shown
+        this.tempPaidByValue = expense.paidBy;
 
         // Set up split configuration for editing (handle both API response formats)
         const splitData = expense.splitPercentages || expense.splitPercentage || {};
@@ -775,16 +781,27 @@ class EventDetailPage {
             return;
         }
 
-        this.resetAddExpenseForm();
+        // Only reset form if we're not editing an existing expense
+        if (!this.editingExpenseId) {
+            this.resetAddExpenseForm();
+        }
+        
+        // Load participants (but preserve selection if editing)
         this.loadExpenseFormParticipants();
+        
+        // Restore the paid by value if editing
+        if (this.editingExpenseId && this.tempPaidByValue && this.elements.expensePaidBy) {
+            this.elements.expensePaidBy.value = this.tempPaidByValue;
+            this.tempPaidByValue = null; // Clear temporary value
+        }
         
         if (this.elements.expenseModal) {
             this.elements.expenseModal.style.display = 'flex';
             this.elements.expenseModal.classList.add('fade-in');
         }
 
-        // Set default date to today
-        if (this.elements.expenseDate) {
+        // Set default date to today only if not editing
+        if (!this.editingExpenseId && this.elements.expenseDate) {
             const today = new Date();
             this.elements.expenseDate.value = today.toISOString().split('T')[0];
         }
@@ -868,11 +885,13 @@ class EventDetailPage {
             if (isEditing) {
                 // Update existing expense
                 result = await api.updateCostItem(this.editingExpenseId, expenseData);
-                showSuccess(`Expense "${result.description}" updated successfully!`);
+                const description = result?.description || expenseData.description || 'expense';
+                showSuccess(`Expense "${description}" updated successfully!`);
             } else {
                 // Create new expense
                 result = await api.createCostItem(expenseData);
-                showSuccess(`Expense "${result.description}" added successfully!`);
+                const description = result?.description || expenseData.description || 'expense';
+                showSuccess(`Expense "${description}" added successfully!`);
             }
             
             this.hideAddExpenseDialog();
@@ -999,15 +1018,48 @@ class EventDetailPage {
     }
     
     // Split Configuration Methods
-    initializeSplitConfiguration() {
-        // Set equal split as default
-        if (this.elements.splitEqualRadio) {
-            this.elements.splitEqualRadio.checked = true;
+    isCurrentSplitEqual() {
+        if (!this.currentSplitPercentages || Object.keys(this.currentSplitPercentages).length === 0) {
+            return true; // Default to equal if no data
         }
         
-        // Initialize current split data
-        this.currentSplitPercentages = {};
-        this.splitMode = 'equal';
+        // Get the percentage values and check if they're all equal
+        const percentages = Object.values(this.currentSplitPercentages).filter(p => p > 0);
+        if (percentages.length === 0) return true;
+        
+        // Check if all non-zero percentages are the same (within a small tolerance for floating point)
+        const firstPercentage = percentages[0];
+        const tolerance = 0.01;
+        return percentages.every(p => Math.abs(p - firstPercentage) < tolerance);
+    }
+    
+    initializeSplitConfiguration() {
+        // When editing an expense, preserve the existing split configuration
+        if (this.editingExpenseId && this.currentSplitPercentages && Object.keys(this.currentSplitPercentages).length > 0) {
+            // Detect if current split is equal or custom
+            const isEqualSplit = this.isCurrentSplitEqual();
+            
+            if (isEqualSplit) {
+                if (this.elements.splitEqualRadio) {
+                    this.elements.splitEqualRadio.checked = true;
+                }
+                this.splitMode = 'equal';
+            } else {
+                if (this.elements.splitCustomRadio) {
+                    this.elements.splitCustomRadio.checked = true;
+                }
+                this.splitMode = 'custom';
+            }
+        } else {
+            // Set equal split as default for new expenses
+            if (this.elements.splitEqualRadio) {
+                this.elements.splitEqualRadio.checked = true;
+            }
+            
+            // Initialize current split data
+            this.currentSplitPercentages = {};
+            this.splitMode = 'equal';
+        }
         
         // Load initial split configuration
         this.loadSplitConfiguration();
@@ -1038,9 +1090,11 @@ class EventDetailPage {
             return;
         }
         
-        // Generate equal split percentages for initialization
-        const equalSplit = this.generateEqualSplit();
-        this.currentSplitPercentages = { ...equalSplit };
+        // Only generate equal split percentages if not already set (i.e., for new expenses)
+        if (!this.currentSplitPercentages || Object.keys(this.currentSplitPercentages).length === 0) {
+            const equalSplit = this.generateEqualSplit();
+            this.currentSplitPercentages = { ...equalSplit };
+        }
         
         const participantHtml = eventParticipants.map(participant => {
             const percentage = this.currentSplitPercentages[participant.id] || 0;
@@ -1073,7 +1127,10 @@ class EventDetailPage {
         }).join('');
         
         this.elements.splitParticipantsContainer.innerHTML = participantHtml;
-        this.elements.splitParticipantsContainer.className = 'split-participants-container equal-mode';
+        
+        // Set the appropriate mode based on current split configuration
+        const mode = this.splitMode || (this.isCurrentSplitEqual() ? 'equal' : 'custom');
+        this.elements.splitParticipantsContainer.className = `split-participants-container ${mode}-mode`;
         
         // Bind events for split controls
         this.bindSplitControlEvents();
@@ -1365,7 +1422,7 @@ class EventDetailPage {
                         ${hasExpenses ? `<div class="expense-warning">Has expenses in this event</div>` : ''}
                     </div>
                     <div class="participant-item-actions">
-                        <button class="participant-action-btn btn-remove" data-action="remove" data-participant-id="${participant.id}" data-participant-name="${participant.name}" data-has-expenses="${hasExpenses}">
+                        <button type="button" class="participant-action-btn btn-remove" data-action="remove" data-participant-id="${participant.id}" data-participant-name="${participant.name}" data-has-expenses="${hasExpenses}">
                             Remove
                         </button>
                     </div>
@@ -1405,7 +1462,7 @@ class EventDetailPage {
                         ${contact.length > 0 ? `<div class="participant-item-details">${contact.join(' • ')}</div>` : ''}
                     </div>
                     <div class="participant-item-actions">
-                        <button class="participant-action-btn btn-add" data-action="add" data-participant-id="${participant.id}">
+                        <button type="button" class="participant-action-btn btn-add" data-action="add" data-participant-id="${participant.id}">
                             Add
                         </button>
                     </div>
@@ -1486,6 +1543,16 @@ class EventDetailPage {
     }
 
     async handleEditEvent() {
+        console.log('[EVENT-DETAIL.JS] handleEditEvent called', {
+            currentEvent: this.currentEvent?.id,
+            eventExists: !!this.currentEvent
+        });
+        // Prevent execution if no event is currently being edited
+        if (!this.currentEvent) {
+            console.warn('[EVENT-DETAIL.JS] handleEditEvent called but no event is currently being edited');
+            return;
+        }
+
         if (!this.validateEditEventForm()) {
             return;
         }
@@ -1502,7 +1569,19 @@ class EventDetailPage {
                 participants: this.currentEvent.participants
             };
 
+            console.log('[EVENT-DETAIL.JS] About to update event', {
+                eventId: this.currentEventId,
+                eventData,
+                formName: formData.get('name'),
+                currentEventName: this.currentEvent.name
+            });
+
             const updatedEvent = await api.updateEvent(this.currentEventId, eventData);
+            
+            console.log('[EVENT-DETAIL.JS] Event updated', {
+                updatedEvent,
+                updatedEventName: updatedEvent.name
+            });
             
             this.hideEditEventDialog();
             await this.refresh();
@@ -1552,8 +1631,8 @@ class EventDetailPage {
             isValid = false;
         }
 
-        // Validate participants
-        if (!this.currentEvent.participants || this.currentEvent.participants.length === 0) {
+        // Validate participants - check if currentEvent exists
+        if (!this.currentEvent || !this.currentEvent.participants || this.currentEvent.participants.length === 0) {
             this.showEditEventError('participants', 'At least one participant is required');
             isValid = false;
         }
