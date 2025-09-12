@@ -15,7 +15,7 @@ describe('Event Management - Description Update Bug Fix', () => {
     it('should handle event description updates from both list and detail pages without conflicts', () => {
         // Step 1: Create an event with all mandatory fields
         cy.visit('/events');
-        cy.wait(1000);
+        cy.wait(500);
         
         cy.get('#add-event-btn').click();
         cy.get('#add-event-modal').should('be.visible');
@@ -25,6 +25,10 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('#event-date').type('2025-09-16');
         cy.get('#event-location').type('Badminton Court A');
         cy.get('#event-description').type('8-9点：18号场\n9-10点：11号场');
+        
+        // Wait for participants to load before selecting them
+        cy.get('#participants-loading').should('not.be.visible');
+        cy.get('.participant-checkbox').should('be.visible');
         
         // Select some participants (similar to the bug report with 6 users)
         cy.get('.participant-checkbox').first().check();
@@ -43,7 +47,7 @@ describe('Event Management - Description Update Bug Fix', () => {
         
         // Step 2: Refresh the event list page (localhost:3000/events)
         cy.visit('/events');
-        cy.wait(1000); // Allow page to fully load after refresh
+        cy.wait(500); // Allow page to fully load after refresh
         
         // Verify event exists after refresh
         cy.get('.event-card').should('contain', 'Sep 16 8-10 pm');
@@ -132,7 +136,7 @@ describe('Event Management - Description Update Bug Fix', () => {
     it('should handle rapid sequential edits without handler conflicts', () => {
         // Create a test event
         cy.visit('/events');
-        cy.wait(1000);
+        cy.wait(500);
         
         cy.get('#add-event-btn').click();
         cy.get('#add-event-modal').should('be.visible');
@@ -141,6 +145,10 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('#event-date').type('2025-09-17');
         cy.get('#event-location').type('Test Location');
         cy.get('#event-description').type('Initial description');
+        
+        // Wait for participants to load before selecting them
+        cy.get('#participants-loading').should('not.be.visible');
+        cy.get('.participant-checkbox').should('be.visible');
         
         // Select some participants
         cy.get('.participant-checkbox').first().check();
@@ -212,7 +220,7 @@ describe('Event Management - Description Update Bug Fix', () => {
         
         // Create and test event editing workflow
         cy.visit('/events');
-        cy.wait(1000);
+        cy.wait(500);
         
         // Create event
         cy.get('#add-event-btn').click();
@@ -220,6 +228,11 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('#event-date').type('2025-09-18');
         cy.get('#event-location').type('Test Location');
         cy.get('#event-description').type('Test description');
+        
+        // Wait for participants to load before selecting them
+        cy.get('#participants-loading').should('not.be.visible');
+        cy.get('.participant-checkbox').should('be.visible');
+        
         cy.get('.participant-checkbox').first().check();
         cy.get('#add-event-save').click();
         cy.get('#success-ok').click();
