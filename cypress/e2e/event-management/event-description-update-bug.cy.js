@@ -53,9 +53,9 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('.event-card').should('contain', 'Sep 16 8-10 pm');
         
         // Step 3: Click edit event pencil icon from event list page
-        cy.get('.event-card').contains('Sep 16 8-10 pm').parent().within(() => {
-            cy.get('.edit-event-btn').click();
-        });
+        // Wait for the event cards to fully load with action buttons
+        cy.get('.event-card').contains('Sep 16 8-10 pm').should('be.visible');
+        cy.get('.event-card').contains('Sep 16 8-10 pm').find('.edit-event-btn').click();
         
         // Verify edit modal opens with correct data
         cy.get('#edit-event-modal').should('be.visible');
@@ -161,9 +161,7 @@ describe('Event Management - Description Update Bug Fix', () => {
         // Rapid sequence: Edit from list -> Edit from detail -> Edit from list again
         
         // Edit 1: From events list
-        cy.get('.event-card').contains('Rapid Edit Test Event').parent().within(() => {
-            cy.get('.edit-event-btn').click();
-        });
+        cy.get('.event-card').contains('Rapid Edit Test Event').find('.edit-event-btn').click();
         
         cy.get('#edit-event-modal').should('be.visible');
         cy.get('#edit-event-description').clear().type('Edit 1 from list');
@@ -185,9 +183,7 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('[data-page="events"]').click();
         cy.wait(500);
         
-        cy.get('.event-card').contains('Rapid Edit Test Event').parent().within(() => {
-            cy.get('.edit-event-btn').click();
-        });
+        cy.get('.event-card').contains('Rapid Edit Test Event').find('.edit-event-btn').click();
         
         cy.get('#edit-event-modal').should('be.visible');
         cy.get('#edit-event-description').clear().type('Edit 3 from list again');
@@ -238,9 +234,7 @@ describe('Event Management - Description Update Bug Fix', () => {
         cy.get('#success-ok').click();
         
         // Edit from events list
-        cy.get('.event-card').contains('Console Error Test').parent().within(() => {
-            cy.get('.edit-event-btn').click();
-        });
+        cy.get('.event-card').contains('Console Error Test').find('.edit-event-btn').click();
         cy.get('#edit-event-description').clear().type('Updated description');
         cy.get('#edit-event-save').click();
         cy.get('#success-ok').click();
