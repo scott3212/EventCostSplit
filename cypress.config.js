@@ -15,8 +15,7 @@ module.exports = defineConfig({
         outputTarget: {
           'cypress-results.log': 'txt'
         },
-        includeSuccessfulHookLogs: true,
-        commandTimings: 'timestamp'
+        includeSuccessfulHookLogs: true
       });
       // implement node event listeners here
       const fs = require('fs');
