@@ -1,0 +1,22 @@
+{
+  "watch": ["src/", "public/js/", "public/css/"],
+  "ignore": [
+    "*.json",
+    "data/",
+    "users.json",
+    "events.json", 
+    "cost_items.json",
+    "payments.json",
+    "node_modules/",
+    "tests/",
+    "cypress/",
+    "*.log",
+    "*.test.js",
+    "coverage/"
+  ],
+  "ext": "js,html,css",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000"
+}
