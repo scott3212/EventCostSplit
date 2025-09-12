@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "cypress": "^15.1.0",
+    "cypress-terminal-report": "^7.2.1",
     "eslint": "^8.52.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-jest": "^27.6.0",

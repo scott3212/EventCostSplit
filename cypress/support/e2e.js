@@ -5,6 +5,9 @@
 // Import commands.js using ES2015 syntax:
 import './commands'
 
+// Import cypress-terminal-report for logging
+require('cypress-terminal-report/src/installLogsCollector')()
+
 // Add global before hook to clear data before each test
 beforeEach(() => {
   // Clear application data before each test to ensure clean state

@@ -8,6 +8,16 @@ module.exports = defineConfig({
     video: false,
     screenshotOnRunFailure: true,
     setupNodeEvents(on, config) {
+      // Install cypress-terminal-report plugin
+      require('cypress-terminal-report/src/installLogsPrinter')(on, {
+        // Write logs to cypress-results.log 
+        outputRoot: config.projectRoot + '/',
+        outputTarget: {
+          'cypress-results.log': 'txt'
+        },
+        includeSuccessfulHookLogs: true,
+        commandTimings: 'timestamp'
+      });
       // implement node event listeners here
       const fs = require('fs');
       const path = require('path');
@@ -63,8 +73,8 @@ module.exports = defineConfig({
     runMode: 2,
     openMode: 0
   },
-  defaultCommandTimeout: 15000,
-  requestTimeout: 15000,
-  responseTimeout: 15000,
-  pageLoadTimeout: 30000
+  defaultCommandTimeout: 3000,
+  requestTimeout: 3000,
+  responseTimeout: 3000,
+  pageLoadTimeout: 5000
 });
