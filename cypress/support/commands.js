@@ -148,3 +148,19 @@ Cypress.Commands.add('shouldShowBalance', { prevSubject: true }, (subject, expec
     expect(amount).to.equal(expectedAmount)
   })
 })
+
+// Custom logging command for writing to cypress-results.log
+Cypress.Commands.add('logToFile', (message, level = 'INFO') => {
+  const timestamp = new Date().toISOString()
+  const logMessage = `[${timestamp}] ${level}: ${message}`
+  
+  cy.task('writeToResultsLog', {
+    message: logMessage,
+    timestamp: timestamp
+  })
+})
+
+// Log test progress
+Cypress.Commands.add('logTestProgress', (step, description) => {
+  cy.logToFile(`Step ${step}: ${description}`)
+})

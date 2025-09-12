@@ -13,9 +13,12 @@ describe('Event Management - Description Update Bug Fix', () => {
     });
 
     it('should handle event description updates from both list and detail pages without conflicts', () => {
+        cy.logTestProgress('1', 'Starting event description update test');
+        
         // Step 1: Create an event with all mandatory fields
         cy.visit('/events');
         cy.wait(500);
+        cy.logTestProgress('2', 'Visited events page');
         
         cy.get('#add-event-btn').click();
         cy.get('#add-event-modal').should('be.visible');
