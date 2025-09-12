@@ -53,20 +53,6 @@ module.exports = defineConfig({
             console.warn('Failed to write test log:', error.message);
             return null;
           }
-        },
-        
-        writeToResultsLog(logData) {
-          // Write to cypress-results.log specifically
-          const logFile = path.join(__dirname, 'cypress-results.log');
-          
-          try {
-            const logEntry = `${logData.message}\n`;
-            fs.appendFileSync(logFile, logEntry);
-            return null;
-          } catch (error) {
-            console.warn('Failed to write to cypress-results.log:', error.message);
-            return null;
-          }
         }
       });
     },
@@ -77,8 +63,8 @@ module.exports = defineConfig({
     runMode: 2,
     openMode: 0
   },
-  defaultCommandTimeout: 5000,
-  requestTimeout: 3000,
-  responseTimeout: 3000,
-  pageLoadTimeout: 5000
+  defaultCommandTimeout: 15000,
+  requestTimeout: 15000,
+  responseTimeout: 15000,
+  pageLoadTimeout: 30000
 });

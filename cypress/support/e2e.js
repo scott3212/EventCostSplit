@@ -38,22 +38,3 @@ chai.Assertion.addMethod('balanceAmount', function (expected) {
     amount
   )
 })
-
-// Log test start/end for UI runs
-beforeEach(() => {
-  if (Cypress.currentTest) {
-    cy.task('writeToResultsLog', {
-      message: `[TEST START] ${Cypress.currentTest.title}`,
-      timestamp: new Date().toISOString()
-    })
-  }
-})
-
-afterEach(() => {
-  if (Cypress.currentTest) {
-    cy.task('writeToResultsLog', {
-      message: `[TEST END] ${Cypress.currentTest.title} - ${Cypress.currentTest.state}`,
-      timestamp: new Date().toISOString()
-    })
-  }
-})
