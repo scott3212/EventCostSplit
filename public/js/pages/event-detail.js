@@ -908,8 +908,6 @@ class EventDetailPage {
             await this.refresh();
             
         } catch (error) {
-            console.error('Failed to save expense:', error);
-            
             if (error.message.includes('description already exists')) {
                 this.showExpenseError('description', 'An expense with this description already exists');
             } else if (error.message.includes('amount')) {
@@ -1557,7 +1555,18 @@ class EventDetailPage {
             currentEvent: this.currentEvent?.id,
             eventExists: !!this.currentEvent
         });
-        // Prevent execution if no event is currently being edited
+        
+        // First check: event-detail page must be visible and active
+        const eventDetailPage = document.getElementById('event-detail-page');
+        const isEventDetailPageVisible = eventDetailPage && !eventDetailPage.classList.contains('hidden') && 
+                                        eventDetailPage.style.display !== 'none';
+        
+        if (!isEventDetailPageVisible) {
+            console.warn('[EVENT-DETAIL.JS] handleEditEvent called but event-detail page is not visible, ignoring');
+            return;
+        }
+        
+        // Second check: must have a current event loaded
         if (!this.currentEvent) {
             console.warn('[EVENT-DETAIL.JS] handleEditEvent called but no event is currently being edited');
             return;
@@ -1596,7 +1605,7 @@ class EventDetailPage {
             this.hideEditEventDialog();
             await this.refresh();
             
-            showSuccess(`Event "${updatedEvent.name}" updated successfully!`);
+            showSuccess(`Event "${updatedEvent.data?.name || this.currentEvent.name}" updated successfully!`);
             
         } catch (error) {
             console.error('Failed to update event:', error);
