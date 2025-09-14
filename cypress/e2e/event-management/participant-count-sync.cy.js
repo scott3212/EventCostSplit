@@ -40,12 +40,12 @@ describe('Event Participant Count Update', () => {
         cy.get('#event-date').type('2025-09-20');
         cy.get('#event-location').type('Test Location');
         
-        // Select first 2 users as participants
-        cy.get('.participant-card').should('have.length', 3);
-        cy.get('.participant-card').eq(0).within(() => {
+        // Wait for participants to load and select first 2 users as participants
+        cy.get('.participant-item', { timeout: 10000 }).should('have.length', 3);
+        cy.get('.participant-item').eq(0).within(() => {
             cy.get('input[type="checkbox"]').check();
         });
-        cy.get('.participant-card').eq(1).within(() => {
+        cy.get('.participant-item').eq(1).within(() => {
             cy.get('input[type="checkbox"]').check();
         });
         
@@ -150,9 +150,9 @@ describe('Event Participant Count Update', () => {
         cy.get('#event-date').type('2025-09-21');
         cy.get('#event-location').type('Test Location 2');
         
-        // Select all 3 users
-        cy.get('.participant-card').should('have.length', 3);
-        cy.get('.participant-card input[type="checkbox"]').check();
+        // Wait for participants to load and select all 3 users
+        cy.get('.participant-item', { timeout: 10000 }).should('have.length', 3);
+        cy.get('.participant-item input[type="checkbox"]').check();
         
         cy.get('#add-event-save').click();
         cy.get('#success-modal').should('be.visible');

@@ -6,8 +6,8 @@
 Cypress.Commands.add('clearApplicationData', () => {
   cy.log('Starting application data clearing...')
   
-  // Attempt data clearing with retries
-  cy.request({
+  // Attempt data clearing with retries and return the response
+  return cy.request({
     method: 'DELETE',
     url: '/api/test/clear-data',
     timeout: 10000, // 10 second timeout for data clearing
@@ -29,8 +29,8 @@ Cypress.Commands.add('clearApplicationData', () => {
     // Verify complete clearing
     expect(response.body.fullyCleared).to.be.true
     
-    // Add small delay to ensure file system consistency
-    cy.wait(200)
+    // Add small delay to ensure file system consistency and return the response
+    return cy.wait(200).then(() => response)
   })
 })
 

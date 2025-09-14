@@ -3,6 +3,7 @@
   "ignore": [
     "*.json",
     "data/",
+    "src/data/",
     "users.json",
     "events.json", 
     "cost_items.json",

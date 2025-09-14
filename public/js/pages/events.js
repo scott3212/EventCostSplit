@@ -514,7 +514,12 @@ class EventsPage {
 
     showEmptyState() {
         if (this.elements.loading) this.elements.loading.style.display = 'none';
-        if (this.elements.list) this.elements.list.style.display = 'none';
+        if (this.elements.list) {
+            this.elements.list.style.display = 'none';
+            // CRITICAL FIX: Clear the list contents when showing empty state
+            // This prevents old event cards from lingering in the DOM
+            this.elements.list.innerHTML = '';
+        }
         if (this.elements.empty) this.elements.empty.style.display = 'block';
     }
 
@@ -1146,8 +1151,6 @@ class EventsPage {
             showSuccess(`Event "${newEvent.name}" created successfully!`);
             
         } catch (error) {
-            console.error('Failed to create event:', error);
-            
             if (error.message.includes('name already exists') || error.message.includes('name is not unique')) {
                 this.showError('event-name', 'An event with this name already exists');
             } else {
@@ -1193,16 +1196,19 @@ class EventsPage {
 
     validateDate() {
         const date = this.elements.dateInput?.value;
-        
+
         if (!date) {
             this.showError('event-date', 'Event date is required');
             return false;
         }
-        
+
         const eventDate = this.parseDateSafely(date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
+        // Set event date to start of day for proper comparison
+        eventDate.setHours(0, 0, 0, 0);
+
         if (eventDate < today) {
             this.showError('event-date', 'Event date cannot be in the past');
             return false;

@@ -95,16 +95,32 @@ describe('User Management E2E Tests', () => {
 
   describe('Edit User', () => {
     beforeEach(() => {
+      // Set up API interception to ensure we wait for user data to load
+      cy.intercept('GET', '/api/users').as('getUsers')
+      
       // Create a test user for editing
       cy.fixture('users').then((userData) => {
         cy.createUser(userData.testUsers[0]).then((user) => {
           cy.wrap(user).as('testUser')
         })
       })
+      
       // Refresh the users list by re-navigating to users page
       cy.get('[data-page="users"]').click()
-      cy.wait(1000)
-      // Ensure user cards are visible after refresh
+      
+      // Wait for the users API call to complete (this ensures this.users is populated)
+      cy.wait('@getUsers').then((interception) => {
+        // Verify the API returned the user we just created
+        expect(interception.response.statusCode).to.be.oneOf([200, 304])
+        if (interception.response.statusCode === 200) {
+          expect(interception.response.body.data).to.have.length.at.least(1)
+        }
+      })
+      
+      // Additional wait to ensure DOM is fully updated
+      cy.wait(500)
+      
+      // Ensure user cards are visible after refresh and API data is loaded
       cy.get('.user-card').should('have.length.at.least', 1)
     })
 
