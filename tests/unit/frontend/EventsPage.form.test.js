@@ -151,10 +151,16 @@ describe('EventsPage - Create Event Form', () => {
         });
 
         test('should reject past dates', () => {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            mockElements['event-date'].value = yesterday.toISOString().split('T')[0];
-            
+            // Create yesterday's date in local timezone to avoid UTC conversion issues
+            const today = new Date();
+            const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+
+            // Format as YYYY-MM-DD
+            const year = yesterday.getFullYear();
+            const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const day = String(yesterday.getDate()).padStart(2, '0');
+            mockElements['event-date'].value = `${year}-${month}-${day}`;
+
             const result = eventsPage.validateDate();
             expect(result).toBe(false);
             expect(mockElements['event-date-error'].textContent).toBe('Event date cannot be in the past');

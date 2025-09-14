@@ -1806,8 +1806,6 @@ class EventDetailPage {
             this.goBackToEvents();
 
         } catch (error) {
-            console.error('Failed to delete event:', error);
-            
             // Re-enable delete button
             if (this.elements.confirmDeleteEventOk) {
                 this.elements.confirmDeleteEventOk.disabled = false;

@@ -334,7 +334,6 @@ class EventsPage {
             
             this.updateStats();
         } catch (error) {
-            console.error('Failed to load events:', error);
             showError('Failed to load events. Please try again.');
             this.showEmptyState();
         }
@@ -623,7 +622,6 @@ class EventsPage {
             
             this.renderParticipants(users);
         } catch (error) {
-            console.error('[EVENTS.JS] Failed to load participants:', error);
             if (this.elements.participantsError) {
                 this.elements.participantsError.textContent = 'Failed to load users. Please try again.';
                 this.elements.participantsError.style.display = 'block';
@@ -1203,6 +1201,11 @@ class EventsPage {
         }
 
         const eventDate = this.parseDateSafely(date);
+        if (!eventDate || isNaN(eventDate.getTime())) {
+            this.showError('event-date', 'Invalid date format');
+            return false;
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -1213,7 +1216,7 @@ class EventsPage {
             this.showError('event-date', 'Event date cannot be in the past');
             return false;
         }
-        
+
         this.clearError('event-date');
         return true;
     }
