@@ -229,4 +229,3 @@ class TestController {
 }
 
 module.exports = TestController;
-// Force restart 3

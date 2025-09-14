@@ -119,7 +119,7 @@ class ApiClient {
 
     async updateEvent(id, eventData) {
         const response = await this.put(`/events/${id}`, eventData);
-        return response.data || response;
+        return response; // Return full response to preserve success field
     }
 
     async deleteEvent(id) {
