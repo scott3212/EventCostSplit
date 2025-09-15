@@ -361,12 +361,17 @@
 
                     <div id="payments-page" class="page">
                         <div class="page-header">
-                            <h1>💳 Payments</h1>
-                            <p>Track payments and settlement suggestions</p>
-                            <div class="page-actions">
-                                <button id="record-payment-btn" class="btn btn-primary">
-                                    <span>➕</span> Record Payment
-                                </button>
+                            <div class="page-title-section">
+                                <div class="page-title-content">
+                                    <h1>💳 Payments</h1>
+                                    <p>Track payments and settlement suggestions</p>
+                                </div>
+                                <div class="page-actions">
+                                    <button id="record-payment-btn" class="btn btn-primary">
+                                        <span class="btn-icon">➕</span>
+                                        Record Payment
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -911,8 +916,11 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                <button type="submit" form="record-payment-form" class="btn btn-primary">Record Payment</button>
+                <button class="btn btn-secondary" id="record-payment-cancel">Cancel</button>
+                <button class="btn btn-primary" id="record-payment-save">
+                    <span class="loading-spinner-sm" id="record-payment-spinner" style="display: none;"></span>
+                    <span id="record-payment-save-text">Record Payment</span>
+                </button>
             </div>
         </div>
     </div>

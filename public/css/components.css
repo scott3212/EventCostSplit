@@ -1903,6 +1903,31 @@
     width: 90%;
 }
 
+/* Ensure all modals are properly centered when shown */
+#record-payment-modal[style*="block"],
+#add-user-modal[style*="block"],
+#add-event-modal[style*="block"],
+#success-modal[style*="block"],
+#error-modal[style*="block"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Specific styles for payment-related modals */
+#record-payment-modal .modal-content {
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Success and error modals should be smaller and centered */
+#success-modal .modal-content,
+#error-modal .modal-content {
+    max-width: 400px;
+    width: 90%;
+    margin: 0 auto;
+}
+
 @media (max-width: 768px) {
     .participant-list {
         max-height: 150px;

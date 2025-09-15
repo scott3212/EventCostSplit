@@ -25,16 +25,22 @@ class PaymentsPage {
             }
         });
 
-        // Record Payment Form
-        const recordPaymentForm = document.getElementById('record-payment-form');
-        if (recordPaymentForm) {
-            recordPaymentForm.addEventListener('submit', (e) => {
+        // Record Payment Cancel button
+        const recordPaymentCancelBtn = document.getElementById('record-payment-cancel');
+        if (recordPaymentCancelBtn) {
+            recordPaymentCancelBtn.addEventListener('click', () => this.hideRecordPaymentModal());
+        }
+
+        // Record Payment Save button
+        const recordPaymentSaveBtn = document.getElementById('record-payment-save');
+        if (recordPaymentSaveBtn) {
+            recordPaymentSaveBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.handleRecordPayment();
             });
         }
 
-        // Modal close events
+        // Modal close events (X button and click outside)
         const recordPaymentModal = document.getElementById('record-payment-modal');
         if (recordPaymentModal) {
             const closeBtn = recordPaymentModal.querySelector('.modal-close');
@@ -236,7 +242,7 @@ class PaymentsPage {
 
         // Populate user select options
         this.populateUserSelect();
-        
+
         // Clear form
         const form = document.getElementById('record-payment-form');
         if (form) form.reset();
@@ -244,7 +250,7 @@ class PaymentsPage {
         // Clear any previous errors
         this.clearFormErrors();
 
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 
     hideRecordPaymentModal() {
@@ -285,20 +291,22 @@ class PaymentsPage {
         }
 
         try {
-            // Find submit button - it's outside the form with form attribute reference
-            const submitBtn = document.querySelector('button[form="record-payment-form"]');
-            if (!submitBtn) {
-                throw new Error('Submit button not found');
+            // Update button to show loading state
+            const submitBtn = document.getElementById('record-payment-save');
+            const spinner = document.getElementById('record-payment-spinner');
+            const saveText = document.getElementById('record-payment-save-text');
+
+            if (submitBtn && spinner && saveText) {
+                submitBtn.disabled = true;
+                spinner.style.display = 'inline-block';
+                saveText.textContent = 'Recording...';
             }
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Recording...';
-            submitBtn.disabled = true;
 
             await this.api.createPayment(paymentData);
-            
+
             this.hideRecordPaymentModal();
             this.showSuccess('Payment recorded successfully!');
-            
+
             // Reload page data
             await this.loadPage();
 
@@ -306,10 +314,15 @@ class PaymentsPage {
             console.error('Error recording payment:', error);
             this.showError('Failed to record payment. Please try again.');
         } finally {
-            const submitBtn = document.querySelector('button[form="record-payment-form"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'Record Payment';
+            // Reset button state
+            const submitBtn = document.getElementById('record-payment-save');
+            const spinner = document.getElementById('record-payment-spinner');
+            const saveText = document.getElementById('record-payment-save-text');
+
+            if (submitBtn && spinner && saveText) {
                 submitBtn.disabled = false;
+                spinner.style.display = 'none';
+                saveText.textContent = 'Record Payment';
             }
         }
     }
@@ -436,7 +449,7 @@ class PaymentsPage {
         const messageElement = document.getElementById('error-message');
         if (modal && messageElement) {
             messageElement.textContent = message;
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
     }
 
@@ -445,7 +458,7 @@ class PaymentsPage {
         const messageElement = document.getElementById('success-message');
         if (modal && messageElement) {
             messageElement.textContent = message;
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
     }
 }
