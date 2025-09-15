@@ -441,28 +441,12 @@ class EventDetailPage {
             return;
         }
         
-        const participantsHtml = participants.map(participant => this.createParticipantCard(participant)).join('');
+        const participantsHtml = participants.map(participant =>
+            ParticipantComponent.createDisplayCard(participant)
+        ).join('');
         this.elements.participantsList.innerHTML = participantsHtml;
     }
 
-    createParticipantCard(participant) {
-        const contact = [];
-        if (participant.email) contact.push(participant.email);
-        if (participant.phone) contact.push(participant.phone);
-        
-        const balanceStatus = this.getUserBalanceStatus(participant.balance || 0);
-        
-        return `
-            <div class="participant-card">
-                <div class="participant-name">${participant.name}</div>
-                ${contact.length > 0 ? `<div class="participant-contact">${contact.join(' • ')}</div>` : ''}
-                <div class="participant-balance ${balanceStatus.class}">
-                    <span>${balanceStatus.text}</span>
-                    <span>${formatCurrency(Math.abs(participant.balance || 0))}</span>
-                </div>
-            </div>
-        `;
-    }
 
     async loadCostItems() {
         if (this.elements.expensesLoading) {
@@ -763,15 +747,6 @@ class EventDetailPage {
         }
     }
 
-    getUserBalanceStatus(balance) {
-        if (balance > 0) {
-            return { class: 'balance-owed', text: 'Credit' };
-        } else if (balance < 0) {
-            return { class: 'balance-owes', text: 'Owes' };
-        } else {
-            return { class: 'balance-settled', text: 'Settled' };
-        }
-    }
 
     goBackToEvents() {
         // Use router for navigation if available

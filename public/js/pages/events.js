@@ -647,57 +647,30 @@ class EventsPage {
         }
         
         console.log('[EVENTS.JS] Creating participant HTML for', users.length, 'users');
-        const participantsHtml = users.map(user => this.createParticipantItem(user)).join('');
+        const participantsHtml = users.map(user => {
+            const isSelected = this.selectedParticipants.has(user.id);
+            return ParticipantComponent.createSelectableItem(user, isSelected, user.id);
+        }).join('');
         this.elements.participantsList.innerHTML = participantsHtml;
         this.elements.participantsList.style.display = 'block';
-        
+
         console.log('[EVENTS.JS] Participant HTML rendered, binding events');
         this.bindParticipantEvents();
     }
 
 
-    createParticipantItem(user) {
-        const balance = user.totalBalance || 0;
-        const balanceStatus = this.getUserBalanceStatus(balance);
-        const isSelected = this.selectedParticipants.has(user.id);
-        
-        return `
-            <div class="participant-item ${isSelected ? 'selected' : ''}" data-user-id="${user.id}">
-                <input type="checkbox" class="participant-checkbox" ${isSelected ? 'checked' : ''}>
-                <div class="participant-info">
-                    <div class="participant-name">${user.name}</div>
-                    <div class="participant-details">
-                        ${user.email ? user.email : 'No email'}
-                        ${user.phone ? ` • ${user.phone}` : ''}
-                    </div>
-                </div>
-                <div class="participant-balance ${balanceStatus.class}">
-                    ${formatCurrency(balance)}
-                </div>
-            </div>
-        `;
-    }
 
     bindParticipantEvents() {
-        const participantItems = document.querySelectorAll('.participant-item');
-        participantItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                const userId = item.dataset.userId;
-                const checkbox = item.querySelector('.participant-checkbox');
-                
-                if (this.selectedParticipants.has(userId)) {
-                    this.selectedParticipants.delete(userId);
-                    item.classList.remove('selected');
-                    checkbox.checked = false;
-                } else {
-                    this.selectedParticipants.add(userId);
-                    item.classList.add('selected');
-                    checkbox.checked = true;
-                }
-                
-                this.updateSelectedParticipantsDisplay();
-                this.clearError('participants');
-            });
+        // Use ParticipantComponent's centralized event binding
+        ParticipantComponent.bindSelectionEvents('#participants-list', (userId, isSelected) => {
+            if (isSelected) {
+                this.selectedParticipants.add(userId);
+            } else {
+                this.selectedParticipants.delete(userId);
+            }
+
+            this.updateSelectedParticipantsDisplay();
+            this.clearError('participants');
         });
     }
 
@@ -1334,24 +1307,6 @@ class EventsPage {
         await this.refresh();
     }
 
-    getUserBalanceStatus(balance) {
-        if (balance > 0) {
-            return {
-                class: 'balance-owed',
-                text: 'Credit'
-            };
-        } else if (balance < 0) {
-            return {
-                class: 'balance-owes',
-                text: 'Owes'
-            };
-        } else {
-            return {
-                class: 'balance-settled',
-                text: 'Settled'
-            };
-        }
-    }
 
     // Participant Management Methods (adapted from EventDetailPage)
     async loadParticipantManagement() {

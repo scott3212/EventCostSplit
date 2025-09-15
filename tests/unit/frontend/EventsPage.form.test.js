@@ -1,4 +1,8 @@
 const EventsPage = require('../../../public/js/pages/events.js');
+const ParticipantComponent = require('../../../public/js/components/ParticipantComponent.js');
+
+// Make ParticipantComponent available globally
+global.ParticipantComponent = ParticipantComponent;
 
 // Mock DOM and globals
 const mockApiClient = {
@@ -290,9 +294,9 @@ describe('EventsPage - Create Event Form', () => {
                 phone: '+1234567890',
                 totalBalance: -10.50
             };
-            
-            const html = eventsPage.createParticipantItem(user);
-            
+
+            const html = ParticipantComponent.createSelectableItem(user, false, user.id);
+
             expect(html).toContain('John Doe');
             expect(html).toContain('john@example.com');
             expect(html).toContain('+1234567890');
@@ -302,17 +306,17 @@ describe('EventsPage - Create Event Form', () => {
         });
 
         test('should handle user balance status correctly', () => {
-            expect(eventsPage.getUserBalanceStatus(10)).toEqual({
+            expect(ParticipantComponent.getBalanceStatus(10)).toEqual({
                 class: 'balance-owed',
                 text: 'Credit'
             });
-            
-            expect(eventsPage.getUserBalanceStatus(-10)).toEqual({
+
+            expect(ParticipantComponent.getBalanceStatus(-10)).toEqual({
                 class: 'balance-owes',
                 text: 'Owes'
             });
-            
-            expect(eventsPage.getUserBalanceStatus(0)).toEqual({
+
+            expect(ParticipantComponent.getBalanceStatus(0)).toEqual({
                 class: 'balance-settled',
                 text: 'Settled'
             });

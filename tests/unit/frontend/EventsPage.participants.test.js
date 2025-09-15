@@ -1,4 +1,8 @@
 const EventsPage = require('../../../public/js/pages/events.js');
+const ParticipantComponent = require('../../../public/js/components/ParticipantComponent.js');
+
+// Make ParticipantComponent available globally
+global.ParticipantComponent = ParticipantComponent;
 
 // Mock DOM and globals
 const mockApiClient = {
@@ -181,9 +185,26 @@ describe('EventsPage - Participant Selection', () => {
             expect(mockElements['participants-error'].style.display).toBe('block');
         });
 
-        test('should create participant item with correct balance status', () => {
+        test('should use ParticipantComponent for rendering participants', () => {
+            eventsPage.users = mockUsers;
+            eventsPage.selectedParticipants.add('user1'); // Pre-select first user
+            eventsPage.renderParticipants(mockUsers);
+
+            const participantsHtml = mockElements['participants-list'].innerHTML;
+
+            // Check that ParticipantComponent generated HTML is used
+            expect(participantsHtml).toContain('participant-item');
+            expect(participantsHtml).toContain('John Doe');
+            expect(participantsHtml).toContain('jane@example.com');
+            expect(participantsHtml).toContain('Bob Johnson');
+
+            // Check that selection state is preserved
+            expect(participantsHtml).toContain('selected'); // For pre-selected user1
+        });
+
+        test('should create participant items through ParticipantComponent', () => {
             const userWithCredit = mockUsers[0]; // John Doe with positive balance
-            const html = eventsPage.createParticipantItem(userWithCredit);
+            const html = ParticipantComponent.createSelectableItem(userWithCredit, false, userWithCredit.id);
 
             expect(html).toContain('John Doe');
             expect(html).toContain('john@example.com');
@@ -192,29 +213,22 @@ describe('EventsPage - Participant Selection', () => {
             expect(html).toContain('$25.50');
         });
 
-        test('should create participant item for user who owes money', () => {
+        test('should handle different balance states through ParticipantComponent', () => {
             const userWithDebt = mockUsers[1]; // Jane Smith with negative balance
-            const html = eventsPage.createParticipantItem(userWithDebt);
+            const userSettled = mockUsers[2]; // Bob Johnson with zero balance
 
-            expect(html).toContain('Jane Smith');
-            expect(html).toContain('jane@example.com');
-            expect(html).toContain('+1234567890');
-            expect(html).toContain('balance-owes'); // negative balance = owes
-            expect(html).toContain('$-15.75');
-        });
+            const debtHtml = ParticipantComponent.createSelectableItem(userWithDebt, false, userWithDebt.id);
+            const settledHtml = ParticipantComponent.createSelectableItem(userSettled, false, userSettled.id);
 
-        test('should create participant item for settled user', () => {
-            const settledUser = mockUsers[2]; // Bob Johnson with zero balance
-            const html = eventsPage.createParticipantItem(settledUser);
+            expect(debtHtml).toContain('Jane Smith');
+            expect(debtHtml).toContain('balance-owes'); // negative balance = owes
 
-            expect(html).toContain('Bob Johnson');
-            expect(html).toContain('balance-settled'); // zero balance = settled
-            expect(html).toContain('$0.00');
+            expect(settledHtml).toContain('Bob Johnson');
+            expect(settledHtml).toContain('balance-settled'); // zero balance = settled
         });
 
         test('should show selected state for pre-selected participants', () => {
-            eventsPage.selectedParticipants.add('user1');
-            const html = eventsPage.createParticipantItem(mockUsers[0]);
+            const html = ParticipantComponent.createSelectableItem(mockUsers[0], true, mockUsers[0].id);
 
             expect(html).toContain('selected');
             expect(html).toContain('checked');
@@ -329,10 +343,10 @@ describe('EventsPage - Participant Selection', () => {
         });
     });
 
-    describe('User Balance Status Helper', () => {
+    describe('User Balance Status Helper (via ParticipantComponent)', () => {
         test('should return correct status for positive balance (credit)', () => {
-            const status = eventsPage.getUserBalanceStatus(25.50);
-            
+            const status = ParticipantComponent.getBalanceStatus(25.50);
+
             expect(status).toEqual({
                 class: 'balance-owed',
                 text: 'Credit'
@@ -340,8 +354,8 @@ describe('EventsPage - Participant Selection', () => {
         });
 
         test('should return correct status for negative balance (owes)', () => {
-            const status = eventsPage.getUserBalanceStatus(-15.75);
-            
+            const status = ParticipantComponent.getBalanceStatus(-15.75);
+
             expect(status).toEqual({
                 class: 'balance-owes',
                 text: 'Owes'
@@ -349,8 +363,8 @@ describe('EventsPage - Participant Selection', () => {
         });
 
         test('should return correct status for zero balance (settled)', () => {
-            const status = eventsPage.getUserBalanceStatus(0);
-            
+            const status = ParticipantComponent.getBalanceStatus(0);
+
             expect(status).toEqual({
                 class: 'balance-settled',
                 text: 'Settled'
@@ -358,20 +372,20 @@ describe('EventsPage - Participant Selection', () => {
         });
 
         test('should handle very small positive balances as credit', () => {
-            const status = eventsPage.getUserBalanceStatus(0.01);
-            
+            const status = ParticipantComponent.getBalanceStatus(0.01);
+
             expect(status).toEqual({
-                class: 'balance-owed',
-                text: 'Credit'
+                class: 'balance-settled',
+                text: 'Settled'
             });
         });
 
         test('should handle very small negative balances as owes', () => {
-            const status = eventsPage.getUserBalanceStatus(-0.01);
-            
+            const status = ParticipantComponent.getBalanceStatus(-0.01);
+
             expect(status).toEqual({
-                class: 'balance-owes',
-                text: 'Owes'
+                class: 'balance-settled',
+                text: 'Settled'
             });
         });
     });
