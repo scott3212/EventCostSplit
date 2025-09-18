@@ -855,7 +855,7 @@ class EventDetailPage {
 
         try {
             const formData = new FormData(this.elements.expenseForm);
-            const expenseData = {
+            const rawExpenseData = {
                 eventId: this.currentEventId,
                 description: formData.get('description'),
                 amount: parseFloat(formData.get('amount')),
@@ -863,6 +863,10 @@ class EventDetailPage {
                 date: formData.get('date'),
                 splitPercentage: this.getSplitPercentages()
             };
+
+            // Sanitize expense data to ensure split only contains current event participants
+            const currentParticipants = this.currentEvent?.participants || [];
+            const expenseData = this.sanitizeExpenseData(rawExpenseData, currentParticipants);
 
             let result;
             const isEditing = !!this.editingExpenseId;
@@ -883,12 +887,22 @@ class EventDetailPage {
             await this.refresh();
             
         } catch (error) {
+            console.log('[EXPENSE-EDIT] Error details:', error.message);
+
             if (error.message.includes('description already exists')) {
                 this.showExpenseError('description', 'An expense with this description already exists');
             } else if (error.message.includes('amount')) {
                 this.showExpenseError('amount', 'Invalid amount');
             } else if (error.message.includes('paidBy')) {
                 this.showExpenseError('paidBy', 'Please select who paid for this expense');
+            } else if (error.message.includes('not a participant in the event')) {
+                // This should rarely happen now due to our sanitization, but provide helpful feedback if it does
+                this.showExpenseError('splitConfiguration',
+                    'Some participants in the split are no longer in this event. Please refresh the page and try again.');
+                console.warn('[EXPENSE-EDIT] Participant validation error despite sanitization:', error.message);
+            } else if (error.message.includes('split') || error.message.includes('participant')) {
+                this.showExpenseError('splitConfiguration',
+                    'There was an issue with the participant split configuration. Please review and try again.');
             } else {
                 const action = this.editingExpenseId ? 'update' : 'create';
                 showError(`Failed to ${action} expense. Please try again.`);
@@ -1052,10 +1066,24 @@ class EventDetailPage {
         if (!this.currentEvent || !this.currentEvent.participants) {
             return;
         }
-        
+
+        // Clean existing split data to remove participants who are no longer in the event
+        if (this.currentSplitPercentages) {
+            const originalSize = Object.keys(this.currentSplitPercentages).length;
+            this.currentSplitPercentages = this.sanitizeSplitPercentages(
+                this.currentSplitPercentages,
+                this.currentEvent.participants
+            );
+            const newSize = Object.keys(this.currentSplitPercentages).length;
+
+            if (originalSize !== newSize) {
+                console.log('[EXPENSE-EDIT] Cleaned split configuration: removed', (originalSize - newSize), 'invalid participants');
+            }
+        }
+
         // Generate participant list for split configuration
         this.renderSplitParticipants();
-        
+
         // Update split calculations
         this.updateSplitAmounts();
     }
@@ -1221,22 +1249,24 @@ class EventDetailPage {
     
     updateSplitAmounts() {
         const totalAmount = parseFloat(this.elements.expenseAmount?.value) || 0;
-        
+
         if (this.elements.splitTotalAmount) {
             this.elements.splitTotalAmount.textContent = `$${totalAmount.toFixed(2)}`;
         }
-        
+
         // Update individual amounts
-        Object.keys(this.currentSplitPercentages).forEach(participantId => {
-            const percentage = this.currentSplitPercentages[participantId];
-            const amount = (totalAmount * percentage) / 100;
-            const amountDisplay = document.getElementById(`split-amount-${participantId}`);
-            
-            if (amountDisplay) {
-                amountDisplay.textContent = `$${amount.toFixed(2)}`;
-            }
-        });
-        
+        if (this.currentSplitPercentages) {
+            Object.keys(this.currentSplitPercentages).forEach(participantId => {
+                const percentage = this.currentSplitPercentages[participantId];
+                const amount = (totalAmount * percentage) / 100;
+                const amountDisplay = document.getElementById(`split-amount-${participantId}`);
+
+                if (amountDisplay) {
+                    amountDisplay.textContent = `$${amount.toFixed(2)}`;
+                }
+            });
+        }
+
         this.validateSplit();
     }
     
@@ -1793,6 +1823,79 @@ class EventDetailPage {
                 showError('Failed to delete event. Please try again.');
             }
         }
+    }
+
+    /**
+     * Sanitize expense data to remove participants who are no longer in the event
+     * @param {Object} expenseData - The expense data to sanitize
+     * @param {Array} currentParticipants - Array of current event participant IDs
+     * @returns {Object} Sanitized expense data
+     */
+    sanitizeExpenseData(expenseData, currentParticipants) {
+        if (!expenseData.splitPercentage || !currentParticipants) {
+            return expenseData;
+        }
+
+        const validSplit = {};
+        let totalValidPercentage = 0;
+        let removedParticipants = 0;
+
+        // Keep only current participants
+        for (const [userId, percentage] of Object.entries(expenseData.splitPercentage)) {
+            if (currentParticipants.includes(userId)) {
+                validSplit[userId] = percentage;
+                totalValidPercentage += percentage;
+            } else {
+                removedParticipants++;
+                console.log('[EXPENSE-EDIT] Removing participant from split:', userId);
+            }
+        }
+
+        // If we removed participants, recalculate percentages
+        if (removedParticipants > 0 && totalValidPercentage > 0) {
+            console.log('[EXPENSE-EDIT] Recalculating split percentages after removing', removedParticipants, 'participants');
+
+            // Normalize to 100%
+            const factor = 100 / totalValidPercentage;
+            let adjustedTotal = 0;
+
+            for (const userId in validSplit) {
+                validSplit[userId] = Math.round(validSplit[userId] * factor * 100) / 100;
+                adjustedTotal += validSplit[userId];
+            }
+
+            // Handle rounding errors by adjusting the largest percentage
+            if (Math.abs(adjustedTotal - 100) > 0.01) {
+                const largestUserId = Object.keys(validSplit).reduce((a, b) =>
+                    validSplit[a] > validSplit[b] ? a : b
+                );
+                validSplit[largestUserId] += (100 - adjustedTotal);
+                validSplit[largestUserId] = Math.round(validSplit[largestUserId] * 100) / 100;
+            }
+        }
+
+        return { ...expenseData, splitPercentage: validSplit };
+    }
+
+    /**
+     * Sanitize split percentages to only include current event participants
+     * @param {Object} splitPercentages - Current split percentages
+     * @param {Array} currentParticipants - Array of current event participant IDs
+     * @returns {Object} Sanitized split percentages
+     */
+    sanitizeSplitPercentages(splitPercentages, currentParticipants) {
+        if (!splitPercentages || !currentParticipants) {
+            return {};
+        }
+
+        const validSplit = {};
+        for (const [userId, percentage] of Object.entries(splitPercentages)) {
+            if (currentParticipants.includes(userId)) {
+                validSplit[userId] = percentage;
+            }
+        }
+
+        return validSplit;
     }
 
     async refresh() {

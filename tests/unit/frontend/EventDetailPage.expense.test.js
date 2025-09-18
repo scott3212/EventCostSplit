@@ -5,7 +5,8 @@ const mockApiClient = {
     getEvent: jest.fn(),
     getEventParticipants: jest.fn(),
     getEventCostItems: jest.fn(),
-    createCostItem: jest.fn()
+    createCostItem: jest.fn(),
+    updateCostItem: jest.fn()
 };
 
 global.api = mockApiClient;
@@ -131,6 +132,7 @@ describe('EventDetailPage - Expense Management', () => {
         createElement('expense-amount-error');
         createElement('expense-date-error');
         createElement('expense-paid-by-error');
+        createElement('expense-splitConfiguration-error');
         
         // Mock form data behavior
         global.FormData = class FormData {
@@ -596,6 +598,278 @@ describe('EventDetailPage - Expense Management', () => {
         });
     });
     
+    describe('Data Sanitization', () => {
+        describe('sanitizeExpenseData', () => {
+            test('should remove non-participant from split percentages', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100,
+                    splitPercentage: {
+                        'user1': 33.33,
+                        'user2': 33.33,
+                        'user3': 33.34,
+                        'removedUser': 0
+                    }
+                };
+                const currentParticipants = ['user1', 'user2', 'user3'];
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, currentParticipants);
+
+                expect(result.splitPercentage).toEqual({
+                    'user1': 33.33,
+                    'user2': 33.33,
+                    'user3': 33.34
+                });
+                expect(result.splitPercentage).not.toHaveProperty('removedUser');
+            });
+
+            test('should recalculate percentages after participant removal', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100,
+                    splitPercentage: {
+                        'user1': 25,
+                        'user2': 25,
+                        'user3': 25,
+                        'removedUser': 25  // This will be removed
+                    }
+                };
+                const currentParticipants = ['user1', 'user2', 'user3'];
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, currentParticipants);
+
+                // Should recalculate to 100% among remaining participants
+                const total = Object.values(result.splitPercentage).reduce((sum, val) => sum + val, 0);
+                expect(Math.abs(total - 100)).toBeLessThan(0.01); // Within rounding tolerance
+            });
+
+            test('should handle empty split after all participants removed', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100,
+                    splitPercentage: {
+                        'removedUser1': 50,
+                        'removedUser2': 50
+                    }
+                };
+                const currentParticipants = ['user1', 'user2'];
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, currentParticipants);
+
+                expect(result.splitPercentage).toEqual({});
+            });
+
+            test('should preserve valid participants in split', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100,
+                    splitPercentage: {
+                        'user1': 50,
+                        'user2': 50
+                    }
+                };
+                const currentParticipants = ['user1', 'user2', 'user3'];
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, currentParticipants);
+
+                expect(result.splitPercentage).toEqual({
+                    'user1': 50,
+                    'user2': 50
+                });
+                expect(result.description).toBe('Test Expense');
+                expect(result.amount).toBe(100);
+            });
+
+            test('should handle missing splitPercentage gracefully', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100
+                };
+                const currentParticipants = ['user1', 'user2'];
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, currentParticipants);
+
+                expect(result).toEqual(expenseData);
+            });
+
+            test('should handle missing currentParticipants gracefully', () => {
+                const expenseData = {
+                    description: 'Test Expense',
+                    amount: 100,
+                    splitPercentage: {
+                        'user1': 50,
+                        'user2': 50
+                    }
+                };
+
+                const result = eventDetailPage.sanitizeExpenseData(expenseData, null);
+
+                expect(result).toEqual(expenseData);
+            });
+        });
+
+        describe('sanitizeSplitPercentages', () => {
+            test('should filter out removed participants from split', () => {
+                const splitPercentages = {
+                    'user1': 33.33,
+                    'user2': 33.33,
+                    'user3': 33.34,
+                    'removedUser': 0
+                };
+                const currentParticipants = ['user1', 'user2', 'user3'];
+
+                const result = eventDetailPage.sanitizeSplitPercentages(splitPercentages, currentParticipants);
+
+                expect(result).toEqual({
+                    'user1': 33.33,
+                    'user2': 33.33,
+                    'user3': 33.34
+                });
+            });
+
+            test('should return empty object when no participants match', () => {
+                const splitPercentages = {
+                    'removedUser1': 50,
+                    'removedUser2': 50
+                };
+                const currentParticipants = ['user1', 'user2'];
+
+                const result = eventDetailPage.sanitizeSplitPercentages(splitPercentages, currentParticipants);
+
+                expect(result).toEqual({});
+            });
+
+            test('should handle null inputs gracefully', () => {
+                expect(eventDetailPage.sanitizeSplitPercentages(null, ['user1'])).toEqual({});
+                expect(eventDetailPage.sanitizeSplitPercentages({'user1': 100}, null)).toEqual({});
+                expect(eventDetailPage.sanitizeSplitPercentages(null, null)).toEqual({});
+            });
+        });
+    });
+
+    describe('Enhanced Error Handling', () => {
+        beforeEach(() => {
+            // Set up for expense editing with valid split
+            eventDetailPage.currentEvent = {
+                id: 'event1',
+                participants: ['user1', 'user2', 'user3']
+            };
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+
+            jest.spyOn(eventDetailPage, 'refresh').mockResolvedValue();
+        });
+
+        test('should show helpful error for participant validation failure', async () => {
+            const error = new Error('User 290797f4-14ed-49c6-b42a-b5f559711fce in split is not a participant in the event');
+            mockApiClient.updateCostItem.mockRejectedValue(error);
+            eventDetailPage.editingExpenseId = 'expense1';
+
+            await eventDetailPage.handleAddExpense();
+
+            expect(mockElements['expense-splitConfiguration-error'].textContent)
+                .toBe('Some participants in the split are no longer in this event. Please refresh the page and try again.');
+        });
+
+        test('should show generic split error for other split issues', async () => {
+            const error = new Error('Invalid split configuration');
+            mockApiClient.createCostItem.mockRejectedValue(error);
+
+            await eventDetailPage.handleAddExpense();
+
+            expect(mockElements['expense-splitConfiguration-error'].textContent)
+                .toBe('There was an issue with the participant split configuration. Please review and try again.');
+        });
+
+        test('should log detailed error information for debugging', async () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            const error = new Error('Test error');
+            mockApiClient.createCostItem.mockRejectedValue(error);
+
+            await eventDetailPage.handleAddExpense();
+
+            expect(consoleSpy).toHaveBeenCalledWith('[EXPENSE-EDIT] Error details:', 'Test error');
+            consoleSpy.mockRestore();
+        });
+
+        test('should log warning when participant validation fails despite sanitization', async () => {
+            const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+            const error = new Error('User xyz in split is not a participant in the event');
+            mockApiClient.updateCostItem.mockRejectedValue(error);
+            eventDetailPage.editingExpenseId = 'expense1';
+
+            await eventDetailPage.handleAddExpense();
+
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                '[EXPENSE-EDIT] Participant validation error despite sanitization:',
+                'User xyz in split is not a participant in the event'
+            );
+            consoleWarnSpy.mockRestore();
+        });
+    });
+
+    describe('Split Configuration with Removed Participants', () => {
+        beforeEach(() => {
+            eventDetailPage.currentEvent = {
+                participants: ['user1', 'user2', 'user3']
+            };
+        });
+
+        test('should clean split configuration when loading', () => {
+            // Set up split with removed participant
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 25,
+                'user2': 25,
+                'user3': 25,
+                'removedUser': 25
+            };
+
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+            eventDetailPage.loadSplitConfiguration();
+
+            expect(eventDetailPage.currentSplitPercentages).toEqual({
+                'user1': 25,
+                'user2': 25,
+                'user3': 25
+            });
+            expect(consoleSpy).toHaveBeenCalledWith(
+                '[EXPENSE-EDIT] Cleaned split configuration: removed',
+                1,
+                'invalid participants'
+            );
+            consoleSpy.mockRestore();
+        });
+
+        test('should not log when no participants need removal', () => {
+            eventDetailPage.currentSplitPercentages = {
+                'user1': 33.33,
+                'user2': 33.33,
+                'user3': 33.34
+            };
+
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+            eventDetailPage.loadSplitConfiguration();
+
+            expect(consoleSpy).not.toHaveBeenCalledWith(
+                expect.stringContaining('Cleaned split configuration')
+            );
+            consoleSpy.mockRestore();
+        });
+
+        test('should handle empty split configuration gracefully', () => {
+            eventDetailPage.currentSplitPercentages = null;
+
+            expect(() => {
+                eventDetailPage.loadSplitConfiguration();
+            }).not.toThrow();
+        });
+    });
+
     describe('Event Listeners', () => {
         test('should bind event listeners on initialization', () => {
             expect(mockElements['add-expense-btn'].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
