@@ -844,12 +844,6 @@ class EventDetailPage {
         if (!this.validateExpenseForm()) {
             return;
         }
-        
-        // Validate split configuration
-        if (!this.validateSplit()) {
-            this.showExpenseError('splitConfiguration', 'Split percentages must add up to exactly 100%');
-            return;
-        }
 
         this.setExpenseSaveButtonState(true);
 
@@ -864,9 +858,22 @@ class EventDetailPage {
                 splitPercentage: this.getSplitPercentages()
             };
 
+            console.log('[EXPENSE-EDIT] Raw expense data before sanitization:', rawExpenseData);
+            console.log('[EXPENSE-EDIT] Current event participants:', this.currentEvent?.participants);
+
             // Sanitize expense data to ensure split only contains current event participants
             const currentParticipants = this.currentEvent?.participants || [];
             const expenseData = this.sanitizeExpenseData(rawExpenseData, currentParticipants);
+
+            // Validate split configuration after sanitization
+            const sanitizedSplitTotal = Object.values(expenseData.splitPercentage).reduce((sum, p) => sum + p, 0);
+            console.log('[EXPENSE-EDIT] Sanitized split total:', sanitizedSplitTotal, 'Split data:', expenseData.splitPercentage);
+            if (Math.abs(sanitizedSplitTotal - 100) > 0.01) {
+                console.log('[EXPENSE-EDIT] Validation failed - split total is:', sanitizedSplitTotal, 'difference from 100:', Math.abs(sanitizedSplitTotal - 100));
+                this.showExpenseError('splitConfiguration', `Split percentages must add up to exactly 100% (currently ${sanitizedSplitTotal.toFixed(2)}%)`);
+                this.setExpenseSaveButtonState(false);
+                return;
+            }
 
             let result;
             const isEditing = !!this.editingExpenseId;
@@ -1851,6 +1858,9 @@ class EventDetailPage {
             }
         }
 
+        // Log debug info about the sanitization
+        console.log('[EXPENSE-EDIT] Sanitization debug - removedParticipants:', removedParticipants, 'totalValidPercentage:', totalValidPercentage);
+
         // If we removed participants, recalculate percentages
         if (removedParticipants > 0 && totalValidPercentage > 0) {
             console.log('[EXPENSE-EDIT] Recalculating split percentages after removing', removedParticipants, 'participants');
@@ -1859,9 +1869,13 @@ class EventDetailPage {
             const factor = 100 / totalValidPercentage;
             let adjustedTotal = 0;
 
+            console.log('[EXPENSE-EDIT] Normalization factor:', factor, 'Original valid split:', validSplit);
+
             for (const userId in validSplit) {
+                const originalPercentage = validSplit[userId];
                 validSplit[userId] = Math.round(validSplit[userId] * factor * 100) / 100;
                 adjustedTotal += validSplit[userId];
+                console.log('[EXPENSE-EDIT] Adjusted', userId, 'from', originalPercentage, 'to', validSplit[userId]);
             }
 
             // Handle rounding errors by adjusting the largest percentage
@@ -1869,9 +1883,14 @@ class EventDetailPage {
                 const largestUserId = Object.keys(validSplit).reduce((a, b) =>
                     validSplit[a] > validSplit[b] ? a : b
                 );
+                console.log('[EXPENSE-EDIT] Rounding adjustment needed - current total:', adjustedTotal, 'adjusting', largestUserId);
                 validSplit[largestUserId] += (100 - adjustedTotal);
                 validSplit[largestUserId] = Math.round(validSplit[largestUserId] * 100) / 100;
             }
+
+            console.log('[EXPENSE-EDIT] Final sanitized split:', validSplit);
+        } else {
+            console.log('[EXPENSE-EDIT] No recalculation needed - removedParticipants:', removedParticipants, 'totalValidPercentage:', totalValidPercentage);
         }
 
         return { ...expenseData, splitPercentage: validSplit };
@@ -1889,12 +1908,44 @@ class EventDetailPage {
         }
 
         const validSplit = {};
+        let totalValidPercentage = 0;
+        let removedCount = 0;
+
+        // First pass: collect valid participants and calculate total
         for (const [userId, percentage] of Object.entries(splitPercentages)) {
             if (currentParticipants.includes(userId)) {
                 validSplit[userId] = percentage;
+                totalValidPercentage += percentage;
+            } else {
+                removedCount++;
             }
         }
 
+        // If no participants were removed, return as is
+        if (removedCount === 0) {
+            return validSplit;
+        }
+
+        // If some participants were removed, recalculate percentages to total 100%
+        const validParticipantCount = Object.keys(validSplit).length;
+        if (validParticipantCount === 0) {
+            return {};
+        }
+
+        // Recalculate percentages proportionally
+        const scaleFactor = 100 / totalValidPercentage;
+        for (const userId of Object.keys(validSplit)) {
+            validSplit[userId] = parseFloat((validSplit[userId] * scaleFactor).toFixed(2));
+        }
+
+        // Ensure the total is exactly 100% by adjusting the first participant if needed
+        const newTotal = Object.values(validSplit).reduce((sum, val) => sum + val, 0);
+        if (Math.abs(newTotal - 100) > 0.01) {
+            const firstParticipant = Object.keys(validSplit)[0];
+            validSplit[firstParticipant] = parseFloat((validSplit[firstParticipant] + (100 - newTotal)).toFixed(2));
+        }
+
+        console.log(`Recalculated split after removing ${removedCount} participants:`, validSplit);
         return validSplit;
     }
 

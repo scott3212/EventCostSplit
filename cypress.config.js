@@ -62,6 +62,12 @@ module.exports = defineConfig({
             console.warn('Failed to write test log:', error.message);
             return null;
           }
+        },
+        
+        log(message) {
+          // Simple console log for debugging
+          console.log(message);
+          return null;
         }
       });
     },

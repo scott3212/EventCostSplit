@@ -200,15 +200,15 @@ class TestController {
         try {
             const DataIntegrityChecker = require('../utils/dataIntegrityChecker');
             const integrityChecker = new DataIntegrityChecker();
-            
+
             const status = await integrityChecker.getStatus();
             const autoFix = req.query.fix === 'true';
-            
+
             let fixResult = null;
             if (autoFix && status.overallHealth !== 'healthy') {
                 fixResult = await integrityChecker.validateAndFix();
             }
-            
+
             res.json({
                 success: true,
                 message: 'Data integrity check completed',
@@ -217,11 +217,72 @@ class TestController {
                 fixResult: fixResult,
                 timestamp: new Date().toISOString()
             });
-            
+
         } catch (error) {
             res.status(500).json({
                 success: false,
                 message: 'Data integrity check failed',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Force update expense data bypassing validation (for testing only)
+     * WARNING: This endpoint should only be available in test/development environments
+     */
+    async forceUpdateExpense(req, res) {
+        try {
+            // Only allow in non-production environments
+            if (process.env.NODE_ENV === 'production') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Force update is not allowed in production'
+                });
+            }
+
+            const { expenseId, expenseData } = req.body;
+
+            if (!expenseId || !expenseData) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'expenseId and expenseData are required'
+                });
+            }
+
+            // Directly update the expense data in the repository bypassing all validation
+            const costItems = await this.costItemService.getAllCostItems();
+            const expenseIndex = costItems.findIndex(item => item.id === expenseId);
+
+            if (expenseIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Expense not found'
+                });
+            }
+
+            // Force update the expense with provided data
+            costItems[expenseIndex] = {
+                ...costItems[expenseIndex],
+                ...expenseData,
+                id: expenseId, // Ensure ID is preserved
+                updatedAt: new Date().toISOString()
+            };
+
+            // Save directly to repository bypassing validation
+            await this.costItemService.costItemRepo.saveData(costItems);
+
+            res.json({
+                success: true,
+                message: 'Expense force-updated successfully (test mode)',
+                data: costItems[expenseIndex]
+            });
+
+        } catch (error) {
+            console.error('Force update expense failed:', error.message);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to force update expense',
                 error: error.message
             });
         }

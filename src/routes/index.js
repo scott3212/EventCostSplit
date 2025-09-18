@@ -72,6 +72,7 @@ function createApiRoutes() {
     router.get('/test/stats', testController.getTestStats.bind(testController));
     router.get('/test/health', testController.healthCheck.bind(testController));
     router.get('/test/integrity', testController.checkDataIntegrity.bind(testController));
+    router.post('/test/force-update-expense', testController.forceUpdateExpense.bind(testController));
   }
 
   // API information endpoint
