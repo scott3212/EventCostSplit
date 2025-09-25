@@ -21,6 +21,7 @@ class EventsPage {
             container: document.querySelector('.events-container'),
             detailedViewToggle: document.getElementById('events-detailed-view'),
             compactViewToggle: document.getElementById('events-compact-view'),
+            hideCompletedToggle: document.getElementById('hide-completed-events'),
             // Add Event Modal elements
             addModal: document.getElementById('add-event-modal'),
             addForm: document.getElementById('add-event-form'),
@@ -68,6 +69,7 @@ class EventsPage {
         
         this.bindEvents();
         this.loadViewPreference();
+        this.loadHideCompletedPreference();
         this.isInitialized = true;
     }
 
@@ -94,6 +96,13 @@ class EventsPage {
         if (this.elements.compactViewToggle) {
             this.elements.compactViewToggle.addEventListener('change', () => {
                 this.toggleView('compact');
+            });
+        }
+
+        // Hide completed events toggle
+        if (this.elements.hideCompletedToggle) {
+            this.elements.hideCompletedToggle.addEventListener('change', () => {
+                this.toggleCompletedEvents();
             });
         }
 
@@ -341,12 +350,17 @@ class EventsPage {
 
     renderEvents(events) {
         if (!this.elements.list) return;
-        
+
         const eventsHtml = events.map(event => this.createEventCard(event)).join('');
         this.elements.list.innerHTML = eventsHtml;
-        
+
         this.bindEventActions();
         this.showEventsList();
+
+        // Apply completed events filter if it's enabled
+        if (this.elements.hideCompletedToggle?.checked) {
+            this.applyCompletedEventsFilter();
+        }
     }
 
     createEventCard(event) {
@@ -519,7 +533,24 @@ class EventsPage {
             // This prevents old event cards from lingering in the DOM
             this.elements.list.innerHTML = '';
         }
-        if (this.elements.empty) this.elements.empty.style.display = 'block';
+        if (this.elements.empty) {
+            this.elements.empty.style.display = 'block';
+            // Reset empty state message to default
+            this.resetEmptyStateMessage();
+        }
+    }
+
+    resetEmptyStateMessage() {
+        if (!this.elements.empty) return;
+
+        const emptyMessage = this.elements.empty.querySelector('h2');
+        if (emptyMessage) {
+            emptyMessage.textContent = 'No Events Yet';
+        }
+        const emptyDescription = this.elements.empty.querySelector('p');
+        if (emptyDescription) {
+            emptyDescription.textContent = 'Create your first badminton event to get started with cost splitting.';
+        }
     }
 
     updateStats() {
@@ -551,13 +582,90 @@ class EventsPage {
 
     loadViewPreference() {
         if (typeof localStorage === 'undefined') return;
-        
+
         const preference = localStorage.getItem('eventsViewPreference');
         if (preference === 'compact') {
             if (this.elements.compactViewToggle) {
                 this.elements.compactViewToggle.checked = true;
                 this.toggleView('compact');
             }
+        }
+    }
+
+    loadHideCompletedPreference() {
+        if (typeof localStorage === 'undefined') return;
+
+        const hideCompleted = localStorage.getItem('hideCompletedEvents') === 'true';
+        if (this.elements.hideCompletedToggle) {
+            this.elements.hideCompletedToggle.checked = hideCompleted;
+            if (hideCompleted) {
+                this.applyCompletedEventsFilter();
+            }
+        }
+    }
+
+    toggleCompletedEvents() {
+        const isHidden = this.elements.hideCompletedToggle?.checked || false;
+
+        // Store preference in localStorage
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('hideCompletedEvents', isHidden.toString());
+        }
+
+        if (isHidden) {
+            this.applyCompletedEventsFilter();
+        } else {
+            this.removeCompletedEventsFilter();
+        }
+    }
+
+    applyCompletedEventsFilter() {
+        const eventCards = document.querySelectorAll('.event-card');
+        let visibleCount = 0;
+
+        eventCards.forEach(card => {
+            const statusBadge = card.querySelector('.status-badge');
+            if (statusBadge && statusBadge.classList.contains('status-completed')) {
+                card.style.display = 'none';
+            } else {
+                card.style.display = '';
+                visibleCount++;
+            }
+        });
+
+        // Update the visible count or show empty state
+        this.updateFilteredDisplay(visibleCount);
+    }
+
+    removeCompletedEventsFilter() {
+        const eventCards = document.querySelectorAll('.event-card');
+        eventCards.forEach(card => {
+            card.style.display = '';
+        });
+
+        // Reset to normal display
+        this.updateFilteredDisplay(this.events.length);
+    }
+
+    updateFilteredDisplay(visibleCount) {
+        if (visibleCount === 0) {
+            // Show a filtered empty state
+            if (this.elements.list) this.elements.list.style.display = 'none';
+            if (this.elements.empty) {
+                this.elements.empty.style.display = 'block';
+                // Temporarily update the empty message to indicate filtering
+                const emptyMessage = this.elements.empty.querySelector('h2');
+                if (emptyMessage) {
+                    emptyMessage.textContent = 'No active events found';
+                }
+                const emptyDescription = this.elements.empty.querySelector('p');
+                if (emptyDescription) {
+                    emptyDescription.textContent = 'All events are completed. Uncheck "Hide Completed" to see them.';
+                }
+            }
+        } else {
+            if (this.elements.list) this.elements.list.style.display = 'block';
+            if (this.elements.empty) this.elements.empty.style.display = 'none';
         }
     }
 

@@ -282,6 +282,25 @@
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
 }
 
+/* Responsive modal widths for larger screens */
+@media (min-width: 768px) {
+    .modal-content {
+        max-width: 600px; /* Wider on tablets */
+    }
+}
+
+@media (min-width: 1024px) {
+    .modal-content {
+        max-width: 700px; /* Even wider on desktop */
+    }
+}
+
+@media (min-width: 1280px) {
+    .modal-content {
+        max-width: 800px; /* Maximum width on large screens */
+    }
+}
+
 .modal-header {
     padding: 1.5rem;
     border-bottom: 1px solid #e2e8f0;
@@ -1051,6 +1070,13 @@
     gap: 1rem;
 }
 
+/* Filter Toggle Styles */
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .toggle-label {
     font-size: 0.875rem;
     font-weight: 500;
@@ -1100,6 +1126,62 @@
 
 .toggle-text {
     font-size: 0.875rem;
+}
+
+/* Control Group Layout */
+.control-group {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Checkbox Toggle Styles */
+.toggle-checkbox {
+    display: none;
+}
+
+.checkbox-toggle {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-toggle .toggle-icon {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.toggle-checkbox:checked + .checkbox-toggle {
+    background: var(--primary-color);
+    color: white;
+}
+
+.toggle-checkbox:checked + .checkbox-toggle .toggle-icon {
+    background: white;
+    color: var(--primary-color);
+    border-color: white;
+}
+
+@media (max-width: 768px) {
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .view-toggle,
+    .filter-toggle {
+        justify-content: center;
+    }
 }
 
 /* Compact View Styles */
@@ -1899,7 +1981,7 @@
 
 /* Modal Size Variations */
 .modal-sm .modal-content {
-    max-width: 400px;
+    max-width: 400px !important; /* Force override responsive widths */
     width: 90%;
 }
 
@@ -1923,7 +2005,7 @@
 /* Success and error modals should be smaller and centered */
 #success-modal .modal-content,
 #error-modal .modal-content {
-    max-width: 400px;
+    max-width: 400px !important; /* Force override responsive widths */
     width: 90%;
     margin: 0 auto;
 }
@@ -2132,6 +2214,169 @@
     opacity: 0.7;
 }
 
+/* Split Mode Info Styles */
+.split-mode-controls {
+    margin-top: 1rem;
+}
+
+.split-mode-info {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.mode-info {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.mode-example {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #ffffff;
+    border-left: 3px solid #667eea;
+    font-size: 0.85rem;
+    color: #475569;
+    border-radius: 4px;
+}
+
+/* Shares Split Specific Styles */
+.split-shares-total {
+    display: inline-block;
+    margin-left: 1rem;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.shares-helper {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.shares-input-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.shares-input {
+    width: 60px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.shares-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shares-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.shares-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #374151;
+    transform: scale(1.05);
+}
+
+.shares-btn:active {
+    background: #e5e7eb;
+    transform: scale(0.95);
+}
+
+.shares-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.shares-btn:disabled:hover {
+    background: #ffffff;
+    border-color: #d1d5db;
+    color: #6b7280;
+    transform: none;
+}
+
+.shares-amount-preview {
+    font-size: 0.875rem;
+    color: #059669;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.shares-amount-preview.excluded {
+    color: #dc2626;
+}
+
+/* Shares Mode Container */
+.split-participants-container.shares-mode .split-controls {
+    opacity: 1;
+}
+
+.split-participants-container.shares-mode .percentage-controls {
+    display: none;
+}
+
+.split-participants-container.shares-mode .shares-controls {
+    display: flex;
+}
+
+/* Expense Display Shares Styles */
+.split-mode-indicator {
+    display: inline-block;
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.split-summary-info {
+    font-size: 0.875rem;
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: #f0f4ff;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.split-participant-detail.shares-detail {
+    background: #f8fffe;
+    border-left: 3px solid #10b981;
+}
+
+.split-participant-detail.percentage-detail {
+    background: #fefbf8;
+    border-left: 3px solid #f59e0b;
+}
+
+.split-shares {
+    color: #10b981;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
 /* Split Configuration Mobile Styles */
 @media (max-width: 768px) {
     .split-method-toggle {
@@ -2263,6 +2508,21 @@
 
 .balance-amount.zero {
     color: var(--text-muted);
+}
+
+/* Event balance context styling */
+.balance-status {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+}
+
+.participant-balance .balance-status {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.125rem;
 }
 
 .user-contact {

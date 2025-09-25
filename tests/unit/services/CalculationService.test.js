@@ -56,6 +56,7 @@ describe('CalculationService', () => {
         costItemId: 'cost1',
         paidBy: 'user1',
         totalAmount: 100,
+        splitMode: 'percentage',
         balances: {
           user1: 50,
           user2: 50
@@ -80,6 +81,7 @@ describe('CalculationService', () => {
         costItemId: 'cost1',
         paidBy: 'user1',
         totalAmount: 100,
+        splitMode: 'percentage',
         balances: {
           user1: 60,
           user2: 40
@@ -195,7 +197,7 @@ describe('CalculationService', () => {
         {
           id: 'cost1',
           amount: 100,
-          splitPercentage: { user1: 50 }
+          splitPercentage: { user1: 50, user2: 50 }
         }
       ];
       const paidCostItems = [
