@@ -309,11 +309,21 @@ const validators = {
   },
 
   /**
-   * Validate and format currency amount
+   * Validate and format currency amount (positive only)
    */
   currency(value, fieldName) {
     const num = this.positiveNumber(value, fieldName);
-    
+
+    // Round to 2 decimal places for currency
+    return Math.round(num * 100) / 100;
+  },
+
+  /**
+   * Validate and format currency amount (allows negative for payments)
+   */
+  paymentCurrency(value, fieldName) {
+    const num = this.nonZeroNumber(value, fieldName);
+
     // Round to 2 decimal places for currency
     return Math.round(num * 100) / 100;
   }

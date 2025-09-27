@@ -28,7 +28,7 @@ class Payment {
       validators.uuid(data.userId, 'User ID');
 
       validators.required(data.amount, 'Amount');
-      validators.currency(data.amount, 'Amount');
+      validators.paymentCurrency(data.amount, 'Amount');
 
       validators.required(data.date, 'Date');
       validators.date(data.date, 'Date');
@@ -46,7 +46,7 @@ class Payment {
       if (data.description) {
         data.description = validators.sanitizeString(data.description);
       }
-      data.amount = validators.currency(data.amount, 'Amount');
+      data.amount = validators.paymentCurrency(data.amount, 'Amount');
 
     } catch (error) {
       if (error instanceof ValidationError) {
