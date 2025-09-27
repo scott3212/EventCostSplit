@@ -5,7 +5,13 @@ class EventDetailPage {
         this.participants = [];
         this.costItems = [];
         this.isInitialized = false;
-        
+        this.isReadOnly = false; // Read-only mode flag
+
+        // Split configuration state
+        this.splitMode = 'equal';
+        this.currentSplitPercentages = {};
+        this.currentSplitShares = {};
+
         this.elements = {};
         this.bindElements();
         this.bindEventListeners();
@@ -64,16 +70,19 @@ class EventDetailPage {
             // Split Configuration Elements
             splitConfigurationSection: document.getElementById('split-configuration-section'),
             splitEqualRadio: document.getElementById('split-equal'),
+            splitSharesRadio: document.getElementById('split-shares'),
             splitCustomRadio: document.getElementById('split-custom'),
             splitParticipantsContainer: document.getElementById('split-participants-container'),
             splitTotalAmount: document.getElementById('split-total-amount'),
             splitRemaining: document.getElementById('split-remaining'),
+            splitSharesTotal: document.getElementById('split-shares-total'),
+            splitTotalShares: document.getElementById('split-total-shares'),
             splitConfigurationError: document.getElementById('split-configuration-error'),
+            sharesMakeEqualBtn: document.getElementById('shares-make-equal-btn'),
             
-            // Edit Event Button
+            // Event Action Buttons
+            shareEventBtn: document.getElementById('share-event-btn'),
             editEventBtn: document.getElementById('edit-event-btn'),
-            
-            // Delete Event Button
             deleteEventBtn: document.getElementById('delete-event-btn'),
             
             // Edit Event Modal
@@ -186,13 +195,26 @@ class EventDetailPage {
         if (this.elements.splitEqualRadio) {
             this.elements.splitEqualRadio.addEventListener('change', () => this.handleSplitMethodChange());
         }
-        
+
+        if (this.elements.splitSharesRadio) {
+            this.elements.splitSharesRadio.addEventListener('change', () => this.handleSplitMethodChange());
+        }
+
         if (this.elements.splitCustomRadio) {
             this.elements.splitCustomRadio.addEventListener('change', () => this.handleSplitMethodChange());
+        }
+
+        if (this.elements.sharesMakeEqualBtn) {
+            this.elements.sharesMakeEqualBtn.addEventListener('click', () => this.makeEqualSharesSplit());
         }
         
         if (this.elements.expenseAmount) {
             this.elements.expenseAmount.addEventListener('input', () => this.updateSplitAmounts());
+        }
+
+        // Share Event Button
+        if (this.elements.shareEventBtn) {
+            this.elements.shareEventBtn.addEventListener('click', () => this.shareEvent());
         }
 
         // Edit Event Button
@@ -304,22 +326,31 @@ class EventDetailPage {
         });
     }
 
-    async showEvent(eventId) {
+    async showEvent(eventId, queryParams = {}) {
         this.currentEventId = eventId;
-        
+
+        // Set read-only mode based on query parameter
+        this.isReadOnly = queryParams.readonly === 'true';
+        console.log('EventDetailPage: Read-only mode:', this.isReadOnly);
+
         try {
             // Show the event detail page
             this.showPage();
-            
+
             // Load event data
             await this.loadEventData();
-            
+
             // Load participants first, then cost items (participants needed for expense rendering)
             await this.loadParticipants();
             await this.loadCostItems();
-            
+
             this.updateStats();
-            
+
+            // Apply read-only mode after content is loaded
+            if (this.isReadOnly) {
+                this.applyReadOnlyMode();
+            }
+
         } catch (error) {
             console.error('Failed to load event:', error);
             showError('Failed to load event details. Please try again.');
@@ -407,11 +438,17 @@ class EventDetailPage {
             ]);
             
             // Merge balance data with participant data
+            // Note: balanceData contains event-specific balances, not global balances
             const participantsWithBalance = participants.map(participant => {
                 const balance = balanceData.userBalances[participant.id];
                 return {
                     ...participant,
-                    balance: balance ? balance.net : 0,
+                    // Event-specific balance data (from calculateEventBalance)
+                    eventBalance: balance ? balance.net : 0,     // Net balance for this event only
+                    eventOwes: balance ? balance.owes : 0,       // Amount owes for this event only
+                    eventPaid: balance ? balance.paid : 0,       // Amount paid for this event only
+                    // Keep original structure for backward compatibility
+                    balance: balance ? balance.net : 0,          // Will be treated as event balance
                     owes: balance ? balance.owes : 0,
                     paid: balance ? balance.paid : 0
                 };
@@ -492,9 +529,17 @@ class EventDetailPage {
         // Ensure participants are loaded before finding the user
         const paidByUser = this.participants?.find(p => p.id === costItem.paidBy);
         
-        // Count participants with non-zero split (handle both API response formats)
-        const splitData = costItem.splitPercentages || costItem.splitPercentage || {};
-        const participantCount = Object.values(splitData).filter(p => p > 0).length;
+        // Count participants with non-zero split (handle both shares and percentage modes)
+        let splitData, participantCount, splitMode;
+        if (costItem.splitShares) {
+            splitData = costItem.splitShares;
+            participantCount = Object.values(splitData).filter(shares => shares > 0).length;
+            splitMode = 'shares';
+        } else {
+            splitData = costItem.splitPercentages || costItem.splitPercentage || {};
+            participantCount = Object.values(splitData).filter(p => p > 0).length;
+            splitMode = 'percentage';
+        }
         
         // Generate split details for detailed view
         const splitDetails = this.generateSplitDetails(costItem);
@@ -521,7 +566,9 @@ class EventDetailPage {
                 </div>
                 <div class="expense-split-info">
                     <div class="split-summary">
+                        <span class="split-mode-indicator">${splitMode === 'shares' ? '🔢' : '%'}</span>
                         Split among ${participantCount} participant${participantCount !== 1 ? 's' : ''}
+                        ${splitMode === 'shares' ? '(Shares)' : '(Percentage)'}
                         <button class="toggle-split-details btn-link" data-expense-id="${costItem.id}">
                             Show details
                         </button>
@@ -535,23 +582,48 @@ class EventDetailPage {
     }
 
     generateSplitDetails(costItem) {
-        const splitPercentages = costItem.splitPercentages || costItem.splitPercentage || {};
         const splitHtml = [];
-        
-        for (const [participantId, percentage] of Object.entries(splitPercentages)) {
-            if (percentage > 0) {
-                const participant = this.participants?.find(p => p.id === participantId);
-                const amount = (costItem.amount * percentage) / 100;
-                splitHtml.push(`
-                    <div class="split-participant-detail">
-                        <span class="participant-name">${participant ? participant.name : 'Unknown'}</span>
-                        <span class="split-percentage">${percentage.toFixed(1)}%</span>
-                        <span class="split-amount">${formatCurrency(amount)}</span>
-                    </div>
-                `);
+
+        if (costItem.splitShares) {
+            // Shares mode
+            const totalShares = Object.values(costItem.splitShares).reduce((sum, shares) => sum + (shares || 0), 0);
+
+            for (const [participantId, shares] of Object.entries(costItem.splitShares)) {
+                if (shares > 0) {
+                    const participant = this.participants?.find(p => p.id === participantId);
+                    const amount = totalShares > 0 ? (costItem.amount * shares) / totalShares : 0;
+                    splitHtml.push(`
+                        <div class="split-participant-detail shares-detail">
+                            <span class="participant-name">${participant ? participant.name : 'Unknown'}</span>
+                            <span class="split-shares">${shares} share${shares !== 1 ? 's' : ''}</span>
+                            <span class="split-amount">${formatCurrency(amount)}</span>
+                        </div>
+                    `);
+                }
+            }
+
+            if (totalShares > 0) {
+                splitHtml.unshift(`<div class="split-summary-info">Total shares: ${totalShares}</div>`);
+            }
+        } else {
+            // Percentage mode (existing logic)
+            const splitPercentages = costItem.splitPercentages || costItem.splitPercentage || {};
+
+            for (const [participantId, percentage] of Object.entries(splitPercentages)) {
+                if (percentage > 0) {
+                    const participant = this.participants?.find(p => p.id === participantId);
+                    const amount = (costItem.amount * percentage) / 100;
+                    splitHtml.push(`
+                        <div class="split-participant-detail percentage-detail">
+                            <span class="participant-name">${participant ? participant.name : 'Unknown'}</span>
+                            <span class="split-percentage">${percentage.toFixed(1)}%</span>
+                            <span class="split-amount">${formatCurrency(amount)}</span>
+                        </div>
+                    `);
+                }
             }
         }
-        
+
         return splitHtml.length > 0 ? splitHtml.join('') : '<p class="text-muted">No split details available</p>';
     }
 
@@ -854,9 +926,15 @@ class EventDetailPage {
                 description: formData.get('description'),
                 amount: parseFloat(formData.get('amount')),
                 paidBy: formData.get('paidBy'),
-                date: formData.get('date'),
-                splitPercentage: this.getSplitPercentages()
+                date: formData.get('date')
             };
+
+            // Add split configuration based on mode
+            if (this.splitMode === 'shares') {
+                rawExpenseData.splitShares = this.getSplitShares();
+            } else {
+                rawExpenseData.splitPercentage = this.getSplitPercentages();
+            }
 
             console.log('[EXPENSE-EDIT] Raw expense data before sanitization:', rawExpenseData);
             console.log('[EXPENSE-EDIT] Current event participants:', this.currentEvent?.participants);
@@ -866,11 +944,29 @@ class EventDetailPage {
             const expenseData = this.sanitizeExpenseData(rawExpenseData, currentParticipants);
 
             // Validate split configuration after sanitization
-            const sanitizedSplitTotal = Object.values(expenseData.splitPercentage).reduce((sum, p) => sum + p, 0);
-            console.log('[EXPENSE-EDIT] Sanitized split total:', sanitizedSplitTotal, 'Split data:', expenseData.splitPercentage);
-            if (Math.abs(sanitizedSplitTotal - 100) > 0.01) {
-                console.log('[EXPENSE-EDIT] Validation failed - split total is:', sanitizedSplitTotal, 'difference from 100:', Math.abs(sanitizedSplitTotal - 100));
-                this.showExpenseError('splitConfiguration', `Split percentages must add up to exactly 100% (currently ${sanitizedSplitTotal.toFixed(2)}%)`);
+            if (expenseData.splitPercentage) {
+                // Percentage mode validation
+                const sanitizedSplitTotal = Object.values(expenseData.splitPercentage).reduce((sum, p) => sum + p, 0);
+                console.log('[EXPENSE-EDIT] Sanitized split total:', sanitizedSplitTotal, 'Split data:', expenseData.splitPercentage);
+                if (Math.abs(sanitizedSplitTotal - 100) > 0.01) {
+                    console.log('[EXPENSE-EDIT] Validation failed - split total is:', sanitizedSplitTotal, 'difference from 100:', Math.abs(sanitizedSplitTotal - 100));
+                    this.showExpenseError('splitConfiguration', `Split percentages must add up to exactly 100% (currently ${sanitizedSplitTotal.toFixed(2)}%)`);
+                    this.setExpenseSaveButtonState(false);
+                    return;
+                }
+            } else if (expenseData.splitShares) {
+                // Shares mode validation
+                const totalShares = Object.values(expenseData.splitShares).reduce((sum, shares) => sum + (shares || 0), 0);
+                console.log('[EXPENSE-EDIT] Shares split - total shares:', totalShares, 'Split data:', expenseData.splitShares);
+                if (totalShares === 0) {
+                    console.log('[EXPENSE-EDIT] Validation failed - no shares assigned');
+                    this.showExpenseError('splitConfiguration', 'At least one person must have shares greater than 0');
+                    this.setExpenseSaveButtonState(false);
+                    return;
+                }
+            } else {
+                console.log('[EXPENSE-EDIT] Validation failed - no split configuration');
+                this.showExpenseError('splitConfiguration', 'Split configuration is required');
                 this.setExpenseSaveButtonState(false);
                 return;
             }
@@ -998,23 +1094,26 @@ class EventDetailPage {
         // Use the participant IDs directly (currentEvent.participants is an array of ID strings)
         const participantIds = this.currentEvent.participants;
         const participantCount = participantIds.length;
-        
+
         if (participantCount === 0) {
             return {};
         }
 
-        // Calculate equal percentages
-        const basePercentage = Math.floor((100 / participantCount) * 100) / 100;
+        // For truly equal splits, calculate exact percentages that ensure equal dollar amounts
+        // This avoids rounding issues in the final amount calculation
+        const exactPercentage = 100 / participantCount;
+        const roundedPercentage = Math.round(exactPercentage * 10000) / 10000; // 4 decimal precision
+
         const splitPercentage = {};
         let totalAssigned = 0;
 
-        // Assign base percentage to all but last participant
+        // Assign the same rounded percentage to all but last participant
         for (let i = 0; i < participantCount - 1; i++) {
-            splitPercentage[participantIds[i]] = basePercentage;
-            totalAssigned += basePercentage;
+            splitPercentage[participantIds[i]] = Math.round(roundedPercentage * 100) / 100; // 2 decimal for UI
+            totalAssigned += splitPercentage[participantIds[i]];
         }
 
-        // Give remaining to last participant (handles rounding)
+        // Give exact remaining to last participant (ensures total = 100.00)
         const remaining = Math.round((100 - totalAssigned) * 100) / 100;
         splitPercentage[participantIds[participantCount - 1]] = remaining;
 
@@ -1099,93 +1198,174 @@ class EventDetailPage {
         if (!this.elements.splitParticipantsContainer || !this.participants) {
             return;
         }
-        
+
         const participantIds = this.currentEvent.participants || [];
         const eventParticipants = this.participants.filter(p => participantIds.includes(p.id));
-        
+
         if (eventParticipants.length === 0) {
             this.elements.splitParticipantsContainer.innerHTML = '<p class="text-muted">No participants selected</p>';
             return;
         }
-        
-        // Only generate equal split percentages if not already set (i.e., for new expenses)
-        if (!this.currentSplitPercentages || Object.keys(this.currentSplitPercentages).length === 0) {
-            const equalSplit = this.generateEqualSplit();
-            this.currentSplitPercentages = { ...equalSplit };
+
+        // Initialize split data if not already set
+        if (this.splitMode === 'shares') {
+            if (!this.currentSplitShares || Object.keys(this.currentSplitShares).length === 0) {
+                this.currentSplitShares = this.generateEqualShares();
+            }
+        } else {
+            if (!this.currentSplitPercentages || Object.keys(this.currentSplitPercentages).length === 0) {
+                this.currentSplitPercentages = this.generateEqualSplit();
+            }
         }
-        
+
         const participantHtml = eventParticipants.map(participant => {
-            const percentage = this.currentSplitPercentages[participant.id] || 0;
             const initials = participant.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             const isPaidBy = this.elements.expensePaidBy && this.elements.expensePaidBy.value === participant.id;
-            
-            return `
-                <div class="split-participant" data-participant-id="${participant.id}">
-                    <div class="participant-info">
-                        <div class="participant-avatar">${initials}</div>
-                        <div class="participant-details">
-                            <h4>${participant.name}</h4>
-                            <p class="participant-role">${isPaidBy ? 'Paid for expense' : 'Participant'}</p>
+
+            if (this.splitMode === 'shares') {
+                const shares = this.currentSplitShares[participant.id] || 1;
+                const isExcluded = shares === 0;
+
+                return `
+                    <div class="split-participant ${isExcluded ? 'excluded' : ''}" data-participant-id="${participant.id}">
+                        <div class="participant-info">
+                            <div class="participant-avatar">${initials}</div>
+                            <div class="participant-details">
+                                <h4>${participant.name}</h4>
+                                <p class="participant-role">${isPaidBy ? 'Paid for expense' : 'Participant'}</p>
+                            </div>
+                        </div>
+                        <div class="split-controls shares-controls">
+                            <div class="shares-input-container">
+                                <div class="shares-buttons">
+                                    <button type="button" class="shares-btn shares-decrease" data-participant-id="${participant.id}" ${shares <= 0 ? 'disabled' : ''}>−</button>
+                                    <input type="number" class="shares-input" id="shares-input-${participant.id}"
+                                           value="${shares}" min="0" step="1">
+                                    <button type="button" class="shares-btn shares-increase" data-participant-id="${participant.id}">+</button>
+                                </div>
+                                <div class="shares-amount-preview ${isExcluded ? 'excluded' : ''}" id="shares-amount-${participant.id}">$0.00</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="split-controls">
-                        <div class="split-toggle">
-                            <input type="checkbox" class="split-checkbox" id="split-include-${participant.id}" checked>
-                            <label for="split-include-${participant.id}">Include</label>
+                `;
+            } else {
+                // Percentage mode (existing logic)
+                const percentage = this.currentSplitPercentages[participant.id] || 0;
+
+                return `
+                    <div class="split-participant" data-participant-id="${participant.id}">
+                        <div class="participant-info">
+                            <div class="participant-avatar">${initials}</div>
+                            <div class="participant-details">
+                                <h4>${participant.name}</h4>
+                                <p class="participant-role">${isPaidBy ? 'Paid for expense' : 'Participant'}</p>
+                            </div>
                         </div>
-                        <div class="split-amount">
-                            <input type="number" class="split-percentage-input" id="split-percentage-${participant.id}" 
-                                   value="${percentage.toFixed(2)}" min="0" max="100" step="0.01">
-                            <span>%</span>
-                            <div class="split-amount-display" id="split-amount-${participant.id}">$0.00</div>
+                        <div class="split-controls percentage-controls">
+                            <div class="split-toggle">
+                                <input type="checkbox" class="split-checkbox" id="split-include-${participant.id}" ${percentage > 0 ? 'checked' : ''}>
+                                <label for="split-include-${participant.id}">Include</label>
+                            </div>
+                            <div class="split-amount">
+                                <input type="number" class="split-percentage-input" id="split-percentage-${participant.id}"
+                                       value="${percentage.toFixed(2)}" min="0" max="100" step="0.01">
+                                <span>%</span>
+                                <div class="split-amount-display" id="split-amount-${participant.id}">$0.00</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }).join('');
-        
+
         this.elements.splitParticipantsContainer.innerHTML = participantHtml;
-        
-        // Set the appropriate mode based on current split configuration
-        const mode = this.splitMode || (this.isCurrentSplitEqual() ? 'equal' : 'custom');
-        this.elements.splitParticipantsContainer.className = `split-participants-container ${mode}-mode`;
-        
+
+        // Set the appropriate mode CSS class
+        this.elements.splitParticipantsContainer.className = `split-participants-container ${this.splitMode}-mode`;
+
         // Bind events for split controls
         this.bindSplitControlEvents();
     }
     
     bindSplitControlEvents() {
-        // Bind checkbox events
-        this.elements.splitParticipantsContainer.querySelectorAll('.split-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const participantId = e.target.id.replace('split-include-', '');
-                this.handleParticipantToggle(participantId, e.target.checked);
+        if (this.splitMode === 'shares') {
+            // Bind shares input events
+            this.elements.splitParticipantsContainer.querySelectorAll('.shares-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const participantId = e.target.id.replace('shares-input-', '');
+                    const shares = parseInt(e.target.value) || 0;
+                    this.handleSharesChange(participantId, shares);
+                });
             });
-        });
-        
-        // Bind percentage input events
-        this.elements.splitParticipantsContainer.querySelectorAll('.split-percentage-input').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const participantId = e.target.id.replace('split-percentage-', '');
-                this.handlePercentageChange(participantId, parseFloat(e.target.value) || 0);
+
+            // Bind shares increase/decrease buttons
+            this.elements.splitParticipantsContainer.querySelectorAll('.shares-increase').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const participantId = e.target.dataset.participantId;
+                    const currentShares = this.currentSplitShares[participantId] || 0;
+                    this.handleSharesChange(participantId, currentShares + 1);
+                    this.renderSplitParticipants();
+                });
             });
-        });
+
+            this.elements.splitParticipantsContainer.querySelectorAll('.shares-decrease').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const participantId = e.target.dataset.participantId;
+                    const currentShares = this.currentSplitShares[participantId] || 0;
+                    if (currentShares > 0) {
+                        this.handleSharesChange(participantId, currentShares - 1);
+                        this.renderSplitParticipants();
+                    }
+                });
+            });
+        } else {
+            // Bind checkbox events (percentage mode)
+            this.elements.splitParticipantsContainer.querySelectorAll('.split-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const participantId = e.target.id.replace('split-include-', '');
+                    this.handleParticipantToggle(participantId, e.target.checked);
+                });
+            });
+
+            // Bind percentage input events
+            this.elements.splitParticipantsContainer.querySelectorAll('.split-percentage-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const participantId = e.target.id.replace('split-percentage-', '');
+                    this.handlePercentageChange(participantId, parseFloat(e.target.value) || 0);
+                });
+            });
+        }
     }
     
     handleSplitMethodChange() {
         const isEqual = this.elements.splitEqualRadio && this.elements.splitEqualRadio.checked;
-        this.splitMode = isEqual ? 'equal' : 'custom';
-        
+        const isShares = this.elements.splitSharesRadio && this.elements.splitSharesRadio.checked;
+
+        if (isEqual) {
+            this.splitMode = 'equal';
+        } else if (isShares) {
+            this.splitMode = 'shares';
+        } else {
+            this.splitMode = 'custom';
+        }
+
         if (this.elements.splitParticipantsContainer) {
             this.elements.splitParticipantsContainer.className = `split-participants-container ${this.splitMode}-mode`;
         }
-        
+
+        // Update split summary visibility
+        this.updateSplitSummaryVisibility();
+
         if (isEqual) {
             // Reset to equal split
             this.currentSplitPercentages = this.generateEqualSplit();
             this.updateSplitInputs();
+        } else if (isShares) {
+            // Initialize shares mode
+            this.currentSplitShares = this.generateEqualShares();
+            this.renderSplitParticipants();
         }
-        
+
         this.updateSplitAmounts();
         this.validateSplit();
     }
@@ -1261,57 +1441,148 @@ class EventDetailPage {
             this.elements.splitTotalAmount.textContent = `$${totalAmount.toFixed(2)}`;
         }
 
-        // Update individual amounts
-        if (this.currentSplitPercentages) {
-            Object.keys(this.currentSplitPercentages).forEach(participantId => {
-                const percentage = this.currentSplitPercentages[participantId];
-                const amount = (totalAmount * percentage) / 100;
-                const amountDisplay = document.getElementById(`split-amount-${participantId}`);
+        if (this.splitMode === 'shares') {
+            // Update shares total
+            const totalShares = Object.values(this.currentSplitShares || {}).reduce((sum, shares) => sum + (shares || 0), 0);
+            if (this.elements.splitTotalShares) {
+                this.elements.splitTotalShares.textContent = totalShares.toString();
+            }
 
-                if (amountDisplay) {
-                    amountDisplay.textContent = `$${amount.toFixed(2)}`;
-                }
-            });
+            // Update individual share amounts
+            if (this.currentSplitShares && totalShares > 0) {
+                Object.keys(this.currentSplitShares).forEach(participantId => {
+                    const amount = this.calculateSharesAmount(participantId, totalAmount);
+                    const amountDisplay = document.getElementById(`shares-amount-${participantId}`);
+
+                    if (amountDisplay) {
+                        if (this.currentSplitShares[participantId] === 0) {
+                            amountDisplay.textContent = 'Excluded';
+                            amountDisplay.classList.add('excluded');
+                        } else {
+                            amountDisplay.textContent = `$${amount.toFixed(2)}`;
+                            amountDisplay.classList.remove('excluded');
+                        }
+                    }
+                });
+            }
+        } else {
+            // Update individual percentage amounts (existing logic)
+            if (this.currentSplitPercentages) {
+                Object.keys(this.currentSplitPercentages).forEach(participantId => {
+                    const percentage = this.currentSplitPercentages[participantId];
+                    const amount = (totalAmount * percentage) / 100;
+                    const amountDisplay = document.getElementById(`split-amount-${participantId}`);
+
+                    if (amountDisplay) {
+                        amountDisplay.textContent = `$${amount.toFixed(2)}`;
+                    }
+                });
+            }
         }
 
         this.validateSplit();
     }
     
     validateSplit() {
-        // Defensive check for tests and edge cases
-        if (!this.currentSplitPercentages) {
-            return false;
-        }
-        
-        const totalPercentage = Object.values(this.currentSplitPercentages).reduce((sum, p) => sum + p, 0);
-        const remaining = Math.round((100 - totalPercentage) * 100) / 100;
-        
-        let isValid = Math.abs(remaining) < 0.01; // Allow for small rounding errors
-        let message = '';
-        
-        if (remaining > 0.01) {
-            message = `${remaining.toFixed(2)}% remaining`;
-            this.elements.splitRemaining?.classList.remove('success', 'error');
-        } else if (remaining < -0.01) {
-            message = `${Math.abs(remaining).toFixed(2)}% over 100%`;
-            isValid = false;
-            this.elements.splitRemaining?.classList.add('error');
-            this.elements.splitRemaining?.classList.remove('success');
+        if (this.splitMode === 'shares') {
+            // Shares mode validation - always valid as long as at least one person has shares
+            if (!this.currentSplitShares) {
+                return false;
+            }
+
+            const totalShares = Object.values(this.currentSplitShares).reduce((sum, shares) => sum + (shares || 0), 0);
+            return totalShares > 0; // Valid if anyone has shares
         } else {
-            message = '✓ Split adds up to 100%';
-            this.elements.splitRemaining?.classList.add('success');
-            this.elements.splitRemaining?.classList.remove('error');
+            // Percentage mode validation (existing logic)
+            if (!this.currentSplitPercentages) {
+                return false;
+            }
+
+            const totalPercentage = Object.values(this.currentSplitPercentages).reduce((sum, p) => sum + p, 0);
+            const remaining = Math.round((100 - totalPercentage) * 100) / 100;
+
+            let isValid = Math.abs(remaining) < 0.01; // Allow for small rounding errors
+            let message = '';
+
+            if (remaining > 0.01) {
+                message = `${remaining.toFixed(2)}% remaining`;
+                this.elements.splitRemaining?.classList.remove('success', 'error');
+            } else if (remaining < -0.01) {
+                message = `${Math.abs(remaining).toFixed(2)}% over 100%`;
+                isValid = false;
+                this.elements.splitRemaining?.classList.add('error');
+                this.elements.splitRemaining?.classList.remove('success');
+            } else {
+                message = '✓ Split adds up to 100%';
+                this.elements.splitRemaining?.classList.add('success');
+                this.elements.splitRemaining?.classList.remove('error');
+            }
+
+            if (this.elements.splitRemaining) {
+                this.elements.splitRemaining.textContent = message;
+            }
+
+            return isValid;
         }
-        
-        if (this.elements.splitRemaining) {
-            this.elements.splitRemaining.textContent = message;
-        }
-        
-        return isValid;
     }
     
     getSplitPercentages() {
         return { ...this.currentSplitPercentages };
+    }
+
+    // Shares-based methods
+    generateEqualShares() {
+        const participantIds = this.currentEvent.participants || [];
+        const eventParticipants = this.participants.filter(p => participantIds.includes(p.id));
+        const shares = {};
+
+        eventParticipants.forEach(participant => {
+            shares[participant.id] = 1;
+        });
+
+        return shares;
+    }
+
+    getSplitShares() {
+        return { ...this.currentSplitShares };
+    }
+
+    handleSharesChange(participantId, shares) {
+        this.currentSplitShares[participantId] = shares;
+        this.updateSplitAmounts();
+        this.validateSplit();
+    }
+
+    makeEqualSharesSplit() {
+        this.currentSplitShares = this.generateEqualShares();
+        this.renderSplitParticipants();
+        this.updateSplitAmounts();
+        this.validateSplit();
+    }
+
+    updateSplitSummaryVisibility() {
+        // Show/hide percentage vs shares summary
+        if (this.elements.splitRemaining) {
+            this.elements.splitRemaining.style.display = this.splitMode === 'shares' ? 'none' : 'inline';
+        }
+
+        if (this.elements.splitSharesTotal) {
+            this.elements.splitSharesTotal.style.display = this.splitMode === 'shares' ? 'inline' : 'none';
+        }
+
+        if (this.elements.sharesMakeEqualBtn && this.elements.sharesMakeEqualBtn.parentElement) {
+            this.elements.sharesMakeEqualBtn.parentElement.style.display = this.splitMode === 'shares' ? 'flex' : 'none';
+        }
+    }
+
+    calculateSharesAmount(participantId, totalAmount) {
+        const shares = this.currentSplitShares[participantId] || 0;
+        if (shares === 0) return 0;
+
+        const totalShares = Object.values(this.currentSplitShares).reduce((sum, s) => sum + (s || 0), 0);
+        if (totalShares === 0) return 0;
+
+        return (totalAmount * shares) / totalShares;
     }
 
     // Edit Event Methods
@@ -1839,61 +2110,82 @@ class EventDetailPage {
      * @returns {Object} Sanitized expense data
      */
     sanitizeExpenseData(expenseData, currentParticipants) {
-        if (!expenseData.splitPercentage || !currentParticipants) {
+        if (!currentParticipants) {
             return expenseData;
         }
 
-        const validSplit = {};
-        let totalValidPercentage = 0;
-        let removedParticipants = 0;
+        if (expenseData.splitPercentage) {
+            // Handle percentage mode sanitization (existing logic)
+            const validSplit = {};
+            let totalValidPercentage = 0;
+            let removedParticipants = 0;
 
-        // Keep only current participants
-        for (const [userId, percentage] of Object.entries(expenseData.splitPercentage)) {
-            if (currentParticipants.includes(userId)) {
-                validSplit[userId] = percentage;
-                totalValidPercentage += percentage;
-            } else {
-                removedParticipants++;
-                console.log('[EXPENSE-EDIT] Removing participant from split:', userId);
+            // Keep only current participants
+            for (const [userId, percentage] of Object.entries(expenseData.splitPercentage)) {
+                if (currentParticipants.includes(userId)) {
+                    validSplit[userId] = percentage;
+                    totalValidPercentage += percentage;
+                } else {
+                    removedParticipants++;
+                    console.log('[EXPENSE-EDIT] Removing participant from percentage split:', userId);
+                }
             }
+
+            // Log debug info about the sanitization
+            console.log('[EXPENSE-EDIT] Percentage sanitization - removedParticipants:', removedParticipants, 'totalValidPercentage:', totalValidPercentage);
+
+            // If we removed participants, recalculate percentages
+            if (removedParticipants > 0 && totalValidPercentage > 0) {
+                console.log('[EXPENSE-EDIT] Recalculating split percentages after removing', removedParticipants, 'participants');
+
+                // Normalize to 100%
+                const factor = 100 / totalValidPercentage;
+                let adjustedTotal = 0;
+
+                console.log('[EXPENSE-EDIT] Normalization factor:', factor, 'Original valid split:', validSplit);
+
+                for (const userId in validSplit) {
+                    const originalPercentage = validSplit[userId];
+                    validSplit[userId] = Math.round(validSplit[userId] * factor * 100) / 100;
+                    adjustedTotal += validSplit[userId];
+                    console.log('[EXPENSE-EDIT] Adjusted', userId, 'from', originalPercentage, 'to', validSplit[userId]);
+                }
+
+                // Handle rounding errors by adjusting the largest percentage
+                if (Math.abs(adjustedTotal - 100) > 0.01) {
+                    const largestUserId = Object.keys(validSplit).reduce((a, b) =>
+                        validSplit[a] > validSplit[b] ? a : b
+                    );
+                    console.log('[EXPENSE-EDIT] Rounding adjustment needed - current total:', adjustedTotal, 'adjusting', largestUserId);
+                    validSplit[largestUserId] += (100 - adjustedTotal);
+                    validSplit[largestUserId] = Math.round(validSplit[largestUserId] * 100) / 100;
+                }
+
+                console.log('[EXPENSE-EDIT] Final sanitized percentage split:', validSplit);
+            }
+
+            return { ...expenseData, splitPercentage: validSplit };
+        } else if (expenseData.splitShares) {
+            // Handle shares mode sanitization
+            const validShares = {};
+            let removedParticipants = 0;
+
+            // Keep only current participants
+            for (const [userId, shares] of Object.entries(expenseData.splitShares)) {
+                if (currentParticipants.includes(userId)) {
+                    validShares[userId] = shares;
+                } else {
+                    removedParticipants++;
+                    console.log('[EXPENSE-EDIT] Removing participant from shares split:', userId);
+                }
+            }
+
+            console.log('[EXPENSE-EDIT] Shares sanitization - removedParticipants:', removedParticipants, 'Final sanitized shares split:', validShares);
+
+            return { ...expenseData, splitShares: validShares };
         }
 
-        // Log debug info about the sanitization
-        console.log('[EXPENSE-EDIT] Sanitization debug - removedParticipants:', removedParticipants, 'totalValidPercentage:', totalValidPercentage);
-
-        // If we removed participants, recalculate percentages
-        if (removedParticipants > 0 && totalValidPercentage > 0) {
-            console.log('[EXPENSE-EDIT] Recalculating split percentages after removing', removedParticipants, 'participants');
-
-            // Normalize to 100%
-            const factor = 100 / totalValidPercentage;
-            let adjustedTotal = 0;
-
-            console.log('[EXPENSE-EDIT] Normalization factor:', factor, 'Original valid split:', validSplit);
-
-            for (const userId in validSplit) {
-                const originalPercentage = validSplit[userId];
-                validSplit[userId] = Math.round(validSplit[userId] * factor * 100) / 100;
-                adjustedTotal += validSplit[userId];
-                console.log('[EXPENSE-EDIT] Adjusted', userId, 'from', originalPercentage, 'to', validSplit[userId]);
-            }
-
-            // Handle rounding errors by adjusting the largest percentage
-            if (Math.abs(adjustedTotal - 100) > 0.01) {
-                const largestUserId = Object.keys(validSplit).reduce((a, b) =>
-                    validSplit[a] > validSplit[b] ? a : b
-                );
-                console.log('[EXPENSE-EDIT] Rounding adjustment needed - current total:', adjustedTotal, 'adjusting', largestUserId);
-                validSplit[largestUserId] += (100 - adjustedTotal);
-                validSplit[largestUserId] = Math.round(validSplit[largestUserId] * 100) / 100;
-            }
-
-            console.log('[EXPENSE-EDIT] Final sanitized split:', validSplit);
-        } else {
-            console.log('[EXPENSE-EDIT] No recalculation needed - removedParticipants:', removedParticipants, 'totalValidPercentage:', totalValidPercentage);
-        }
-
-        return { ...expenseData, splitPercentage: validSplit };
+        return expenseData;
     }
 
     /**
@@ -1952,6 +2244,184 @@ class EventDetailPage {
     async refresh() {
         if (this.currentEventId) {
             await this.showEvent(this.currentEventId);
+        }
+    }
+
+    /**
+     * Share event with read-only URL
+     */
+    shareEvent() {
+        if (!this.currentEventId) {
+            showError('Cannot share event: Event not loaded');
+            return;
+        }
+
+        // Generate read-only URL
+        const currentUrl = window.location.href.split('?')[0];
+        const shareUrl = `${currentUrl}?readonly=true`;
+
+        // Try to copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => {
+                    showSuccess('Share link copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Failed to copy to clipboard:', err);
+                    this.showShareDialog(shareUrl);
+                });
+        } else {
+            // Fallback for browsers without clipboard API
+            this.showShareDialog(shareUrl);
+        }
+    }
+
+    /**
+     * Show share dialog with URL
+     */
+    showShareDialog(shareUrl) {
+        // Create and show a simple share dialog
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+        `;
+
+        dialog.innerHTML = `
+            <h3 style="margin-top: 0; margin-bottom: 16px; color: #374151;">Share Event (Read-Only)</h3>
+            <p style="margin-bottom: 16px; color: #6b7280;">Share this link to let others view the event without editing:</p>
+            <div style="margin-bottom: 16px;">
+                <input
+                    type="text"
+                    value="${shareUrl}"
+                    readonly
+                    style="width: 100%; padding: 8px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-family: monospace; font-size: 14px;"
+                    onclick="this.select()"
+                >
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button
+                    onclick="this.parentElement.parentElement.remove()"
+                    style="padding: 8px 16px; border: 2px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer;"
+                >
+                    Close
+                </button>
+                <button
+                    onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showSuccess('Copied to clipboard!')); this.parentElement.parentElement.remove();"
+                    style="padding: 8px 16px; border: none; border-radius: 6px; background: #667eea; color: white; cursor: pointer;"
+                >
+                    Copy Link
+                </button>
+            </div>
+        `;
+
+        // Add overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        `;
+        overlay.onclick = () => {
+            document.body.removeChild(overlay);
+            document.body.removeChild(dialog);
+        };
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialog);
+
+        // Auto-select the URL
+        const input = dialog.querySelector('input');
+        input.focus();
+        input.select();
+    }
+
+    /**
+     * Apply read-only mode by hiding all edit/add/delete buttons and adding visual indicators
+     */
+    applyReadOnlyMode() {
+        console.log('EventDetailPage: Applying read-only mode');
+
+        // Hide all edit/add/delete action buttons (but keep share button visible)
+        const actionButtons = [
+            '#add-expense-btn',
+            '#add-first-expense-btn',
+            '#edit-event-btn',
+            '#delete-event-btn',
+            '.edit-expense-btn',
+            '.delete-expense-btn',
+            '.btn-danger',
+            '.btn-primary:not(.btn-outline)', // Keep share buttons but hide action buttons
+        ];
+
+        actionButtons.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.style.display = 'none';
+            });
+        });
+
+        // Add read-only banner
+        this.showReadOnlyBanner();
+
+        // Disable all form inputs in modals
+        const formInputs = document.querySelectorAll('#add-expense-modal input, #add-expense-modal select, #add-expense-modal textarea, #add-expense-modal button[type="submit"]');
+        formInputs.forEach(input => {
+            input.disabled = true;
+        });
+
+        console.log('EventDetailPage: Read-only mode applied');
+    }
+
+    /**
+     * Show read-only banner at the top of the page
+     */
+    showReadOnlyBanner() {
+        // Check if banner already exists
+        if (document.getElementById('readonly-banner')) {
+            return;
+        }
+
+        const banner = document.createElement('div');
+        banner.id = 'readonly-banner';
+        banner.style.cssText = `
+            background: #f3f4f6;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 16px 20px;
+            text-align: center;
+            color: #374151;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        `;
+
+        banner.innerHTML = `
+            <span style="font-size: 18px;">👁️</span>
+            <span>This is a read-only view. No changes can be made.</span>
+        `;
+
+        // Insert banner at the top of the event detail page
+        const eventDetailPage = document.getElementById('event-detail');
+        if (eventDetailPage && eventDetailPage.firstChild) {
+            eventDetailPage.insertBefore(banner, eventDetailPage.firstChild);
         }
     }
 }

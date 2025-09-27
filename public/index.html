@@ -212,19 +212,31 @@
                                         <span class="summary-label">Total Events</span>
                                     </div>
                                 </div>
-                                <div class="view-toggle">
-                                    <span class="toggle-label">View:</span>
-                                    <div class="toggle-switch">
-                                        <input type="radio" id="events-detailed-view" name="events-view" value="detailed" checked>
-                                        <label for="events-detailed-view" class="toggle-option">
-                                            <span class="toggle-icon">📋</span>
-                                            <span class="toggle-text">Detailed</span>
-                                        </label>
-                                        <input type="radio" id="events-compact-view" name="events-view" value="compact">
-                                        <label for="events-compact-view" class="toggle-option">
-                                            <span class="toggle-icon">📄</span>
-                                            <span class="toggle-text">Compact</span>
-                                        </label>
+                                <div class="control-group">
+                                    <div class="view-toggle">
+                                        <span class="toggle-label">View:</span>
+                                        <div class="toggle-switch">
+                                            <input type="radio" id="events-detailed-view" name="events-view" value="detailed" checked>
+                                            <label for="events-detailed-view" class="toggle-option">
+                                                <span class="toggle-icon">📋</span>
+                                                <span class="toggle-text">Detailed</span>
+                                            </label>
+                                            <input type="radio" id="events-compact-view" name="events-view" value="compact">
+                                            <label for="events-compact-view" class="toggle-option">
+                                                <span class="toggle-icon">📄</span>
+                                                <span class="toggle-text">Compact</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="filter-toggle">
+                                        <span class="toggle-label">Filter:</span>
+                                        <div class="toggle-switch">
+                                            <input type="checkbox" id="hide-completed-events" class="toggle-checkbox">
+                                            <label for="hide-completed-events" class="toggle-option checkbox-toggle">
+                                                <span class="toggle-icon">✓</span>
+                                                <span class="toggle-text">Hide Completed</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -266,6 +278,10 @@
                                     </div>
                                 </div>
                                 <div class="event-actions">
+                                    <button id="share-event-btn" class="btn btn-outline btn-sm">
+                                        <span class="btn-icon">🔗</span>
+                                        Share
+                                    </button>
                                     <button id="edit-event-btn" class="btn btn-outline btn-sm">
                                         <span class="btn-icon">✏️</span>
                                         Edit Event
@@ -712,7 +728,7 @@
                     <!-- Split Configuration Section -->
                     <div class="form-group" id="split-configuration-section">
                         <label class="form-label">How should this expense be split? <span class="text-danger">*</span></label>
-                        
+
                         <!-- Split Method Selection -->
                         <div class="split-method-toggle">
                             <input type="radio" id="split-equal" name="splitMethod" value="equal" checked>
@@ -723,15 +739,40 @@
                                     <small>Everyone pays the same amount</small>
                                 </div>
                             </label>
-                            
+
+                            <input type="radio" id="split-shares" name="splitMethod" value="shares">
+                            <label for="split-shares" class="split-method-option">
+                                <span class="split-icon">🔢</span>
+                                <div class="split-text">
+                                    <strong>Shares Split</strong>
+                                    <small>Use whole numbers - perfect precision</small>
+                                </div>
+                            </label>
+
                             <input type="radio" id="split-custom" name="splitMethod" value="custom">
                             <label for="split-custom" class="split-method-option">
                                 <span class="split-icon">🎯</span>
                                 <div class="split-text">
-                                    <strong>Custom Split</strong>
-                                    <small>Set different amounts or exclude people</small>
+                                    <strong>Percentage Split</strong>
+                                    <small>Set custom percentages manually</small>
                                 </div>
                             </label>
+                        </div>
+
+                        <!-- Split Mode Controls -->
+                        <div class="split-mode-controls" style="display: none;">
+                            <div class="split-mode-info">
+                                <div id="equal-mode-info" class="mode-info">
+                                    Everyone will pay an equal amount automatically calculated from the total.
+                                </div>
+                                <div id="shares-mode-info" class="mode-info" style="display: none;">
+                                    Use whole numbers to represent relative portions. Perfect for avoiding rounding errors.
+                                    <div class="mode-example">Example: 1,1,2 means first two people get 1 share each, third person gets 2 shares (double portion)</div>
+                                </div>
+                                <div id="custom-mode-info" class="mode-info" style="display: none;">
+                                    Set exact percentages for each person. Must total exactly 100%.
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Split Configuration UI -->
@@ -744,6 +785,14 @@
                             <div class="split-total">
                                 <span>Total: <strong id="split-total-amount">$0.00</strong></span>
                                 <span id="split-remaining" class="split-remaining"></span>
+                                <span id="split-shares-total" class="split-shares-total" style="display: none;">
+                                    Total Shares: <strong id="split-total-shares">0</strong>
+                                </span>
+                            </div>
+                            <div id="shares-equal-split-helper" class="shares-helper" style="display: none;">
+                                <button type="button" id="shares-make-equal-btn" class="btn btn-outline btn-sm">
+                                    ⚖️ Make Equal Split
+                                </button>
                             </div>
                         </div>
 
@@ -892,8 +941,11 @@
 
                     <div class="form-group">
                         <label for="payment-amount" class="form-label">Amount <span class="text-danger">*</span></label>
-                        <input type="number" id="payment-amount" name="amount" class="form-input" 
-                               placeholder="0.00" min="0" step="0.01" required>
+                        <input type="number" id="payment-amount" name="amount" class="form-input"
+                               placeholder="0.00" step="0.01" required>
+                        <div class="form-help">
+                            <strong>Positive:</strong> User pays to group • <strong>Negative:</strong> Group refunds to user
+                        </div>
                         <div id="amount-error" class="form-error" style="display: none;"></div>
                     </div>
 

@@ -7,10 +7,11 @@ class Router {
         this.routes = new Map();
         this.currentRoute = null;
         this.params = {};
-        
+        this.queryParams = {};
+
         // Define route patterns
         this.defineRoutes();
-        
+
         // Initialize router
         this.init();
     }
@@ -54,6 +55,16 @@ class Router {
         return matches ? matches.map(match => match.slice(1)) : [];
     }
 
+    parseQueryParams() {
+        // Parse query parameters from current URL
+        const params = new URLSearchParams(window.location.search);
+        const queryParams = {};
+        for (const [key, value] of params.entries()) {
+            queryParams[key] = value;
+        }
+        return queryParams;
+    }
+
     init() {
         // Handle browser back/forward buttons
         window.addEventListener('popstate', (event) => {
@@ -89,18 +100,20 @@ class Router {
 
         // Extract parameters
         this.params = this.extractParams(path, route);
+        this.queryParams = this.parseQueryParams();
         this.currentRoute = route;
         console.log('Router: Extracted params:', this.params);
+        console.log('Router: Extracted query params:', this.queryParams);
 
         // Handle the route
         if (route.handler) {
             // Custom handler
             console.log('Router: Using custom handler for:', route.pageId);
-            route.handler(this.params);
+            route.handler(this.params, this.queryParams);
         } else {
             // Default page navigation
             console.log('Router: Using default navigation for:', route.pageId);
-            this.navigateToPage(route.pageId, this.params);
+            this.navigateToPage(route.pageId, this.params, this.queryParams);
         }
     }
 
@@ -126,8 +139,8 @@ class Router {
         return params;
     }
 
-    navigateToPage(pageId, params = {}) {
-        console.log('Router: navigateToPage called with:', pageId, params);
+    navigateToPage(pageId, params = {}, queryParams = {}) {
+        console.log('Router: navigateToPage called with:', pageId, params, queryParams);
         
         // Integrate with existing navigation system
         if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
@@ -135,11 +148,11 @@ class Router {
             if (pageId === 'event-detail' && params.id) {
                 // Special handling for event detail page
                 console.log('Router: Special handling for event-detail page with ID:', params.id);
-                this.showEventDetail(params.id);
+                this.showEventDetail(params.id, queryParams);
             } else {
                 // Standard page navigation
                 console.log('Router: Standard page navigation for:', pageId);
-                window.navigation.navigateToPage(pageId);
+                window.navigation.navigateToPage(pageId, queryParams);
             }
         } else {
             // Fallback: wait for navigation to be ready or handle directly
@@ -185,19 +198,19 @@ class Router {
         });
     }
 
-    showEventDetail(eventId) {
+    showEventDetail(eventId, queryParams = {}) {
         // Show event detail page with specific event
         if (window.eventDetailPage) {
             // First navigate to events page to ensure proper context
             if (window.navigation && typeof window.navigation.navigateToPage === 'function') {
-                window.navigation.navigateToPage('events');
+                window.navigation.navigateToPage('events', queryParams);
             } else {
                 this.directPageNavigation('events');
             }
-            
+
             // Then show the specific event detail
             setTimeout(() => {
-                window.eventDetailPage.showEvent(eventId);
+                window.eventDetailPage.showEvent(eventId, queryParams);
             }, 100); // Small delay to ensure events page is ready
         }
     }

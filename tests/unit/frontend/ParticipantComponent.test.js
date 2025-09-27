@@ -222,8 +222,8 @@ describe('ParticipantComponent', () => {
             const display = ParticipantComponent.buildBalanceDisplay(balance, balanceStatus, 'absolute');
 
             expect(display).toContain('participant-balance balance-owes');
-            expect(display).toContain('<span>Owes</span>');
-            expect(display).toContain('<span>$15.75</span>'); // Absolute value
+            expect(display).toContain('Owes • Overall');
+            expect(display).toContain('$15.75'); // Absolute value
         });
     });
 
@@ -275,9 +275,11 @@ describe('ParticipantComponent', () => {
             expect(html).not.toContain('participant-checkbox');
             expect(html).not.toContain('data-user-id'); // No user ID needed for display only
 
-            // Should show absolute balance format
-            expect(html).toContain('<span>Credit</span>');
-            expect(html).toContain('<span>$25.50</span>');
+            // Should show event balance context (not global balance)
+            expect(html).toContain('This Event');
+            // Since no eventBalance is set, should default to 0
+            expect(html).toContain('$0.00');
+            expect(html).toContain('Settled');
         });
 
         test('should create display card for user with debt', () => {
@@ -286,9 +288,11 @@ describe('ParticipantComponent', () => {
 
             expect(html).toContain('participant-card');
             expect(html).toContain('Bob Smith');
-            expect(html).toContain('balance-owes');
-            expect(html).toContain('<span>Owes</span>');
-            expect(html).toContain('<span>$15.75</span>'); // Absolute value
+            // Should show event balance context (not global balance)
+            expect(html).toContain('This Event');
+            // Since no eventBalance is set, should default to 0
+            expect(html).toContain('$0.00');
+            expect(html).toContain('Settled');
         });
 
         test('should create display card for settled user', () => {
@@ -297,8 +301,9 @@ describe('ParticipantComponent', () => {
 
             expect(html).toContain('Charlie Brown');
             expect(html).toContain('balance-settled');
-            expect(html).toContain('<span>Settled</span>');
-            expect(html).toContain('<span>$0.00</span>');
+            // Should show event balance context
+            expect(html).toContain('Settled • This Event');
+            expect(html).toContain('$0.00');
         });
     });
 
@@ -445,6 +450,195 @@ describe('ParticipantComponent', () => {
             expect(displayHtml).toContain('participant-card');
             expect(selectableHtml).toContain('participant-name');
             expect(selectableHtml).toContain('participant-balance');
+        });
+    });
+
+    describe('Event Balance Display', () => {
+        test('should use event balance when useEventBalance is true', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                totalBalance: 50.00,     // Global balance
+                balance: 25.00,          // Event balance (from event-detail.js processing)
+                eventBalance: 15.00,     // Explicit event balance
+                eventOwes: 10.00,
+                eventPaid: 25.00
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: true
+            });
+
+            // Should use eventBalance (15.00) instead of totalBalance (50.00) or balance (25.00)
+            expect(html).toContain('$15.00');
+            expect(html).not.toContain('$50.00');
+            expect(html).not.toContain('$25.00');
+        });
+
+        test('should use global balance when useEventBalance is false', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                totalBalance: 50.00,     // Global balance
+                balance: 25.00,          // Event balance
+                eventBalance: 15.00      // Explicit event balance
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: false
+            });
+
+            // Should use totalBalance (50.00) instead of eventBalance (15.00)
+            expect(html).toContain('$50.00');
+            expect(html).not.toContain('$15.00');
+        });
+
+        test('should fallback to balance field when eventBalance is undefined', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                balance: 30.00           // No eventBalance field
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: true
+            });
+
+            // Should fall back to balance field
+            expect(html).toContain('$30.00');
+        });
+
+        test('should display correct context labels', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                eventBalance: 25.50
+            };
+
+            const eventHtml = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: true
+            });
+
+            const globalHtml = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: false
+            });
+
+            // Should show different context labels
+            expect(eventHtml).toContain('This Event');
+            expect(globalHtml).toContain('Overall');
+        });
+
+        test('should not show context labels for signed format', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                eventBalance: 25.50
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'item',
+                balanceFormat: 'signed',
+                useEventBalance: true
+            });
+
+            // Signed format (EventsPage style) should not include context labels
+            expect(html).not.toContain('This Event');
+            expect(html).not.toContain('Overall');
+            expect(html).toContain('$25.50'); // But should show the balance
+        });
+
+        test('should handle missing balance data gracefully', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com'
+                // No balance fields at all
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: true
+            });
+
+            // Should default to 0
+            expect(html).toContain('$0.00');
+            expect(html).toContain('Settled');
+        });
+
+        test('should createDisplayCard use event balance by default', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                totalBalance: 100.00,    // Global balance
+                eventBalance: 25.00      // Event balance
+            };
+
+            const html = ParticipantComponent.createDisplayCard(participant);
+
+            // createDisplayCard should use event balance (25.00) not global balance (100.00)
+            expect(html).toContain('$25.00');
+            expect(html).toContain('This Event');
+            expect(html).not.toContain('$100.00');
+            expect(html).not.toContain('Overall');
+        });
+    });
+
+    describe('Balance Display HTML Structure', () => {
+        test('should generate proper HTML structure for event context', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                eventBalance: 15.50
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: true
+            });
+
+            // Should contain the new balance structure
+            expect(html).toContain('balance-amount');
+            expect(html).toContain('balance-status');
+            expect(html).toContain('Credit • This Event');
+        });
+
+        test('should maintain backward compatibility with existing structure', () => {
+            const participant = {
+                id: 'user1',
+                name: 'Alice Test',
+                email: 'alice@test.com',
+                balance: -10.50
+            };
+
+            const html = ParticipantComponent.create(participant, {
+                variant: 'card',
+                balanceFormat: 'absolute',
+                useEventBalance: false
+            });
+
+            // Should still contain required CSS classes for existing functionality
+            expect(html).toContain('participant-balance');
+            expect(html).toContain('balance-owes');
+            expect(html).toContain('Owes • Overall');
         });
     });
 });

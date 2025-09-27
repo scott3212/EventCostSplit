@@ -40,16 +40,31 @@ class CostItemService {
       throw new ValidationError('User who paid must be a participant in the event');
     }
 
-    // Validate split percentages and participants
-    const splitParticipants = Object.keys(costItemData.splitPercentage);
-    for (const userId of splitParticipants) {
-      if (!event.participants.includes(userId)) {
-        throw new ValidationError(`User ${userId} in split is not a participant in the event`);
-      }
-    }
+    // Validate split configuration and participants
+    let splitParticipants;
 
-    // Validate split percentages sum to 100%
-    this.calculationService.validateSplitPercentages(costItemData.splitPercentage);
+    if (costItemData.splitShares) {
+      // Shares-based validation
+      splitParticipants = Object.keys(costItemData.splitShares);
+      for (const userId of splitParticipants) {
+        if (!event.participants.includes(userId)) {
+          throw new ValidationError(`User ${userId} in split is not a participant in the event`);
+        }
+      }
+    } else if (costItemData.splitPercentage) {
+      // Percentage-based validation
+      splitParticipants = Object.keys(costItemData.splitPercentage);
+      for (const userId of splitParticipants) {
+        if (!event.participants.includes(userId)) {
+          throw new ValidationError(`User ${userId} in split is not a participant in the event`);
+        }
+      }
+
+      // Validate split percentages sum to 100%
+      this.calculationService.validateSplitPercentages(costItemData.splitPercentage);
+    } else {
+      throw new ValidationError('Either split shares or split percentages must be provided');
+    }
 
     // Create cost item model
     const costItem = new CostItem(costItemData);

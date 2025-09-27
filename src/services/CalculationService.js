@@ -16,31 +16,144 @@ class CalculationService {
    * Calculate how much each user owes for a specific cost item
    */
   calculateCostItemBalances(costItem) {
-    if (!costItem || !costItem.splitPercentage || !costItem.amount) {
+    if (!costItem || !costItem.amount) {
       throw new ValidationError('Invalid cost item for balance calculation');
     }
 
+    // Prefer shares over percentages for precision (shares take precedence when both exist)
+    if (costItem.splitShares) {
+      return this.calculateSharesBasedBalances(costItem);
+    } else if (costItem.splitPercentage) {
+      return this.calculatePercentageBasedBalances(costItem);
+    } else {
+      throw new ValidationError('Cost item must have either split shares or split percentage');
+    }
+  }
+
+  /**
+   * Calculate balances using shares-based method (precise, no rounding errors)
+   */
+  calculateSharesBasedBalances(costItem) {
     const balances = {};
-    const totalPercentage = Object.values(costItem.splitPercentage).reduce((sum, pct) => sum + pct, 0);
-    
-    if (Math.abs(totalPercentage - 100) > 0.01) {
-      throw new ValidationError('Split percentages must sum to 100%');
+    const totalShares = Object.values(costItem.splitShares).reduce((sum, shares) => sum + shares, 0);
+
+    if (totalShares === 0) {
+      throw new ValidationError('Total shares must be greater than 0');
     }
 
-    // Calculate how much each participant owes
-    Object.entries(costItem.splitPercentage).forEach(([userId, percentage]) => {
-      if (percentage > 0) {
-        const owedAmount = (costItem.amount * percentage) / 100;
-        balances[userId] = Math.round(owedAmount * 100) / 100;
-      }
-    });
+    // Calculate base amount per share
+    const amountPerShare = costItem.amount / totalShares;
+    let totalAssigned = 0;
+    const participants = Object.entries(costItem.splitShares).filter(([_, shares]) => shares > 0);
+
+    // Assign amounts to all participants except the last
+    for (let i = 0; i < participants.length - 1; i++) {
+      const [userId, userShares] = participants[i];
+      const amount = Math.round(amountPerShare * userShares * 100) / 100;
+      balances[userId] = amount;
+      totalAssigned += amount;
+    }
+
+    // Last participant gets remainder to ensure total equals original amount
+    if (participants.length > 0) {
+      const [lastUserId] = participants[participants.length - 1];
+      const remainingAmount = Math.round((costItem.amount - totalAssigned) * 100) / 100;
+      balances[lastUserId] = remainingAmount;
+    }
 
     return {
       costItemId: costItem.id,
       paidBy: costItem.paidBy,
       totalAmount: costItem.amount,
-      balances
+      balances,
+      splitMode: 'shares'
     };
+  }
+
+  /**
+   * Calculate balances using percentage-based method (legacy)
+   */
+  calculatePercentageBasedBalances(costItem) {
+    if (!costItem.splitPercentage) {
+      throw new ValidationError('Split percentage is required for percentage-based calculation');
+    }
+
+    const balances = {};
+    const totalPercentage = Object.values(costItem.splitPercentage).reduce((sum, pct) => sum + pct, 0);
+
+    if (Math.abs(totalPercentage - 100) > 0.01) {
+      throw new ValidationError('Split percentages must sum to 100%');
+    }
+
+    // Calculate how much each participant owes
+    const participantEntries = Object.entries(costItem.splitPercentage).filter(([userId, percentage]) => percentage > 0);
+
+    // Check if this is an equal split scenario that needs special handling
+    const isEqualSplit = this.isEqualSplitScenario(costItem.splitPercentage);
+
+    if (isEqualSplit) {
+      // For equal splits, divide the amount directly to avoid rounding issues
+      this.calculateEqualSplitBalances(costItem.amount, participantEntries, balances);
+    } else {
+      // For custom splits, use percentage-based calculation
+      participantEntries.forEach(([userId, percentage]) => {
+        const owedAmount = (costItem.amount * percentage) / 100;
+        balances[userId] = Math.round(owedAmount * 100) / 100;
+      });
+    }
+
+    return {
+      costItemId: costItem.id,
+      paidBy: costItem.paidBy,
+      totalAmount: costItem.amount,
+      balances,
+      splitMode: 'percentage'
+    };
+  }
+
+  /**
+   * Detect if split percentages represent an equal split scenario
+   */
+  isEqualSplitScenario(splitPercentage) {
+    const activePercentages = Object.values(splitPercentage).filter(p => p > 0);
+
+    if (activePercentages.length === 0) return false;
+
+    // Check if all active percentages are approximately equal
+    // Allow for small differences due to rounding (e.g., 16.66, 16.66, 16.66, 16.66, 16.66, 16.70)
+    const expectedPercentage = 100 / activePercentages.length;
+    const tolerance = 0.1; // Allow 0.1% difference for rounding adjustments
+
+    return activePercentages.every(percentage =>
+      Math.abs(percentage - expectedPercentage) <= tolerance
+    );
+  }
+
+  /**
+   * Calculate equal split balances by dividing amount directly
+   * This ensures truly equal amounts regardless of percentage rounding
+   */
+  calculateEqualSplitBalances(totalAmount, participantEntries, balances) {
+    const participantCount = participantEntries.length;
+
+    // Calculate base amount per person
+    const baseAmount = Math.floor(totalAmount * 100) / (participantCount * 100); // Precise division
+    let totalAssigned = 0;
+
+    // Assign base amount to all participants except the last
+    for (let i = 0; i < participantCount - 1; i++) {
+      const [userId] = participantEntries[i];
+      const amount = Math.round(baseAmount * 100) / 100;
+      balances[userId] = amount;
+      totalAssigned += amount;
+    }
+
+    // Last participant gets the remainder to ensure total equals original amount
+    if (participantCount > 0) {
+      const [lastUserId] = participantEntries[participantCount - 1];
+      const remainingAmount = Math.round((totalAmount - totalAssigned) * 100) / 100;
+      balances[lastUserId] = remainingAmount;
+    }
   }
 
   /**
@@ -122,9 +235,9 @@ class CalculationService {
 
     // Calculate amounts owed from cost items where user is participant
     allCostItems.forEach(costItem => {
-      if (costItem.splitPercentage[userId] > 0) {
-        const owedAmount = (costItem.amount * costItem.splitPercentage[userId]) / 100;
-        totalOwes += owedAmount;
+      const itemBalances = this.calculateCostItemBalances(costItem);
+      if (itemBalances.balances[userId]) {
+        totalOwes += itemBalances.balances[userId];
       }
     });
 

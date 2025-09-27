@@ -20,22 +20,25 @@ class ParticipantComponent {
             variant = 'item',         // 'item' (selectable) or 'card' (display-only)
             balanceFormat = 'signed', // 'signed' (±$10) or 'absolute' ($10 + status text)
             className = '',           // Additional CSS classes
-            userId = null             // For data attributes
+            userId = null,            // For data attributes
+            useEventBalance = false   // Use event-specific balance instead of global balance
         } = options;
 
         // Determine the base CSS class based on variant
         const baseClass = variant === 'card' ? 'participant-card' : 'participant-item';
         const fullClassName = `${baseClass} ${selected ? 'selected' : ''} ${className}`.trim();
 
-        // Get balance information
-        const balance = participant.totalBalance || participant.balance || 0;
+        // Get balance information - use event balance when in event context
+        const balance = useEventBalance
+            ? (participant.eventBalance !== undefined ? participant.eventBalance : participant.balance || 0)
+            : (participant.totalBalance || participant.balance || 0);
         const balanceStatus = this.getBalanceStatus(balance);
 
         // Build contact information
         const contactInfo = this.buildContactInfo(participant, showContact);
 
-        // Build balance display
-        const balanceDisplay = showBalance ? this.buildBalanceDisplay(balance, balanceStatus, balanceFormat) : '';
+        // Build balance display with context
+        const balanceDisplay = showBalance ? this.buildBalanceDisplay(balance, balanceStatus, balanceFormat, { useEventBalance }) : '';
 
         // Build the HTML
         return `
@@ -72,7 +75,8 @@ class ParticipantComponent {
             selectable: false,
             variant: 'card',
             balanceFormat: 'absolute',
-            showContact: true
+            showContact: true,
+            useEventBalance: true  // Display event-specific balance in event context
         });
     }
 
@@ -120,13 +124,16 @@ class ParticipantComponent {
     /**
      * Build balance display HTML
      */
-    static buildBalanceDisplay(balance, balanceStatus, format) {
+    static buildBalanceDisplay(balance, balanceStatus, format, options = {}) {
+        const { useEventBalance = false } = options;
+        const contextLabel = useEventBalance ? 'This Event' : 'Overall';
+
         if (format === 'absolute') {
-            // EventDetailPage style - separate status text and absolute amount
+            // EventDetailPage style - separate status text and absolute amount with context
             return `
                 <div class="participant-balance ${balanceStatus.class}">
-                    <span>${balanceStatus.text}</span>
-                    <span>${formatCurrency(Math.abs(balance))}</span>
+                    <div class="balance-amount">${formatCurrency(Math.abs(balance))}</div>
+                    <div class="balance-status">${balanceStatus.text} • ${contextLabel}</div>
                 </div>
             `;
         } else {

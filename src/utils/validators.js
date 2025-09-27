@@ -99,6 +99,20 @@ const validators = {
   },
 
   /**
+   * Validate non-zero number (for payments - allows negative for refunds)
+   */
+  nonZeroNumber(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num === 0) {
+      throw new ValidationError(
+        `${fieldName} must be a non-zero number`,
+        fieldName.toLowerCase()
+      );
+    }
+    return num;
+  },
+
+  /**
    * Validate non-negative number
    */
   nonNegativeNumber(value, fieldName) {
@@ -227,6 +241,42 @@ const validators = {
     }
 
     return splitPercentage;
+  },
+
+  /**
+   * Validate split shares are positive integers
+   */
+  splitShares(splitShares, fieldName = 'Split shares') {
+    if (!splitShares || typeof splitShares !== 'object' || Array.isArray(splitShares)) {
+      throw new ValidationError(
+        'Split shares configuration is required',
+        'splitShares'
+      );
+    }
+
+    const shares = Object.values(splitShares);
+
+    // Check all shares are valid numbers
+    shares.forEach((shareCount, index) => {
+      const num = parseInt(shareCount);
+      if (isNaN(num) || num < 0 || num !== parseFloat(shareCount)) {
+        throw new ValidationError(
+          'Each person\'s share count must be a non-negative whole number',
+          'splitShares'
+        );
+      }
+    });
+
+    // Check at least one participant has shares
+    const totalShares = shares.reduce((sum, s) => sum + parseInt(s), 0);
+    if (totalShares === 0) {
+      throw new ValidationError(
+        'At least one person must have a share greater than 0',
+        'splitShares'
+      );
+    }
+
+    return splitShares;
   },
 
   /**
@@ -502,11 +552,19 @@ function validateCostItemData(costItemData) {
     validators.required(costItemData.date, 'Date');
     validators.date(costItemData.date, 'Date');
 
-    // Validate split percentages
+    // Validate split configuration - either shares or percentages required
+    if (!costItemData.splitShares && !costItemData.splitPercentage) {
+      throw new ValidationError('Either split shares or split percentages are required');
+    }
+
+    // Validate split shares if provided
+    if (costItemData.splitShares) {
+      validators.splitShares(costItemData.splitShares, 'Split shares');
+    }
+
+    // Validate split percentages if provided
     if (costItemData.splitPercentage) {
       validators.splitPercentages(costItemData.splitPercentage, 'Split percentages');
-    } else {
-      throw new ValidationError('Split percentages are required');
     }
 
   } catch (error) {
@@ -562,6 +620,10 @@ function validateCostItemUpdate(updateData) {
       validators.splitPercentages(updateData.splitPercentage, 'Split percentages');
     }
 
+    if (updateData.splitShares !== undefined) {
+      validators.splitShares(updateData.splitShares, 'Split shares');
+    }
+
   } catch (error) {
     if (error instanceof ValidationError) {
       errors.push(error.message);
@@ -595,7 +657,7 @@ function validatePaymentData(paymentData) {
     validators.uuid(paymentData.userId, 'User ID');
 
     validators.required(paymentData.amount, 'Amount');
-    validators.positiveNumber(paymentData.amount, 'Amount');
+    validators.nonZeroNumber(paymentData.amount, 'Amount');
 
     validators.required(paymentData.date, 'Date');
     validators.date(paymentData.date, 'Date');
@@ -642,7 +704,7 @@ function validatePaymentUpdate(updateData) {
 
     // Validate provided fields
     if (updateData.amount !== undefined) {
-      validators.positiveNumber(updateData.amount, 'Amount');
+      validators.nonZeroNumber(updateData.amount, 'Amount');
     }
 
     if (updateData.date !== undefined) {

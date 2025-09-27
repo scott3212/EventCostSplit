@@ -338,8 +338,8 @@ class PaymentsPage {
         }
 
         // Validate amount
-        if (!paymentData.amount || paymentData.amount <= 0) {
-            this.showFieldError('amount', 'Please enter a valid amount greater than $0');
+        if (!paymentData.amount || paymentData.amount == 0) {
+            this.showFieldError('amount', 'Please enter a non-zero amount (negative for refunds)');
             isValid = false;
         }
 
