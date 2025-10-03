@@ -33,9 +33,18 @@ class CostItemRepository extends BaseRepository {
    */
   async findByParticipant(userId) {
     if (!userId) return [];
-    
-    return await this.findBy({
-      splitPercentage: (splits) => splits && userId in splits && splits[userId] > 0
+
+    const allItems = await this.findAll();
+    return allItems.filter(item => {
+      // Check splitShares first (for shares-based splits)
+      if (item.splitShares && userId in item.splitShares && item.splitShares[userId] > 0) {
+        return true;
+      }
+      // Fall back to splitPercentage (for percentage-based splits)
+      if (item.splitPercentage && userId in item.splitPercentage && item.splitPercentage[userId] > 0) {
+        return true;
+      }
+      return false;
     });
   }
 

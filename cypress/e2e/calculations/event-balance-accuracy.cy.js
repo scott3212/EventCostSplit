@@ -293,23 +293,27 @@ describe('Event Balance Calculation Accuracy', () => {
     cy.wait(2000)
     cy.get('#success-modal').should('be.visible')
     cy.get('#success-ok').click()
-    cy.wait(1000)
+    cy.wait(2000) // Wait longer for balance calculations to complete
 
     cy.log('🔍 STEP 3: Verifying proper decimal rounding')
+
+    // Wait for participant cards to load with balance data
+    cy.get('.participant-card').should('have.length', 3)
+    cy.wait(1000) // Additional wait for balance elements to render
 
     // Check that balances are properly rounded to 2 decimal places
     // Alice: Paid $10.00, Owes $3.33, Net = +$6.67
     cy.get('.participant-card').contains('Alice Precision').within(() => {
-      cy.get('.balance-amount').should('contain', '$6.67')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$6.67')
     })
 
     // Bob and Charlie: Each owe $3.33, Net = -$3.33
     cy.get('.participant-card').contains('Bob Precision').within(() => {
-      cy.get('.balance-amount').should('contain', '$3.33')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$3.33')
     })
 
     cy.get('.participant-card').contains('Charlie Precision').within(() => {
-      cy.get('.balance-amount').should('contain', '$3.34') // May get the rounding adjustment
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$3.34') // May get the rounding adjustment
     })
 
     // Verify no strange precision artifacts (like $3.3300000000001)
@@ -385,14 +389,18 @@ describe('Event Balance Calculation Accuracy', () => {
     cy.wait(2000)
     cy.get('#success-modal').should('be.visible')
     cy.get('#success-ok').click()
-    cy.wait(1000)
+    cy.wait(2000) // Wait longer for balance calculations to complete
+
+    // Wait for participant cards to load with balance data
+    cy.get('.participant-card').should('have.length', 2)
+    cy.wait(1000) // Additional wait for balance elements to render
 
     // Initial: Alice +$50, Bob -$50
     cy.get('.participant-card').contains('Alice Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$50.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$50.00')
     })
     cy.get('.participant-card').contains('Bob Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$50.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$50.00')
       cy.get('.balance-status').should('contain', 'Owes')
     })
 
@@ -413,10 +421,10 @@ describe('Event Balance Calculation Accuracy', () => {
 
     // After modification: Alice +$100, Bob -$100
     cy.get('.participant-card').contains('Alice Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$100.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$100.00')
     })
     cy.get('.participant-card').contains('Bob Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$100.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$100.00')
       cy.get('.balance-status').should('contain', 'Owes')
     })
 
@@ -437,11 +445,11 @@ describe('Event Balance Calculation Accuracy', () => {
 
     // Now Bob paid: Alice -$100, Bob +$100 (roles reversed)
     cy.get('.participant-card').contains('Alice Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$100.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$100.00')
       cy.get('.balance-status').should('contain', 'Owes')
     })
     cy.get('.participant-card').contains('Bob Modify').within(() => {
-      cy.get('.balance-amount').should('contain', '$100.00')
+      cy.get('.balance-amount', { timeout: 10000 }).should('contain', '$100.00')
       cy.get('.balance-status').should('contain', 'Credit')
     })
 

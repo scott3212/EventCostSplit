@@ -41,25 +41,53 @@ class CalculationService {
       throw new ValidationError('Total shares must be greater than 0');
     }
 
-    // Calculate base amount per share
-    const amountPerShare = costItem.amount / totalShares;
-    let totalAssigned = 0;
+    // Calculate base amount per share (in cents to avoid floating point issues)
+    const totalCents = Math.round(costItem.amount * 100);
+    const centsPerShare = Math.floor(totalCents / totalShares);
+    const remainder = totalCents - (centsPerShare * totalShares);
+
     const participants = Object.entries(costItem.splitShares).filter(([_, shares]) => shares > 0);
 
-    // Assign amounts to all participants except the last
-    for (let i = 0; i < participants.length - 1; i++) {
-      const [userId, userShares] = participants[i];
-      const amount = Math.round(amountPerShare * userShares * 100) / 100;
-      balances[userId] = amount;
-      totalAssigned += amount;
-    }
+    // Group participants by share count to ensure equal shares get equal amounts
+    const shareGroups = new Map();
+    participants.forEach(([userId, shares]) => {
+      if (!shareGroups.has(shares)) {
+        shareGroups.set(shares, []);
+      }
+      shareGroups.get(shares).push(userId);
+    });
 
-    // Last participant gets remainder to ensure total equals original amount
-    if (participants.length > 0) {
-      const [lastUserId] = participants[participants.length - 1];
-      const remainingAmount = Math.round((costItem.amount - totalAssigned) * 100) / 100;
-      balances[lastUserId] = remainingAmount;
-    }
+    // Sort share groups by share count (descending) to prioritize larger shareholders for remainder
+    const sortedShareGroups = Array.from(shareGroups.entries()).sort((a, b) => b[0] - a[0]);
+
+    let remainderToDistribute = remainder;
+
+    // Distribute amounts group by group
+    sortedShareGroups.forEach(([shares, userIds]) => {
+      const groupSize = userIds.length;
+      const baseCents = centsPerShare * shares;
+
+      // Calculate how many extra cents this group should get
+      // Each person gets their fair share of the remainder based on their shares
+      const groupTotalShares = shares * groupSize;
+      const groupRemainderFloat = (remainder * groupTotalShares) / totalShares;
+      const groupRemainderCents = Math.round(groupRemainderFloat);
+
+      // Distribute group remainder evenly among group members
+      const centsPerPersonInGroup = Math.floor(groupRemainderCents / groupSize);
+      const extraForSome = groupRemainderCents % groupSize;
+
+      userIds.forEach((userId, index) => {
+        let userCents = baseCents + centsPerPersonInGroup;
+
+        // First few people in group get one extra cent
+        if (index < extraForSome) {
+          userCents += 1;
+        }
+
+        balances[userId] = userCents / 100;
+      });
+    });
 
     return {
       costItemId: costItem.id,
