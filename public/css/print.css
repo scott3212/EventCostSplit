@@ -1,0 +1,502 @@
+/**
+ * Professional Print Stylesheet for Event Cost Splitter
+ * Optimized for compact, paper-saving PDF output
+ */
+
+@media print {
+  /* ========================================
+     RESET & HIDE UI CHROME
+     ======================================== */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Hide all non-content elements */
+  .header,
+  #api-status,
+  .footer,
+  .nav-brand,
+  .sidebar,
+  .page-header,
+  .btn,
+  button,
+  .modal,
+  .event-actions,
+  .page-back,
+  .page-actions,
+  .page-controls,
+  .loading,
+  .section-placeholder,
+  #expenses-empty,
+  #balance-empty,
+  .event-overview::after,
+  .split-summary,
+  .suggestions-section {
+    display: none !important;
+  }
+
+  /* ========================================
+     BASE LAYOUT - COMPACT & PROFESSIONAL
+     ======================================== */
+  body {
+    margin: 0;
+    padding: 10mm;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.3;
+    color: #000;
+    background: white;
+  }
+
+  /* Only print active page */
+  .page {
+    display: none !important;
+  }
+
+  .page.active,
+  .page[style*="display: block"],
+  .page[style*="display:block"] {
+    display: block !important;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Explicitly hide inactive pages */
+  #dashboard-page:not(.active):not([style*="display: block"]),
+  #dashboard-page:not(.active):not([style*="display: block"]) *,
+  #users-page:not(.active):not([style*="display: block"]),
+  #users-page:not(.active):not([style*="display: block"]) *,
+  #events-page:not(.active):not([style*="display: block"]),
+  #events-page:not(.active):not([style*="display: block"]) *,
+  #expenses-page:not(.active):not([style*="display: block"]),
+  #expenses-page:not(.active):not([style*="display: block"]) *,
+  #payments-page:not(.active):not([style*="display: block"]),
+  #payments-page:not(.active):not([style*="display: block"]) * {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+
+  /* Hide events list when printing event detail */
+  #events-page #events-list,
+  #events-page .events-list,
+  #events-page .events-container {
+    display: none !important;
+  }
+
+  .page-content {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove all shadows and effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* ========================================
+     PRINT TITLE
+     ======================================== */
+  #event-detail-page::before {
+    content: attr(data-print-title);
+    display: block;
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1.5pt solid #000;
+    text-align: left;
+  }
+
+  /* ========================================
+     EVENT OVERVIEW - SIDE BY SIDE LAYOUT
+     ======================================== */
+  .event-overview {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+    padding-bottom: 0.2rem;
+  }
+
+  .event-header {
+    display: none; /* Hide redundant header since we have print title */
+  }
+
+  /* Event Info Card - Left Side */
+  .event-info-card {
+    flex: 1;
+    padding: 8px 12px;
+    margin: 0;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+  }
+
+  .event-info-card h3 {
+    font-size: 11pt;
+    margin: 0 0 4px 0;
+    font-weight: bold;
+  }
+
+  .event-info-card p,
+  .event-info-card div {
+    margin: 2px 0;
+    line-height: 1.3;
+    font-size: 9pt;
+  }
+
+  .event-info-card strong {
+    font-weight: 600;
+  }
+
+  .event-date-badge,
+  .status-badge {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 2px 6px;
+    font-size: 8pt;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  /* Event Stats Card - Right Side - Compact Grid */
+  .event-stats-card {
+    flex: 1;
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 6px;
+    align-content: start;
+    padding: 8px 12px;
+    margin: 0;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    font-size: 9pt;
+    line-height: 1.3;
+  }
+
+  .event-stats-card h3 {
+    font-size: 11pt;
+    margin: 0 0 4px 0;
+    font-weight: bold;
+  }
+
+  .stat-item {
+    padding: 6px;
+    border-radius: 4px;
+    text-align: center;
+    break-inside: avoid;
+  }
+
+  .stat-item .stat-label {
+    font-size: 8pt;
+    color: #666;
+    margin-bottom: 2px;
+  }
+
+  .stat-item .stat-value {
+    font-size: 10pt;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  /* ========================================
+     SECTION HEADERS
+     ======================================== */
+  .participants-section h3,
+  .expenses-section h3,
+  .payments-section h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 4px 0 3px 0;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #ddd;
+    page-break-after: avoid;
+  }
+
+  .section-header{
+    padding: 8px 8px 8px 8px;
+    margin-bottom: 0.2rem;
+  }
+
+
+  /* ========================================
+     PARTICIPANTS SECTION - 3 COLUMN GRID
+     ======================================== */
+  .event-detail-content {
+    gap: 0.2rem;
+  }
+
+  .participants-section {
+    margin-bottom: 8px;
+    padding: 8px;
+  }
+
+  #event-participants-list {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .participant-card {
+    padding: 6px 8px;
+    margin: 0;
+    font-size: 9pt;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+    break-inside: avoid;
+  }
+
+  .participant-info {
+    margin-bottom: 4px;
+  }
+
+  .participant-name {
+    font-size: 10pt;
+    font-weight: bold;
+    margin: 0 0 2px 0;
+  }
+
+  .participant-contact {
+    font-size: 8pt;
+    color: #666;
+    margin: 2px 0;
+    line-height: 1.2;
+  }
+
+  .participant-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .balance-amount {
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  .balance-status {
+    font-size: 7pt;
+    color: #666;
+  }
+
+  /* Balance colors */
+  .balance-owed .balance-amount {
+    color: #c62828;
+  }
+
+  .balance-owes .balance-amount {
+    color: #e65100;
+  }
+
+  .balance-settled .balance-amount {
+    color: #2e7d32;
+  }
+
+  /* ========================================
+     EXPENSES SECTION
+     ======================================== */
+  .expenses-section {
+    margin-bottom: 8px;
+    padding: 8px;
+  }
+
+  #expenses-list {
+    margin: 0;
+  }
+
+  .expense-card {
+    padding: 8px;
+    margin-bottom: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+    break-inside: avoid;
+    font-size: 9pt;
+  }
+
+  .expense-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .expense-description {
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  .expense-amount {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1976d2;
+  }
+
+  .expense-meta {
+    font-size: 8pt;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .expense-split-details {
+    font-size: 8pt;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .split-detail-item {
+    margin: 2px 0;
+  }
+
+  /* ========================================
+     PAYMENTS PAGE
+     ======================================== */
+
+  /* Balance Cards */
+  #balance-overview {
+    margin-bottom: 4px;
+  }
+
+  #balance-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .balance-card {
+    width: calc(100% - 3px);
+    padding: 4px 5px;
+    margin: 0;
+    border: 0.5pt solid #999;
+    background: #fafafa;
+    font-size: 7.5pt;
+    break-inside: avoid;
+  }
+
+  .balance-card-header {
+    margin-bottom: 2px;
+  }
+
+  .balance-card-name {
+    font-size: 8.5pt;
+    font-weight: bold;
+  }
+
+  .balance-card-amount {
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 2px 0;
+  }
+
+  /* Settlement Suggestions */
+  #settlement-suggestions {
+    margin-bottom: 4px;
+  }
+
+  .settlement-card {
+    padding: 4px 5px;
+    margin-bottom: 3px;
+    border: 0.5pt solid #999;
+    background: #f5f5f5;
+    font-size: 8pt;
+    break-inside: avoid;
+  }
+
+  .settlement-arrow {
+    margin: 0 4px;
+    font-weight: bold;
+  }
+
+  /* Payment History */
+  #payment-history {
+    margin-bottom: 4px;
+  }
+
+  .payment-card {
+    padding: 4px 5px;
+    margin-bottom: 3px;
+    border: 0.5pt solid #999;
+    background: #fafafa;
+    font-size: 8pt;
+    break-inside: avoid;
+  }
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+  h1 {
+    font-size: 14pt;
+    margin: 0 0 4px 0;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 10pt;
+    margin: 6px 0 3px 0;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 9pt;
+    margin: 3px 0 2px 0;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin: 2px 0;
+    line-height: 1.2;
+  }
+
+  section {
+    margin-bottom: 4px;
+    page-break-inside: avoid;
+  }
+
+  /* ========================================
+     PAGE BREAKS
+     ======================================== */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* ========================================
+     UTILITIES
+     ======================================== */
+  .print-only {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Links - hide URLs in print */
+  a[href]:after {
+    content: "";
+  }
+
+  /* Ensure consistent rendering */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

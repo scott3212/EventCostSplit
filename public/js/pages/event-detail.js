@@ -82,6 +82,7 @@ class EventDetailPage {
             
             // Event Action Buttons
             shareEventBtn: document.getElementById('share-event-btn'),
+            printEventBtn: document.getElementById('print-event-btn'),
             editEventBtn: document.getElementById('edit-event-btn'),
             deleteEventBtn: document.getElementById('delete-event-btn'),
             
@@ -215,6 +216,11 @@ class EventDetailPage {
         // Share Event Button
         if (this.elements.shareEventBtn) {
             this.elements.shareEventBtn.addEventListener('click', () => this.shareEvent());
+        }
+
+        // Print Event Button
+        if (this.elements.printEventBtn) {
+            this.elements.printEventBtn.addEventListener('click', () => this.printEvent());
         }
 
         // Edit Event Button
@@ -2274,6 +2280,31 @@ class EventDetailPage {
             // Fallback for browsers without clipboard API
             this.showShareDialog(shareUrl);
         }
+    }
+
+    /**
+     * Print event page
+     */
+    printEvent() {
+        // Set print title using event location and date
+        if (this.currentEvent) {
+            const location = this.currentEvent.location || 'Event';
+            const dateStr = this.currentEvent.date ?
+                new Date(this.currentEvent.date).toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                }) : '';
+            const printTitle = `${location}${dateStr ? ' - ' + dateStr : ''}`;
+
+            const eventDetailPage = document.getElementById('event-detail-page');
+            if (eventDetailPage) {
+                eventDetailPage.setAttribute('data-print-title', printTitle);
+            }
+        }
+
+        window.print();
     }
 
     /**

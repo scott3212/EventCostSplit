@@ -9,6 +9,12 @@ class PaymentsPage {
     }
 
     bindEvents() {
+        // Print button
+        const printPaymentsBtn = document.getElementById('print-payments-btn');
+        if (printPaymentsBtn) {
+            printPaymentsBtn.addEventListener('click', () => this.printPayments());
+        }
+
         // Record Payment button
         const recordPaymentBtn = document.getElementById('record-payment-btn');
         if (recordPaymentBtn) {
@@ -420,7 +426,7 @@ class PaymentsPage {
                 </div>
 
                 <!-- Settlement Suggestions Section -->
-                <div class="payments-section">
+                <div class="payments-section suggestions-section">
                     <div class="section-header">
                         <h2>🤝 Settlement Suggestions</h2>
                         <p>Recommended payments to settle balances efficiently</p>
@@ -460,6 +466,13 @@ class PaymentsPage {
             messageElement.textContent = message;
             modal.style.display = 'flex';
         }
+    }
+
+    /**
+     * Print payments page
+     */
+    printPayments() {
+        window.print();
     }
 }
 
