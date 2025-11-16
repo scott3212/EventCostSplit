@@ -243,7 +243,8 @@ class TemplateManagementPage {
         this.resetAddForm();
         await this.loadUsers(); // Ensure users are loaded
         if (this.elements.addModal) {
-            this.elements.addModal.classList.add('active');
+            this.elements.addModal.style.display = 'flex';
+            this.elements.addModal.classList.add('fade-in');
         }
         // Focus on name input
         setTimeout(() => {
@@ -255,7 +256,8 @@ class TemplateManagementPage {
 
     hideAddTemplateDialog() {
         if (this.elements.addModal) {
-            this.elements.addModal.classList.remove('active');
+            this.elements.addModal.style.display = 'none';
+            this.elements.addModal.classList.remove('fade-in');
         }
         this.resetAddForm();
     }
@@ -373,7 +375,8 @@ class TemplateManagementPage {
         this.clearEditErrors();
 
         if (this.elements.editModal) {
-            this.elements.editModal.classList.add('active');
+            this.elements.editModal.style.display = 'flex';
+            this.elements.editModal.classList.add('fade-in');
         }
 
         // Focus on name input
@@ -386,7 +389,8 @@ class TemplateManagementPage {
 
     hideEditTemplateDialog() {
         if (this.elements.editModal) {
-            this.elements.editModal.classList.remove('active');
+            this.elements.editModal.style.display = 'none';
+            this.elements.editModal.classList.remove('fade-in');
         }
         this.currentEditTemplate = null;
         this.clearEditErrors();
