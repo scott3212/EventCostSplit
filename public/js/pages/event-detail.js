@@ -47,6 +47,11 @@ class EventDetailPage {
             expensesLoading: document.getElementById('expenses-loading'),
             expensesList: document.getElementById('expenses-list'),
             expensesEmpty: document.getElementById('expenses-empty'),
+
+            // Quick-Add Templates
+            quickAddTemplates: document.getElementById('quick-add-templates'),
+            quickAddButtons: document.getElementById('quick-add-buttons'),
+            manageTemplatesLink: document.getElementById('manage-templates-link'),
             
             // Add Expense Modal
             expenseModal: document.getElementById('add-expense-modal'),
@@ -316,6 +321,14 @@ class EventDetailPage {
             this.elements.editEventLocation.addEventListener('input', () => this.clearEditEventError('location'));
         }
 
+        // Manage Templates Link
+        if (this.elements.manageTemplatesLink) {
+            this.elements.manageTemplatesLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                router.navigateTo('/templates');
+            });
+        }
+
         // Event delegation for participant management buttons
         document.addEventListener('click', (e) => {
             if (e.target.matches('.participant-action-btn[data-action="add"]')) {
@@ -328,6 +341,13 @@ class EventDetailPage {
                 const hasExpenses = e.target.getAttribute('data-has-expenses') === 'true';
                 console.log('[EVENT-DETAIL.JS] Remove participant clicked', { participantId, participantName, hasExpenses });
                 this.showRemoveParticipantDialog(participantId, participantName, hasExpenses);
+            } else if (e.target.matches('.template-quick-btn') || e.target.closest('.template-quick-btn')) {
+                // Handle template quick-add button click
+                const templateBtn = e.target.matches('.template-quick-btn') ? e.target : e.target.closest('.template-quick-btn');
+                const templateId = templateBtn.dataset.templateId;
+                if (templateId) {
+                    this.applyTemplate(templateId);
+                }
             }
         });
     }
@@ -349,6 +369,9 @@ class EventDetailPage {
             // Load participants first, then cost items (participants needed for expense rendering)
             await this.loadParticipants();
             await this.loadCostItems();
+
+            // Load quick-add templates
+            await this.loadQuickAddTemplates();
 
             this.updateStats();
 
@@ -2453,6 +2476,107 @@ class EventDetailPage {
         const eventDetailPage = document.getElementById('event-detail');
         if (eventDetailPage && eventDetailPage.firstChild) {
             eventDetailPage.insertBefore(banner, eventDetailPage.firstChild);
+        }
+    }
+
+    /**
+     * Load and render quick-add templates
+     */
+    async loadQuickAddTemplates() {
+        try {
+            // Load up to 6 templates for quick-add
+            const templates = await api.getQuickAddTemplates(6);
+
+            if (!templates || templates.length === 0) {
+                // Hide quick-add section if no templates
+                if (this.elements.quickAddTemplates) {
+                    this.elements.quickAddTemplates.style.display = 'none';
+                }
+                return;
+            }
+
+            // Show quick-add section
+            if (this.elements.quickAddTemplates) {
+                this.elements.quickAddTemplates.style.display = 'block';
+            }
+
+            // Render template buttons
+            this.renderQuickAddTemplates(templates);
+
+        } catch (error) {
+            console.error('Failed to load quick-add templates:', error);
+            // Silently fail - templates are optional feature
+            if (this.elements.quickAddTemplates) {
+                this.elements.quickAddTemplates.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Render quick-add template buttons
+     */
+    renderQuickAddTemplates(templates) {
+        if (!this.elements.quickAddButtons) return;
+
+        const buttonsHTML = templates.map(template => `
+            <button class="template-quick-btn" data-template-id="${template.id}">
+                <span class="template-quick-name">${this.escapeHtml(template.name)}</span>
+                <span class="template-quick-amount">${formatCurrency(template.defaultAmount)}</span>
+            </button>
+        `).join('');
+
+        this.elements.quickAddButtons.innerHTML = buttonsHTML;
+    }
+
+    /**
+     * Apply a template to pre-fill the expense form
+     */
+    async applyTemplate(templateId) {
+        try {
+            console.log('Applying template:', templateId);
+
+            // Get event participants
+            const participantIds = this.participants.map(p => p.id);
+
+            if (participantIds.length === 0) {
+                showError('Please add participants to the event before using templates');
+                return;
+            }
+
+            // Convert template to expense data
+            const expenseData = await api.templateToExpenseData(templateId, this.currentEventId);
+
+            // Open the add expense modal
+            this.showAddExpenseDialog();
+
+            // Pre-fill the form
+            if (this.elements.expenseDescription) {
+                this.elements.expenseDescription.value = expenseData.description;
+            }
+            if (this.elements.expenseAmount) {
+                this.elements.expenseAmount.value = expenseData.amount;
+            }
+            if (this.elements.expensePaidBy) {
+                this.elements.expensePaidBy.value = expenseData.paidBy || '';
+            }
+            if (this.elements.expenseDate) {
+                this.elements.expenseDate.value = new Date().toISOString().split('T')[0];
+            }
+
+            // Set split to equal (shares mode with equal shares)
+            if (this.elements.splitEqualRadio) {
+                this.elements.splitEqualRadio.checked = true;
+                this.handleSplitMethodChange();
+            }
+
+            // Update split display
+            this.updateSplitAmounts();
+
+            console.log('Template applied successfully:', expenseData);
+
+        } catch (error) {
+            console.error('Failed to apply template:', error);
+            showError(error.message || 'Failed to apply template');
         }
     }
 }
