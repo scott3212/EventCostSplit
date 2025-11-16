@@ -2701,3 +2701,175 @@
         padding: 1rem;
     }
 }
+/* ===================================
+   Expense Templates Styles
+   =================================== */
+
+/* Templates Grid */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+/* Template Card */
+.template-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.template-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+}
+
+.template-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.template-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    flex: 1;
+}
+
+.template-card-body {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.template-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.template-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.template-info-item .label {
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.template-info-item .value {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.template-info-item .value.amount {
+    font-size: 1.125rem;
+    color: var(--primary-color);
+}
+
+/* Quick Add Templates (for Event Detail Page) */
+.quick-add-templates {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.quick-add-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.quick-add-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.quick-add-templates-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.template-quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.template-quick-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.template-quick-btn .template-quick-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    text-align: center;
+}
+
+.template-quick-btn .template-quick-amount {
+    font-size: 1rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.manage-templates-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.manage-templates-link:hover {
+    text-decoration: underline;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .templates-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .template-card {
+        padding: 1rem;
+    }
+
+    .quick-add-templates-row {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+    }
+
+    .template-quick-btn {
+        flex-shrink: 0;
+        min-width: 90px;
+    }
+}

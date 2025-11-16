@@ -50,6 +50,10 @@
                         <span class="nav-icon">💳</span>
                         <span class="nav-text">Payments</span>
                     </button>
+                    <button class="nav-item" data-page="templates">
+                        <span class="nav-icon">📝</span>
+                        <span class="nav-text">Templates</span>
+                    </button>
                 </nav>
 
                 <!-- Mobile Menu Toggle -->
@@ -435,6 +439,52 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Templates Page -->
+                    <div id="templates-page" class="page">
+                        <div class="page-header">
+                            <div class="page-title-section">
+                                <div class="page-title-content">
+                                    <h1>📝 Expense Templates</h1>
+                                    <p>Manage reusable expense templates for quick entry</p>
+                                </div>
+                                <div class="page-actions">
+                                    <button class="btn btn-primary" id="add-template-btn">
+                                        <span>➕</span>
+                                        <span>Add Template</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="page-stats">
+                                <div class="stat-card">
+                                    <span class="stat-label">Total Templates</span>
+                                    <span class="stat-value" id="total-templates-count">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="templates-loading" class="loading-container hidden">
+                            <div class="loading-spinner"></div>
+                            <p>Loading templates...</p>
+                        </div>
+
+                        <!-- Templates List -->
+                        <div id="templates-list" class="templates-grid hidden">
+                            <!-- Template cards will be inserted here by JavaScript -->
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="templates-empty" class="empty-state hidden">
+                            <div class="empty-state-icon">📝</div>
+                            <h3>No Templates Yet</h3>
+                            <p>Create expense templates to quickly add common expenses like court rentals, shuttlecocks, or refreshments.</p>
+                            <button class="btn btn-primary" id="empty-state-add-template-btn">
+                                <span>➕</span>
+                                <span>Create Your First Template</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -626,6 +676,91 @@
                 <button class="btn btn-primary" id="edit-user-save">
                     <span class="loading-spinner-sm" id="edit-user-spinner" style="display: none;"></span>
                     <span id="edit-user-save-text">Save Changes</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Template Modal -->
+    <div id="add-template-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Add New Template</h3>
+                <button class="modal-close" id="add-template-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-template-form">
+                    <div class="form-group">
+                        <label for="template-name" class="form-label">Template Name <span class="text-danger">*</span></label>
+                        <input type="text" id="template-name" name="name" class="form-input" placeholder="e.g., Court Rental, Shuttlecocks" required>
+                        <div id="template-name-error" class="form-error"></div>
+                        <div class="form-help">Give this template a descriptive name</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="template-amount" class="form-label">Default Amount <span class="text-danger">*</span></label>
+                        <input type="number" id="template-amount" name="amount" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                        <div id="template-amount-error" class="form-error"></div>
+                        <div class="form-help">The typical amount for this expense</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="template-default-payer" class="form-label">Default Payer (optional)</label>
+                        <select id="template-default-payer" name="defaultPaidBy" class="form-input">
+                            <option value="">None (must select when using)</option>
+                            <!-- User options will be populated by JavaScript -->
+                        </select>
+                        <div class="form-help">Pre-select who usually pays for this expense</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="add-template-cancel">Cancel</button>
+                <button class="btn btn-primary" id="add-template-save">
+                    <span class="loading-spinner-sm" id="add-template-spinner" style="display: none;"></span>
+                    <span id="add-template-save-text">Create Template</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Template Modal -->
+    <div id="edit-template-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Template</h3>
+                <button class="modal-close" id="edit-template-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-template-form">
+                    <div class="form-group">
+                        <label for="edit-template-name" class="form-label">Template Name <span class="text-danger">*</span></label>
+                        <input type="text" id="edit-template-name" name="name" class="form-input" placeholder="e.g., Court Rental, Shuttlecocks" required>
+                        <div id="edit-template-name-error" class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-template-amount" class="form-label">Default Amount <span class="text-danger">*</span></label>
+                        <input type="number" id="edit-template-amount" name="amount" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                        <div id="edit-template-amount-error" class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-template-default-payer" class="form-label">Default Payer (optional)</label>
+                        <select id="edit-template-default-payer" name="defaultPaidBy" class="form-input">
+                            <option value="">None (must select when using)</option>
+                            <!-- User options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="edit-template-delete">Delete Template</button>
+                <div style="flex: 1;"></div>
+                <button class="btn btn-secondary" id="edit-template-cancel">Cancel</button>
+                <button class="btn btn-primary" id="edit-template-save">
+                    <span class="loading-spinner-sm" id="edit-template-spinner" style="display: none;"></span>
+                    <span id="edit-template-save-text">Save Changes</span>
                 </button>
             </div>
         </div>
@@ -996,6 +1131,7 @@
     <script src="/js/pages/events.js"></script>
     <script src="/js/pages/event-detail.js"></script>
     <script src="/js/pages/payments.js"></script>
+    <script src="/js/pages/template-management.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

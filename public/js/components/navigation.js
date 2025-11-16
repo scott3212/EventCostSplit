@@ -161,6 +161,13 @@ class Navigation {
             }
             window.eventsPage.loadPage();
         }
+
+        if (pageId === 'templates') {
+            if (!window.templateManagementPage) {
+                window.templateManagementPage = new TemplateManagementPage();
+            }
+            window.templateManagementPage.loadPage();
+        }
     }
 
     updateActiveNavItem(activePageId) {
