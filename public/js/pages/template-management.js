@@ -121,6 +121,10 @@ class TemplateManagementPage {
             this.showLoading();
             const response = await api.getExpenseTemplates();
             this.templates = response || [];
+
+            // Load users to populate default payer names in cards
+            await this.loadUsers();
+
             this.renderTemplates();
             this.updateStats();
         } catch (error) {
@@ -489,19 +493,29 @@ class TemplateManagementPage {
             return;
         }
 
-        const confirmed = confirm(`Are you sure you want to delete the template "${this.currentEditTemplate.name}"?\n\nThis action cannot be undone.`);
+        const templateName = this.currentEditTemplate.name;
+        const confirmed = confirm(`Are you sure you want to delete the template "${templateName}"?\n\nThis action cannot be undone.`);
         if (!confirmed) return;
 
         try {
             this.isDeletingTemplate = true;
             this.setEditLoading(true);
             await api.deleteExpenseTemplate(this.currentEditTemplate.id);
-            showSuccess(`Template "${this.currentEditTemplate.name}" deleted successfully!`);
+            showSuccess(`Template "${templateName}" deleted successfully!`);
             this.hideEditTemplateDialog();
             await this.loadTemplates();
         } catch (error) {
             console.error('Failed to delete template:', error);
-            showError(error.message || 'Failed to delete template');
+
+            // Handle 404 gracefully - template might have been already deleted
+            if (error.message && error.message.includes('not found')) {
+                console.warn('Template already deleted, refreshing list');
+                this.hideEditTemplateDialog();
+                await this.loadTemplates();
+                // Don't show error since template is already gone (desired state)
+            } else {
+                showError(error.message || 'Failed to delete template');
+            }
         } finally {
             this.isDeletingTemplate = false;
             this.setEditLoading(false);
