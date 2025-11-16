@@ -217,8 +217,14 @@
   }
 
   .section-header{
-    padding: 8px 8px 8px 8px;
-    margin-bottom: 0.2rem;
+    padding: 0 0.5rem 0 0.5rem;
+  }
+  /* Recent Payments List */
+  .payments-list {
+      padding: 0;
+  }
+  .balances-grid {
+    padding: 0.5rem;
   }
 
 
@@ -290,7 +296,7 @@
 
   /* Balance colors */
   .balance-owed .balance-amount {
-    color: #c62828;
+    color: var(--success-color);
   }
 
   .balance-owes .balance-amount {

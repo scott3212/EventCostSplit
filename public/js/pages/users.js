@@ -1005,18 +1005,18 @@ class UsersPage {
         payments.forEach(payment => {
             activities.push({
                 type: 'payment',
-                date: new Date(payment.date),
+                date: parseLocalDate(payment.date),
                 description: payment.description || 'Payment',
                 amount: payment.amount,
                 raw: payment
             });
         });
-        
+
         // Add event participations
         events.forEach(event => {
             activities.push({
                 type: 'event',
-                date: new Date(event.date),
+                date: parseLocalDate(event.date),
                 description: `Event: ${event.name}`,
                 amount: null,
                 raw: event

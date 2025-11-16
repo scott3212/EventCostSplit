@@ -913,13 +913,8 @@ class EventsPage {
         }
 
         if (this.elements.editEventDate) {
-            // Convert date to YYYY-MM-DD format for date input
-            let dateValue = '';
-            if (this.currentEditEvent.date) {
-                const date = new Date(this.currentEditEvent.date);
-                dateValue = date.toISOString().split('T')[0];
-            }
-            this.elements.editEventDate.value = dateValue;
+            // Set date value directly (already in YYYY-MM-DD format)
+            this.elements.editEventDate.value = this.currentEditEvent.date || '';
         }
 
         if (this.elements.editEventLocation) {

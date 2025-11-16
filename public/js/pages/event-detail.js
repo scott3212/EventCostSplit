@@ -936,10 +936,15 @@ class EventDetailPage {
             };
 
             // Add split configuration based on mode
+            // When updating, explicitly clear the unused split field to avoid conflicts
             if (this.splitMode === 'shares') {
                 rawExpenseData.splitShares = this.getSplitShares();
+                rawExpenseData.splitPercentage = null; // Clear percentage split
+                rawExpenseData.splitMode = 'shares';
             } else {
                 rawExpenseData.splitPercentage = this.getSplitPercentages();
+                rawExpenseData.splitShares = null; // Clear shares split
+                rawExpenseData.splitMode = 'percentage';
             }
 
             console.log('[EXPENSE-EDIT] Raw expense data before sanitization:', rawExpenseData);
@@ -1622,13 +1627,8 @@ class EventDetailPage {
         }
         
         if (this.elements.editEventDate) {
-            // Convert date to YYYY-MM-DD format for date input
-            let dateValue = '';
-            if (this.currentEvent.date) {
-                const eventDate = this.parseDateSafely(this.currentEvent.date);
-                dateValue = eventDate.toISOString().split('T')[0];
-            }
-            this.elements.editEventDate.value = dateValue;
+            // Set date value directly (already in YYYY-MM-DD format)
+            this.elements.editEventDate.value = this.currentEvent.date || '';
         }
         
         if (this.elements.editEventLocation) {
@@ -2290,7 +2290,7 @@ class EventDetailPage {
         if (this.currentEvent) {
             const location = this.currentEvent.location || 'Event';
             const dateStr = this.currentEvent.date ?
-                new Date(this.currentEvent.date).toLocaleDateString('en-US', {
+                parseLocalDate(this.currentEvent.date).toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
