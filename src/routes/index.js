@@ -6,6 +6,7 @@ const UserRepository = require('../repositories/UserRepository');
 const EventRepository = require('../repositories/EventRepository');
 const CostItemRepository = require('../repositories/CostItemRepository');
 const PaymentRepository = require('../repositories/PaymentRepository');
+const ExpenseTemplateRepository = require('../repositories/ExpenseTemplateRepository');
 
 // Service imports
 const CalculationService = require('../services/CalculationService');
@@ -13,12 +14,14 @@ const UserService = require('../services/UserService');
 const EventService = require('../services/EventService');
 const CostItemService = require('../services/CostItemService');
 const PaymentService = require('../services/PaymentService');
+const ExpenseTemplateService = require('../services/ExpenseTemplateService');
 
 // Controller imports
 const UserController = require('../controllers/UserController');
 const EventController = require('../controllers/EventController');
 const CostItemController = require('../controllers/CostItemController');
 const PaymentController = require('../controllers/PaymentController');
+const ExpenseTemplateController = require('../controllers/ExpenseTemplateController');
 const TestController = require('../controllers/TestController');
 
 // Route factory imports
@@ -26,6 +29,7 @@ const createUserRoutes = require('./userRoutes');
 const createEventRoutes = require('./eventRoutes');
 const createCostItemRoutes = require('./costItemRoutes');
 const createPaymentRoutes = require('./paymentRoutes');
+const createExpenseTemplateRoutes = require('./expenseTemplateRoutes');
 
 /**
  * Create and configure all API routes with dependency injection
@@ -38,6 +42,7 @@ function createApiRoutes() {
   const eventRepo = new EventRepository();
   const costItemRepo = new CostItemRepository();
   const paymentRepo = new PaymentRepository();
+  const templateRepo = new ExpenseTemplateRepository();
 
   // Initialize services with dependency injection
   const calculationService = new CalculationService(userRepo, eventRepo, costItemRepo, paymentRepo);
@@ -45,12 +50,14 @@ function createApiRoutes() {
   const eventService = new EventService(eventRepo, userRepo, costItemRepo, paymentRepo, calculationService);
   const costItemService = new CostItemService(costItemRepo, eventRepo, userRepo, calculationService);
   const paymentService = new PaymentService(paymentRepo, userRepo, eventRepo, calculationService);
+  const templateService = new ExpenseTemplateService(templateRepo, userRepo);
 
   // Initialize controllers with service injection
   const userController = new UserController(userService);
   const eventController = new EventController(eventService, costItemService, paymentService);
   const costItemController = new CostItemController(costItemService);
   const paymentController = new PaymentController(paymentService);
+  const templateController = new ExpenseTemplateController(templateService);
   
   // Initialize test controller (only in development/test environments)
   const testController = new TestController({
@@ -65,6 +72,7 @@ function createApiRoutes() {
   router.use('/events', createEventRoutes(eventController));
   router.use('/cost-items', createCostItemRoutes(costItemController));
   router.use('/payments', createPaymentRoutes(paymentController));
+  router.use('/expense-templates', createExpenseTemplateRoutes(templateController));
   
   // Mount test routes (only in non-production environments)
   if (process.env.NODE_ENV !== 'production') {
@@ -85,7 +93,8 @@ function createApiRoutes() {
         users: '/api/users',
         events: '/api/events',
         costItems: '/api/cost-items',
-        payments: '/api/payments'
+        payments: '/api/payments',
+        expenseTemplates: '/api/expense-templates'
       },
       features: [
         'User management with balance tracking',

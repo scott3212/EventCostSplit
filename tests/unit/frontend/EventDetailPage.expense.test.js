@@ -391,7 +391,9 @@ describe('EventDetailPage - Expense Management', () => {
                     'user1': 33.33,
                     'user2': 33.33,
                     'user3': 33.34
-                }
+                },
+                splitMode: 'percentage',
+                splitShares: null
             });
             
             expect(eventDetailPage.hideAddExpenseDialog).toHaveBeenCalled();

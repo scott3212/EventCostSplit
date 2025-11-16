@@ -1,3 +1,17 @@
+/**
+ * Parse a date string (YYYY-MM-DD) as a local date without timezone conversion
+ * This prevents dates from shifting when parsed as UTC midnight
+ * @param {string} dateStr - Date string in YYYY-MM-DD format
+ * @returns {Date} Date object representing local midnight
+ */
+function parseLocalDate(dateStr) {
+    if (!dateStr) return null;
+
+    // Parse as YYYY-MM-DD and create date in local timezone
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
 class ApiClient {
     constructor(baseURL = '') {
         this.baseURL = baseURL;
@@ -223,6 +237,51 @@ class ApiClient {
 
     async getSettlementSuggestions() {
         const response = await this.get('/payments/settlement/suggestions');
+        return response.data || response;
+    }
+
+    // Expense Template endpoints
+    async getExpenseTemplates() {
+        const response = await this.get('/expense-templates');
+        return response.data || response;
+    }
+
+    async getQuickAddTemplates(limit = 6) {
+        const response = await this.get(`/expense-templates/quick-add?limit=${limit}`);
+        return response.data || response;
+    }
+
+    async getExpenseTemplate(id) {
+        const response = await this.get(`/expense-templates/${id}`);
+        return response.data || response;
+    }
+
+    async createExpenseTemplate(templateData) {
+        const response = await this.post('/expense-templates', templateData);
+        return response.data || response;
+    }
+
+    async updateExpenseTemplate(id, templateData) {
+        const response = await this.put(`/expense-templates/${id}`, templateData);
+        return response.data || response;
+    }
+
+    async deleteExpenseTemplate(id) {
+        return this.delete(`/expense-templates/${id}`);
+    }
+
+    async reorderExpenseTemplates(orderUpdates) {
+        const response = await this.put('/expense-templates/reorder', { orderUpdates });
+        return response.data || response;
+    }
+
+    async templateToExpenseData(templateId, eventId) {
+        const response = await this.get(`/expense-templates/${templateId}/to-expense?eventId=${eventId}`);
+        return response.data || response;
+    }
+
+    async getTemplateStats() {
+        const response = await this.get('/expense-templates/stats');
         return response.data || response;
     }
 
