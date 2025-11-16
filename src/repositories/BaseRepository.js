@@ -118,11 +118,19 @@ class BaseRepository {
       return null;
     }
 
+    // Merge updates, removing fields with null values
     const updatedRecord = {
       ...allData[index],
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+
+    // Remove fields that were explicitly set to null
+    Object.keys(updates).forEach(key => {
+      if (updates[key] === null) {
+        delete updatedRecord[key];
+      }
+    });
 
     allData[index] = updatedRecord;
     await this.saveData(allData);

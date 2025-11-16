@@ -98,6 +98,7 @@ class EventController {
           error: error.message
         });
       } else {
+        console.error('❌ Unexpected error in updateEvent:', error);
         res.status(500).json({
           success: false,
           error: 'Failed to update event'

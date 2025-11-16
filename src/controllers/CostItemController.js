@@ -26,6 +26,7 @@ class CostItemController {
           error: error.message
         });
       } else {
+        console.error('❌ Unexpected error in createCostItem:', error);
         res.status(500).json({
           success: false,
           error: 'Failed to create cost item'

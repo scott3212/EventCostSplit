@@ -34,7 +34,7 @@ class CostItem {
       validators.uuid(data.eventId, 'Event ID');
 
       validators.required(data.description, 'Description');
-      validators.minLength(data.description, 3, 'Description');
+      validators.minLength(data.description, 1, 'Description');
       validators.maxLength(data.description, 200, 'Description');
 
       validators.required(data.amount, 'Amount');

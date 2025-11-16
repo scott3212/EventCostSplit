@@ -449,10 +449,21 @@ class EventService {
       }
 
       // Check if anyone with split allocation is being removed
-      const splitParticipants = Object.keys(costItem.splitPercentage).filter(
-        userId => costItem.splitPercentage[userId] > 0
-      );
-      
+      let splitParticipants = [];
+
+      // Check shares-based splits
+      if (costItem.splitShares) {
+        splitParticipants = Object.keys(costItem.splitShares).filter(
+          userId => costItem.splitShares[userId] > 0
+        );
+      }
+      // Check percentage-based splits
+      else if (costItem.splitPercentage) {
+        splitParticipants = Object.keys(costItem.splitPercentage).filter(
+          userId => costItem.splitPercentage[userId] > 0
+        );
+      }
+
       for (const userId of splitParticipants) {
         if (!newParticipants.includes(userId)) {
           throw new ValidationError(`Cannot remove participant who has expense allocation for "${costItem.description}". Please update the expense first.`);

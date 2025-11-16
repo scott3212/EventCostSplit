@@ -626,11 +626,11 @@ function validateCostItemUpdate(updateData) {
       validators.date(updateData.date, 'Date');
     }
 
-    if (updateData.splitPercentage !== undefined) {
+    if (updateData.splitPercentage !== undefined && updateData.splitPercentage !== null) {
       validators.splitPercentages(updateData.splitPercentage, 'Split percentages');
     }
 
-    if (updateData.splitShares !== undefined) {
+    if (updateData.splitShares !== undefined && updateData.splitShares !== null) {
       validators.splitShares(updateData.splitShares, 'Split shares');
     }
 
