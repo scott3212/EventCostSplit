@@ -16,6 +16,7 @@ class ExpenseTemplateController {
   async createTemplate(req, res) {
     try {
       const templateData = req.body;
+      console.log('📝 Creating template:', JSON.stringify(templateData, null, 2));
       const template = await this.templateService.createTemplate(templateData);
       res.status(201).json({
         success: true,
@@ -24,12 +25,15 @@ class ExpenseTemplateController {
       });
     } catch (error) {
       if (error instanceof ValidationError) {
+        console.warn('⚠️  Template validation failed:', error.message);
         res.status(400).json({
           success: false,
           error: error.message
         });
       } else {
         console.error('❌ Unexpected error in createTemplate:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Template data:', JSON.stringify(req.body, null, 2));
         res.status(500).json({
           success: false,
           error: 'Failed to create template'

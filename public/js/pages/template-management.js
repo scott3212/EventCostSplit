@@ -318,6 +318,12 @@ class TemplateManagementPage {
             return;
         }
 
+        // Prevent double submission
+        if (this.isCreatingTemplate) {
+            console.warn('Template creation already in progress, ignoring duplicate request');
+            return;
+        }
+
         const templateData = {
             name: this.elements.nameInput.value.trim(),
             defaultAmount: parseFloat(this.elements.amountInput.value),
@@ -325,6 +331,7 @@ class TemplateManagementPage {
         };
 
         try {
+            this.isCreatingTemplate = true;
             this.setAddLoading(true);
             await api.createExpenseTemplate(templateData);
             showSuccess(`Template "${templateData.name}" created successfully!`);
@@ -334,6 +341,7 @@ class TemplateManagementPage {
             console.error('Failed to create template:', error);
             showError(error.message || 'Failed to create template');
         } finally {
+            this.isCreatingTemplate = false;
             this.setAddLoading(false);
         }
     }
@@ -444,6 +452,12 @@ class TemplateManagementPage {
         if (!this.currentEditTemplate) return;
         if (!this.validateEditForm()) return;
 
+        // Prevent double submission
+        if (this.isUpdatingTemplate) {
+            console.warn('Template update already in progress, ignoring duplicate request');
+            return;
+        }
+
         const templateData = {
             name: this.elements.editNameInput.value.trim(),
             defaultAmount: parseFloat(this.elements.editAmountInput.value),
@@ -451,6 +465,7 @@ class TemplateManagementPage {
         };
 
         try {
+            this.isUpdatingTemplate = true;
             this.setEditLoading(true);
             await api.updateExpenseTemplate(this.currentEditTemplate.id, templateData);
             showSuccess(`Template "${templateData.name}" updated successfully!`);
@@ -460,6 +475,7 @@ class TemplateManagementPage {
             console.error('Failed to update template:', error);
             showError(error.message || 'Failed to update template');
         } finally {
+            this.isUpdatingTemplate = false;
             this.setEditLoading(false);
         }
     }
@@ -467,10 +483,17 @@ class TemplateManagementPage {
     async handleDeleteTemplate() {
         if (!this.currentEditTemplate) return;
 
+        // Prevent double submission
+        if (this.isDeletingTemplate) {
+            console.warn('Template deletion already in progress, ignoring duplicate request');
+            return;
+        }
+
         const confirmed = confirm(`Are you sure you want to delete the template "${this.currentEditTemplate.name}"?\n\nThis action cannot be undone.`);
         if (!confirmed) return;
 
         try {
+            this.isDeletingTemplate = true;
             this.setEditLoading(true);
             await api.deleteExpenseTemplate(this.currentEditTemplate.id);
             showSuccess(`Template "${this.currentEditTemplate.name}" deleted successfully!`);
@@ -480,6 +503,7 @@ class TemplateManagementPage {
             console.error('Failed to delete template:', error);
             showError(error.message || 'Failed to delete template');
         } finally {
+            this.isDeletingTemplate = false;
             this.setEditLoading(false);
         }
     }
